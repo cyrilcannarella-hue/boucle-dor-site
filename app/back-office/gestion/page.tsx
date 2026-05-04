@@ -999,7 +999,7 @@ export default function BackOfficeGestionPage() {
                     </div>
                   </div>
                 </div>
-              </section>}
+              }</section>
 
               {activeTab === "salon" && <section className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -1110,7 +1110,7 @@ export default function BackOfficeGestionPage() {
                     Aucune ligne trouvée dans <strong>salon_settings</strong>.
                   </div>
                 )}
-              </section>}
+              }</section>
 
               {activeTab === "categories" && <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
@@ -1254,7 +1254,7 @@ export default function BackOfficeGestionPage() {
                     </button>
                   </div>
                 </div>
-              </section>}
+              }</section>
 
               {activeTab === "equipe" && <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
@@ -1449,7 +1449,7 @@ export default function BackOfficeGestionPage() {
                       </button>
                     </div>
                   </div>
-              </section>}
+              }</section>
 
               {activeTab === "prestations" && <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
@@ -1790,7 +1790,7 @@ export default function BackOfficeGestionPage() {
                     </div>
                   </div>
                 </div>
-              </section>}
+              }</section>
 
                 </div>{/* fin grid contenu */}
               </div>{/* fin flex-1 */}
