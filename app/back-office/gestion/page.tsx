@@ -738,6 +738,16 @@ export default function BackOfficeGestionPage() {
     });
   }, [clients, search]);
 
+  const TABS = [
+    { id: "salon",       label: "Salon",       icon: "🏪" },
+    { id: "fermetures",  label: "Fermetures",  icon: "📆" },
+    { id: "categories",  label: "Catégories",  icon: "🏷️" },
+    { id: "prestations", label: "Prestations", icon: "✂️" },
+    { id: "equipe",      label: "Équipe",      icon: "💇" },
+  ] as const;
+  type TabId = typeof TABS[number]["id"];
+  const [activeTab, setActiveTab] = useState<TabId>("salon");
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff8ef_0,#f7efe4_38%,#f4eee7_100%)] text-[#1f1b17]">
       <header className="md:sticky top-0 z-30 border-b border-[#eadfce]/80 bg-[#fffaf4]/90 shadow-[0_10px_30px_rgba(80,55,25,0.06)] backdrop-blur-xl">
@@ -798,17 +808,6 @@ export default function BackOfficeGestionPage() {
       </header>
 
       <section className="mx-auto w-[min(1400px,calc(100%-32px))] py-8">
-        <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--gold)]">Gestion salon</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight md:text-5xl">
-              Gestion
-            </h1>
-            <p className="mt-3 text-base leading-7 text-[#6f6254]">
-              Horaires, fermetures, catégories et prestations du salon.
-            </p>
-          </div>
-        </div>
 
           {statusMessage ? (
             <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800 shadow-sm">
@@ -821,8 +820,54 @@ export default function BackOfficeGestionPage() {
               Chargement de la gestion du salon...
             </div>
           ) : (
-            <div className="grid gap-6">
-              <section className={cardClass + " p-5 md:p-7"}>
+            <div className="flex gap-6 items-start">
+
+              {/* Sidebar onglets desktop */}
+              <aside className="hidden md:flex flex-col gap-1 w-52 shrink-0 sticky top-24">
+                <div className="mb-3 px-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--gold)]">Gestion salon</p>
+                  <h1 className="mt-1 text-xl font-semibold tracking-tight">Gestion</h1>
+                </div>
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-left transition ${
+                      activeTab === tab.id
+                        ? "bg-[#1f1b17] text-white shadow-[0_8px_20px_rgba(31,27,23,0.18)]"
+                        : "text-[#4d453d] hover:bg-white/80 hover:shadow-sm border border-transparent hover:border-[#eadfce]"
+                    }`}
+                  >
+                    <span className="text-base">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </aside>
+
+              {/* Onglets mobile */}
+              <div className="md:hidden flex gap-2 overflow-x-auto pb-1 w-full">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 shrink-0 rounded-2xl px-4 py-2.5 text-xs font-semibold transition ${
+                      activeTab === tab.id
+                        ? "bg-[#1f1b17] text-white"
+                        : "border border-[#eadfce] bg-white text-[#4d453d]"
+                    }`}
+                  >
+                    <span>{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Contenu */}
+              <div className="flex-1 min-w-0">
+                <div className="grid gap-6">
+              {activeTab === "fermetures" && <section className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
@@ -954,9 +999,9 @@ export default function BackOfficeGestionPage() {
                     </div>
                   </div>
                 </div>
-              </section>
+              </section>}
 
-              <section className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "salon" && <section className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
@@ -1065,11 +1110,9 @@ export default function BackOfficeGestionPage() {
                     Aucune ligne trouvée dans <strong>salon_settings</strong>.
                   </div>
                 )}
-              </section>
+              </section>}
 
-              <section className="grid gap-5">
-                <div className="grid gap-5 md:grid-cols-[0.85fr_1.15fr]">
-                <div className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "categories" && <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
                       <span className="text-xl">🏷️</span>
@@ -1211,9 +1254,9 @@ export default function BackOfficeGestionPage() {
                     </button>
                   </div>
                 </div>
+              </section>}
 
-                {/* ─── Coiffeuses dans le sous-grid ─── */}
-                <div className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "equipe" && <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
                       <span className="text-xl">💇</span> Équipe
@@ -1406,10 +1449,9 @@ export default function BackOfficeGestionPage() {
                       </button>
                     </div>
                   </div>
-                </div>
-                </div>{/* fin sous-grid catégories+coiffeuses */}
+              </section>}
 
-                <div className={cardClass + " p-5 md:p-7"}>{/* prestations pleine largeur */}
+              {activeTab === "prestations" && <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
                       <span className="text-xl">✂️</span>
@@ -1748,9 +1790,11 @@ export default function BackOfficeGestionPage() {
                     </div>
                   </div>
                 </div>
-                            </section>
+              </section>}
 
-            </div>
+                </div>{/* fin grid contenu */}
+              </div>{/* fin flex-1 */}
+            </div>{/* fin flex layout */}
           )}
       </section>
     </main>
