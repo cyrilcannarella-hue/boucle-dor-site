@@ -867,7 +867,7 @@ export default function BackOfficeGestionPage() {
               {/* Contenu */}
               <div className="flex-1 min-w-0">
                 <div className="grid gap-6">
-              {activeTab === "fermetures" && <section className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "fermetures" ? <section className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
@@ -999,9 +999,9 @@ export default function BackOfficeGestionPage() {
                     </div>
                   </div>
                 </div>
-              }</section>
+              </section> : null}
 
-              {activeTab === "salon" && <section className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "salon" ? <section className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
@@ -1110,9 +1110,9 @@ export default function BackOfficeGestionPage() {
                     Aucune ligne trouvée dans <strong>salon_settings</strong>.
                   </div>
                 )}
-              }</section>
+              </section> : null}
 
-              {activeTab === "categories" && <section className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "categories" ? <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
                       <span className="text-xl">🏷️</span>
@@ -1254,9 +1254,9 @@ export default function BackOfficeGestionPage() {
                     </button>
                   </div>
                 </div>
-              }</section>
+              </section> : null}
 
-              {activeTab === "equipe" && <section className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "equipe" ? <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
                       <span className="text-xl">💇</span> Équipe
@@ -1449,9 +1449,9 @@ export default function BackOfficeGestionPage() {
                       </button>
                     </div>
                   </div>
-              }</section>
+              </section> : null}
 
-              {activeTab === "prestations" && <section className={cardClass + " p-5 md:p-7"}>
+              {activeTab === "prestations" ? <section className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
                       <span className="text-xl">✂️</span>
@@ -1790,7 +1790,7 @@ export default function BackOfficeGestionPage() {
                     </div>
                   </div>
                 </div>
-              }</section>
+              </section> : null}
 
                 </div>{/* fin grid contenu */}
               </div>{/* fin flex-1 */}
