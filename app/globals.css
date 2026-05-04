@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F5E9DC;
+  --foreground: #171717;
+
+  /* ── Couleurs Boucle d'Or ── */
+  --gold: #b98b3d;
+  --gold-light: #d8b56d;
+  --gold-deep: #d8a646;
+  --beige-light: #eadfce;
+  --beige-mid: #e7ddd0;
+  --beige-warm: #f4eadc;
+  --taupe-dark: #1f1b17;
+  --taupe: #6e655c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+}

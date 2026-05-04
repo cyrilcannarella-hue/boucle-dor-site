@@ -1,0 +1,2671 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+
+type RealtimePayload = {
+  new?: { appointment_date?: string };
+  old?: { appointment_date?: string };
+};
+
+type AppointmentRow = {
+  id: string;
+  appointment_date: string;
+  start_time: string;
+  end_time: string;
+  break_start_time: string | null;
+  break_end_time: string | null;
+  status: "confirmed" | "cancelled" | "completed";
+  source: "web" | "salon";
+  price_cents: number;
+  client_message: string | null;
+  internal_note: string | null;
+  client_id?: string | null;
+  service_id?: string | null;
+  staff_id?: string | null;
+  services: {
+    id: string;
+    name: string;
+    duration_minutes: number;
+    duration_before_break?: number | null;
+    break_duration?: number | null;
+    duration_after_break?: number | null;
+    price_cents?: number | null;
+    category_id?: string | null;
+    categories: {
+      id?: string;
+      name: string;
+      color?: string | null;
+    } | null;
+  } | null;
+  clients: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    email: string | null;
+    notes?: string | null;
+  } | null;
+};
+
+type ClientRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string | null;
+  notes: string | null;
+};
+
+type ServiceRow = {
+  id: string;
+  name: string;
+  duration_minutes: number;
+  duration_before_break: number | null;
+  break_duration: number | null;
+  duration_after_break: number | null;
+  price_cents: number;
+  category_id?: string | null;
+  categories: {
+    id?: string;
+    name: string;
+    color?: string | null;
+  } | null;
+};
+
+type ClientAppointmentHistory = {
+  id: string;
+  appointment_date: string;
+  start_time: string;
+  end_time: string;
+  status: "confirmed" | "cancelled" | "completed";
+  price_cents: number;
+  services: {
+    name: string;
+    categories: {
+      name: string;
+      color?: string | null;
+    } | null;
+  } | null;
+};
+
+type SalonSettings = {
+  id: string;
+  salon_name: string;
+  opening_time: string;
+  closing_time: string;
+  is_open_monday: boolean;
+  is_open_tuesday: boolean;
+  is_open_wednesday: boolean;
+  is_open_thursday: boolean;
+  is_open_friday: boolean;
+  is_open_saturday: boolean;
+  is_open_sunday: boolean;
+};
+
+type ExceptionClosure = {
+  id: string;
+  closure_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  is_all_day: boolean;
+  reason: string | null;
+};
+
+type BusySegment = {
+  start: number;
+  end: number;
+};
+
+type VisualAppointmentSegment = {
+  id: string;
+  appointmentId: string;
+  top: number;
+  height: number;
+  appointment: AppointmentRow;
+  label: string;
+  isSecondPart: boolean;
+  showPauseBadge: boolean;
+  sizeMode: "small" | "medium" | "large";
+};
+
+type CategoryOption = {
+  id: string;
+  name: string;
+  color?: string | null;
+};
+
+type StaffRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  color: string;
+  is_active: boolean;
+};
+
+type StaffSchedule = {
+  id: string;
+  staff_id: string;
+  day_of_week: number;
+  is_open: boolean;
+  opening_time: string;
+  closing_time: string;
+  has_break: boolean;
+  break_start: string | null;
+  break_end: string | null;
+};
+
+const DAY_NAMES = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+const MONTH_NAMES = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+];
+
+const SLOT_STEP = 15;
+const PX_PER_MINUTE = 4;
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function getTodayKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+}
+
+function parseDateKey(dateStr: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0, 0);
+}
+
+function addDays(dateStr: string, days: number) {
+  const d = parseDateKey(dateStr);
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function formatFrenchDate(dateStr: string) {
+  return parseDateKey(dateStr).toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatPrice(priceCents: number) {
+  return `${(priceCents / 100).toFixed(2).replace(".00", "")} €`;
+}
+
+function formatTime(timeStr: string) {
+  return timeStr.slice(0, 5);
+}
+
+function parseTimeToMinutes(str: string) {
+  const clean = str.slice(0, 5);
+  const [h, m] = clean.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function minutesToLabel(min: number) {
+  return `${pad2(Math.floor(min / 60))}:${pad2(min % 60)}`;
+}
+
+function overlaps(startA: number, endA: number, startB: number, endB: number) {
+  return startA < endB && endA > startB;
+}
+
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function getStatusLabel(status: AppointmentRow["status"]) {
+  if (status === "confirmed") return "Confirmé";
+  if (status === "cancelled") return "Annulé";
+  return "Terminé";
+}
+
+function getBadgeClasses(status: AppointmentRow["status"]) {
+  if (status === "confirmed") return "bg-[#eef8f0] text-[#1f6a3a] border-[#cfe5d6]";
+  if (status === "cancelled") return "bg-[#fff1f1] text-[#a33a3a] border-[#efc9c9]";
+  return "bg-[#f3f0ff] text-[#5c46b5] border-[#d8d0fa]";
+}
+
+function getCardClasses(status: AppointmentRow["status"]) {
+  if (status === "confirmed") return "border-[#d8eadf] bg-[#f7fcf8]";
+  if (status === "cancelled") return "border-[#efd7d7] bg-[#fff8f8]";
+  return "border-[#ddd7f5] bg-[#faf8ff]";
+}
+
+function hexToRgb(hex: string) {
+  const value = hex.replace("#", "").trim();
+
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) return null;
+
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16),
+  };
+}
+
+function getCategoryCardClasses(categoryName?: string | null) {
+  const value = (categoryName ?? "").trim().toLowerCase();
+
+  if (!value) return "border-[#e7ddd0] bg-[#fffaf4]";
+  if (value.includes("coupe")) return "border-[#d6e6f5] bg-[#f3f8fe]";
+  if (value.includes("color") || value.includes("balay") || value.includes("mèche") || value.includes("meche")) {
+    return "border-[#f0d7c8] bg-[#fff6ef]";
+  }
+  if (value.includes("brushing") || value.includes("coiff") || value.includes("mise en pli")) {
+    return "border-[#e4dbf6] bg-[#f8f4ff]";
+  }
+  if (value.includes("barbe") || value.includes("homme")) return "border-[#d6e2db] bg-[#f3f8f5]";
+  if (value.includes("soin") || value.includes("bot") || value.includes("masque")) {
+    return "border-[#d9ece2] bg-[#f4fbf7]";
+  }
+  if (value.includes("enfant")) return "border-[#f6dfc7] bg-[#fff8f0]";
+
+  const palettes = [
+    "border-[#d6e6f5] bg-[#f3f8fe]",
+    "border-[#f0d7c8] bg-[#fff6ef]",
+    "border-[#e4dbf6] bg-[#f8f4ff]",
+    "border-[#d9ece2] bg-[#f4fbf7]",
+    "border-[#f2decb] bg-[#fff8f2]",
+    "border-[#e4e0d6] bg-[#fbf8f2]",
+  ];
+
+  const index = Array.from(value).reduce((acc, char) => acc + char.charCodeAt(0), 0) % palettes.length;
+  return palettes[index];
+}
+
+function getCategoryCardStyle(categoryColor?: string | null) {
+  if (!categoryColor) return undefined;
+
+  const rgb = hexToRgb(categoryColor);
+  if (!rgb) return undefined;
+
+  return {
+    backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1)`,
+    borderColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1)`,
+  };
+}
+
+function isOpenDayFromSettings(dateStr: string, settings: SalonSettings | null) {
+  if (!settings) return true;
+
+  const day = parseDateKey(dateStr).getDay();
+
+  if (day === 1) return settings.is_open_monday;
+  if (day === 2) return settings.is_open_tuesday;
+  if (day === 3) return settings.is_open_wednesday;
+  if (day === 4) return settings.is_open_thursday;
+  if (day === 5) return settings.is_open_friday;
+  if (day === 6) return settings.is_open_saturday;
+  return settings.is_open_sunday;
+}
+
+function isBlockedByExceptionalClosure(
+  startMinutes: number,
+  endMinutes: number,
+  closures: ExceptionClosure[]
+) {
+  return closures.some((closure) => {
+    if (closure.is_all_day) return true;
+    if (!closure.start_time || !closure.end_time) return false;
+
+    const closureStart = parseTimeToMinutes(closure.start_time);
+    const closureEnd = parseTimeToMinutes(closure.end_time);
+
+    return overlaps(startMinutes, endMinutes, closureStart, closureEnd);
+  });
+}
+
+function getServiceSegmentsFromService(
+  service: ServiceRow | null,
+  startMinutes: number
+) {
+  const before = service?.duration_before_break ?? service?.duration_minutes ?? 0;
+  const pause = service?.break_duration ?? 0;
+  const after = service?.duration_after_break ?? 0;
+
+  const segment1Start = startMinutes;
+  const segment1End = segment1Start + before;
+
+  const breakStart = segment1End;
+  const breakEnd = breakStart + pause;
+
+  const segment2Start = breakEnd;
+  const segment2End = segment2Start + after;
+
+  return {
+    before,
+    pause,
+    after,
+    totalDuration: before + pause + after,
+    segment1Start,
+    segment1End,
+    breakStart,
+    breakEnd,
+    segment2Start,
+    segment2End,
+    totalEnd: segment2End,
+  };
+}
+
+function getAppointmentBusySegments(appointment: AppointmentRow): BusySegment[] {
+  const start = parseTimeToMinutes(appointment.start_time);
+  const end = parseTimeToMinutes(appointment.end_time);
+
+  const hasBreak = !!appointment.break_start_time && !!appointment.break_end_time;
+
+  if (!hasBreak) {
+    return [{ start, end }];
+  }
+
+  const breakStart = parseTimeToMinutes(appointment.break_start_time!);
+  const breakEnd = parseTimeToMinutes(appointment.break_end_time!);
+
+  return [
+    { start, end: breakStart },
+    { start: breakEnd, end },
+  ];
+}
+
+export default function BackOfficePage() {
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+
+  const [selectedDate, setSelectedDate] = useState("");
+
+  const nowRef = new Date();
+  const [calYear, setCalYear] = useState(nowRef.getFullYear());
+  const [calMonth, setCalMonth] = useState(nowRef.getMonth());
+
+  const calDays = Array.from(
+    { length: new Date(calYear, calMonth + 1, 0).getDate() },
+    (_, i) => {
+      const d = i + 1;
+      return `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  );
+
+  const calStartPadding = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
+
+  const handleCalPrevMonth = () => {
+    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
+    else setCalMonth(m => m - 1);
+  };
+
+  const handleCalNextMonth = () => {
+    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
+    else setCalMonth(m => m + 1);
+  };
+  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+  const [clients, setClients] = useState<ClientRow[]>([]);
+  const [services, setServices] = useState<ServiceRow[]>([]);
+  const [settings, setSettings] = useState<SalonSettings | null>(null);
+  const [exceptionClosures, setExceptionClosures] = useState<ExceptionClosure[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [confirmCancelAppointment, setConfirmCancelAppointment] = useState(false);
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [savingCreate, setSavingCreate] = useState(false);
+  const [createModalError, setCreateModalError] = useState("");
+
+  const [createDate, setCreateDate] = useState("");
+  const [modalCalMonth, setModalCalMonth] = useState(nowRef.getMonth());
+  const [modalCalYear, setModalCalYear] = useState(nowRef.getFullYear());
+  const [createTime, setCreateTime] = useState("");
+  const [createCategoryFilter, setCreateCategoryFilter] = useState("all");
+  const [createServiceId, setCreateServiceId] = useState("");
+  const [createClientMode, setCreateClientMode] = useState<"existing" | "new">("existing");
+  const [createExistingClientId, setCreateExistingClientId] = useState("");
+  const [createClientSearch, setCreateClientSearch] = useState("");
+  const [createFirstName, setCreateFirstName] = useState("");
+  const [createLastName, setCreateLastName] = useState("");
+  const [createPhone, setCreatePhone] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createClientNotes, setCreateClientNotes] = useState("");
+  const [createMessage, setCreateMessage] = useState("");
+  const [createInternalNote, setCreateInternalNote] = useState("");
+
+  const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
+  const [selectedClientAppointments, setSelectedClientAppointments] = useState<ClientAppointmentHistory[]>([]);
+  const [loadingClientDetails, setLoadingClientDetails] = useState(false);
+  const [isEditingClient, setIsEditingClient] = useState(false);
+  const [savingClient, setSavingClient] = useState(false);
+  const [editClientFirstName, setEditClientFirstName] = useState("");
+  const [editClientLastName, setEditClientLastName] = useState("");
+  const [editClientPhone, setEditClientPhone] = useState("");
+  const [editClientEmail, setEditClientEmail] = useState("");
+  const [editClientNotes, setEditClientNotes] = useState("");
+
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+
+  const [staff, setStaff] = useState<StaffRow[]>([]);
+  const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+  const [createStaffId, setCreateStaffId] = useState<string>("");
+
+  const [isEditingAppointment, setIsEditingAppointment] = useState(false);
+  const [savingEditAppointment, setSavingEditAppointment] = useState(false);
+  const [editAppointmentDate, setEditAppointmentDate] = useState("");
+  const [editAppointmentTime, setEditAppointmentTime] = useState("");
+  const [editCategoryFilter, setEditCategoryFilter] = useState("all");
+  const [editAppointmentServiceId, setEditAppointmentServiceId] = useState("");
+  const [editAppointmentMessage, setEditAppointmentMessage] = useState("");
+  const [editAppointmentInternalNote, setEditAppointmentInternalNote] = useState("");
+
+  const dayStart = useMemo(
+    () => parseTimeToMinutes(settings?.opening_time?.slice(0, 5) || "09:00"),
+    [settings]
+  );
+  const dayEnd = useMemo(
+    () => parseTimeToMinutes(settings?.closing_time?.slice(0, 5) || "19:00"),
+    [settings]
+  );
+  const dayHeight = (dayEnd - dayStart) * PX_PER_MINUTE;
+
+  useEffect(() => {
+    document.body.style.overflow =
+      showCreateModal || !!selectedClient || showAppointmentModal ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showCreateModal, selectedClient, showAppointmentModal]);
+
+  const loadAppointments = async (dateValue: string) => {
+    setLoading(true);
+    setStatusMessage("");
+
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(
+        `
+        id,
+        appointment_date,
+        start_time,
+        end_time,
+        break_start_time,
+        break_end_time,
+        status,
+        source,
+        price_cents,
+        client_message,
+        internal_note,
+        client_id,
+        service_id,
+        staff_id,
+        services (
+          id,
+          name,
+          duration_minutes,
+          duration_before_break,
+          break_duration,
+          duration_after_break,
+          price_cents,
+          category_id,
+          categories (
+            id,
+            name,
+            color
+          )
+        ),
+        clients (
+          id,
+          first_name,
+          last_name,
+          phone,
+          email,
+          notes
+        )
+      `
+      )
+      .eq("appointment_date", dateValue)
+      .in("status", ["confirmed", "completed"])
+      .order("start_time", { ascending: true });
+
+    if (error) {
+      setAppointments([]);
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+      setLoading(false);
+      return;
+    }
+
+    setAppointments((data ?? []) as unknown as AppointmentRow[]);
+    setLoading(false);
+  };
+
+  const loadClosuresForDay = async (dateValue: string) => {
+    const { data, error } = await supabase
+      .from("exception_closures")
+      .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .eq("closure_date", dateValue)
+      .order("start_time", { ascending: true });
+
+    if (error) {
+      setExceptionClosures([]);
+      setStatusMessage((prev) =>
+        prev ? `${prev} | Erreur fermetures : ${(error as Error).message}` : `Erreur fermetures : ${(error as Error).message}`
+      );
+      return;
+    }
+
+    setExceptionClosures((data ?? []) as ExceptionClosure[]);
+  };
+
+  const loadInitialData = async () => {
+    const { data: settingsData } = await supabase
+      .from("salon_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    setSettings((settingsData ?? null) as SalonSettings | null);
+
+    const { data: clientsData } = await supabase
+      .from("clients")
+      .select("id, first_name, last_name, phone, email, notes")
+      .order("last_name", { ascending: true })
+      .order("first_name", { ascending: true });
+
+    setClients((clientsData ?? []) as ClientRow[]);
+
+    const { data: servicesData } = await supabase
+      .from("services")
+      .select(
+        `
+        id,
+        name,
+        duration_minutes,
+        duration_before_break,
+        break_duration,
+        duration_after_break,
+        price_cents,
+        category_id,
+        categories (
+          id,
+          name
+        )
+      `
+      )
+      .eq("is_visible", true)
+      .order("display_order", { ascending: true });
+
+    setServices((servicesData ?? []) as unknown as ServiceRow[]);
+
+    const { data: staffData } = await supabase
+      .from("staff")
+      .select("id, first_name, last_name, color, is_active")
+      .eq("is_active", true)
+      .order("last_name", { ascending: true });
+
+    const staffList = (staffData ?? []) as StaffRow[];
+    setStaff(staffList);
+    if (staffList.length > 0) setSelectedStaffId(staffList[0].id);
+
+    const { data: schedulesData } = await supabase
+      .from("staff_schedules")
+      .select("*")
+      .order("day_of_week", { ascending: true });
+
+    setStaffSchedules((schedulesData ?? []) as StaffSchedule[]);
+  };
+
+  useEffect(() => {
+    if (!selectedDate) return;
+
+    loadAppointments(selectedDate);
+    loadClosuresForDay(selectedDate);
+
+    const channel = supabase
+      .channel(`appointments-${selectedDate}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointments",
+        },
+        (payload: RealtimePayload) => {
+          const date =
+            payload?.new?.appointment_date ||
+            payload?.old?.appointment_date;
+          if (!date || date === selectedDate) {
+            loadAppointments(selectedDate);
+          }
+        }
+      )
+      .subscribe();
+
+    // Polling de secours toutes les 30s pour capter les UPDATE non transmis par Realtime
+    const interval = setInterval(() => {
+      loadAppointments(selectedDate);
+    }, 30000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, [selectedDate]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadAppointments(selectedDate);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [selectedDate]);
+
+  useEffect(() => {
+    const today = getTodayKey();
+    setSelectedDate(today);
+    setCreateDate(today);
+    loadInitialData();
+
+    const clientsChannel = supabase
+      .channel('clients-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'clients',
+        },
+        () => {
+          loadInitialData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(clientsChannel);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
+  const filteredAppointments = useMemo(() => {
+    if (!selectedStaffId || selectedStaffId === "all") return appointments;
+    return appointments.filter((a) => a.staff_id === selectedStaffId);
+  }, [appointments, selectedStaffId]);
+
+  const stats = useMemo(() => {
+    const confirmed = filteredAppointments.filter((a) => a.status === "confirmed").length;
+    const cancelled = filteredAppointments.filter((a) => a.status === "cancelled").length;
+    const completed = filteredAppointments.filter((a) => a.status === "completed").length;
+
+    return {
+      total: filteredAppointments.length,
+      confirmed,
+      cancelled,
+      completed,
+    };
+  }, [filteredAppointments]);
+
+  const categoryOptions = useMemo<CategoryOption[]>(() => {
+    const map = new Map<string, CategoryOption>();
+
+    services.forEach((service) => {
+      const id = service.category_id || service.categories?.id || service.categories?.name || "sans-categorie";
+      const name = service.categories?.name || "Sans catégorie";
+
+      if (!map.has(id)) {
+        map.set(id, { id, name, color: service.categories?.color ?? null });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+  }, [services]);
+
+  const filteredCreateServices = useMemo(() => {
+    if (createCategoryFilter === "all") return services;
+    return services.filter((service) => {
+      const serviceCategoryId =
+        service.category_id || service.categories?.id || service.categories?.name || "sans-categorie";
+      return serviceCategoryId === createCategoryFilter;
+    });
+  }, [services, createCategoryFilter]);
+
+  const filteredEditServices = useMemo(() => {
+    if (editCategoryFilter === "all") return services;
+    return services.filter((service) => {
+      const serviceCategoryId =
+        service.category_id || service.categories?.id || service.categories?.name || "sans-categorie";
+      return serviceCategoryId === editCategoryFilter;
+    });
+  }, [services, editCategoryFilter]);
+
+  const filteredCreateServiceOptions = useMemo(() => {
+    return filteredCreateServices.map((service) => ({
+      ...service,
+      label: `${service.name} • ${service.duration_minutes} min • ${formatPrice(service.price_cents)}`,
+    }));
+  }, [filteredCreateServices]);
+
+  const filteredEditServiceOptions = useMemo(() => {
+    return filteredEditServices.map((service) => ({
+      ...service,
+      label: `${service.name} • ${service.duration_minutes} min • ${formatPrice(service.price_cents)}`,
+    }));
+  }, [filteredEditServices]);
+
+  const selectedCreateStaffMember = useMemo(
+    () => staff.find((m) => m.id === createStaffId) ?? null,
+    [staff, createStaffId]
+  );
+
+  // Schedule du jour sélectionné pour la coiffeuse en cours de création
+  const createStaffSchedule = useMemo(() => {
+    if (!selectedCreateStaffMember || !createDate) return null;
+    const dow = new Date(createDate + "T12:00:00").getDay();
+    return staffSchedules.find((s) => s.staff_id === selectedCreateStaffMember.id && s.day_of_week === dow) ?? null;
+  }, [selectedCreateStaffMember, createDate, staffSchedules]);
+
+  // Schedule du jour affiché pour la coiffeuse sélectionnée dans l'agenda
+  const selectedStaffScheduleToday = useMemo(() => {
+    if (!selectedStaffId || !selectedDate) return null;
+    const dow = new Date(selectedDate + "T12:00:00").getDay();
+    return staffSchedules.find((s) => s.staff_id === selectedStaffId && s.day_of_week === dow) ?? null;
+  }, [selectedStaffId, selectedDate, staffSchedules]);
+
+  const createDayStart = useMemo(() => {
+    if (!createStaffSchedule) return dayStart;
+    return Math.max(dayStart, parseTimeToMinutes(createStaffSchedule.opening_time.slice(0, 5)));
+  }, [createStaffSchedule, dayStart]);
+
+  const createDayEnd = useMemo(() => {
+    if (!createStaffSchedule) return dayEnd;
+    return Math.min(dayEnd, parseTimeToMinutes(createStaffSchedule.closing_time.slice(0, 5)));
+  }, [createStaffSchedule, dayEnd]);
+
+  const selectedCreateService = useMemo(
+    () => services.find((s) => s.id === createServiceId) ?? null,
+    [services, createServiceId]
+  );
+
+  const selectedEditService = useMemo(
+    () => services.find((s) => s.id === editAppointmentServiceId) ?? null,
+    [services, editAppointmentServiceId]
+  );
+
+  const clientSortedOptions = useMemo(() => {
+    return [...clients].sort((a, b) =>
+      `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "fr")
+    );
+  }, [clients]);
+
+  const filteredExistingClients = useMemo(() => {
+    const query = createClientSearch.trim().toLowerCase();
+
+    if (!query) return [];
+
+    return clientSortedOptions
+      .filter((client) => {
+        const haystack = `${client.first_name ?? ""} ${client.last_name ?? ""} ${client.phone ?? ""}`
+          .toLowerCase()
+          .trim();
+
+        return haystack.includes(query);
+      })
+      .slice(0, 12);
+  }, [clientSortedOptions, createClientSearch]);
+
+  const selectedExistingClient = useMemo(
+    () => clientSortedOptions.find((client) => client.id === createExistingClientId) ?? null,
+    [clientSortedOptions, createExistingClientId]
+  );
+
+  const hourSlots = useMemo(() => {
+    const arr: number[] = [];
+    for (let m = dayStart; m <= dayEnd; m += SLOT_STEP) arr.push(m);
+    return arr;
+  }, [dayStart, dayEnd]);
+
+  const dayHasAllDayClosure = useMemo(() => {
+    return exceptionClosures.some((closure) => closure.is_all_day);
+  }, [exceptionClosures]);
+
+  const openAppointmentModal = (appointment: AppointmentRow) => {
+    setSelectedAppointment(appointment);
+    setShowAppointmentModal(true);
+    setIsEditingAppointment(false);
+    setEditAppointmentDate(appointment.appointment_date);
+    setEditAppointmentTime(formatTime(appointment.start_time));
+    setEditAppointmentServiceId(appointment.services?.id ?? appointment.service_id ?? "");
+    const appointmentCategoryId =
+      appointment.services?.category_id ||
+      appointment.services?.categories?.id ||
+      appointment.services?.categories?.name ||
+      "sans-categorie";
+    setEditCategoryFilter(appointment.services ? appointmentCategoryId : "all");
+    setEditAppointmentMessage(appointment.client_message ?? "");
+    setEditAppointmentInternalNote(appointment.internal_note ?? "");
+  };
+
+  const closeAppointmentModal = () => {
+    setSelectedAppointment(null);
+    setShowAppointmentModal(false);
+    setIsEditingAppointment(false);
+    setEditAppointmentDate("");
+    setEditAppointmentTime("");
+    setEditCategoryFilter("all");
+    setEditAppointmentServiceId("");
+    setEditAppointmentMessage("");
+    setEditAppointmentInternalNote("");
+    setConfirmCancelAppointment(false);
+  };
+
+  const handleStatusChange = async (
+    appointmentId: string,
+    newStatus: AppointmentRow["status"]
+  ) => {
+    try {
+      setUpdatingId(appointmentId);
+      setStatusMessage("");
+
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: newStatus })
+        .eq("id", appointmentId);
+
+      if (error) throw new Error((error as Error).message);
+
+      await loadAppointments(selectedDate);
+      setStatusMessage(
+        newStatus === "cancelled" ? "Rendez-vous annulé ✅" : "Statut mis à jour ✅"
+      );
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible de mettre à jour le statut."}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const openCreateModal = (date: string, timeLabel: string) => {
+    setCreateDate(date);
+    setCreateTime(timeLabel);
+    setCreateCategoryFilter("all");
+    setCreateServiceId("");
+    setCreateClientMode("existing");
+    setCreateExistingClientId("");
+    setCreateClientSearch("");
+    setCreateFirstName("");
+    setCreateLastName("");
+    setCreatePhone("");
+    setCreateEmail("");
+    setCreateClientNotes("");
+    setCreateMessage("");
+    setCreateInternalNote("");
+    setCreateStaffId(selectedStaffId || "");
+    setShowCreateModal(true);
+    setStatusMessage("");
+    setCreateModalError("");
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+  };
+
+  const loadClientDetails = async (clientId: string) => {
+    const client = clients.find((c) => c.id === clientId) ?? null;
+    if (client) setSelectedClient(client);
+
+    setLoadingClientDetails(true);
+
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(
+        `
+        id,
+        appointment_date,
+        start_time,
+        end_time,
+        status,
+        price_cents,
+        services (
+          name,
+          categories (
+            name,
+            color
+          )
+        )
+      `
+      )
+      .eq("client_id", clientId)
+      .order("appointment_date", { ascending: false })
+      .order("start_time", { ascending: false });
+
+    if (error) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+      setSelectedClientAppointments([]);
+      setLoadingClientDetails(false);
+      return;
+    }
+
+    setSelectedClientAppointments((data ?? []) as unknown as ClientAppointmentHistory[]);
+    setLoadingClientDetails(false);
+  };
+
+  const closeClientModal = () => {
+    setSelectedClient(null);
+    setSelectedClientAppointments([]);
+    setIsEditingClient(false);
+    setEditClientFirstName("");
+    setEditClientLastName("");
+    setEditClientPhone("");
+    setEditClientEmail("");
+    setEditClientNotes("");
+  };
+
+  const openClientEdit = () => {
+    if (!selectedClient) return;
+    setEditClientFirstName(selectedClient.first_name);
+    setEditClientLastName(selectedClient.last_name);
+    setEditClientPhone(selectedClient.phone);
+    setEditClientEmail(selectedClient.email ?? "");
+    setEditClientNotes(selectedClient.notes ?? "");
+    setIsEditingClient(true);
+  };
+
+  const handleSaveClient = async () => {
+    if (!selectedClient) return;
+    const cleanPhone = normalizePhone(editClientPhone);
+    if (!editClientFirstName.trim() || !editClientLastName.trim()) return;
+    if (cleanPhone.length !== 10) return;
+
+    try {
+      setSavingClient(true);
+      const { error } = await supabase
+        .from("clients")
+        .update({
+          first_name: editClientFirstName.trim(),
+          last_name: editClientLastName.trim(),
+          phone: cleanPhone,
+          email: editClientEmail.trim() || null,
+          notes: editClientNotes.trim() || null,
+        })
+        .eq("id", selectedClient.id);
+
+      if (error) throw new Error(error.message);
+
+      setSelectedClient({
+        ...selectedClient,
+        first_name: editClientFirstName.trim(),
+        last_name: editClientLastName.trim(),
+        phone: cleanPhone,
+        email: editClientEmail.trim() || null,
+        notes: editClientNotes.trim() || null,
+      });
+      await loadInitialData();
+      setIsEditingClient(false);
+    } catch (err: unknown) {
+      console.error(err);
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  const handleCreateAppointment = async () => {
+    if (!selectedCreateService) {
+      setCreateModalError("Choisis une prestation.");
+      return;
+    }
+
+    if (!isOpenDayFromSettings(createDate, settings)) {
+      setCreateModalError("Le salon est fermé ce jour-là.");
+      return;
+    }
+
+    if (dayHasAllDayClosure && createDate === selectedDate) {
+      setCreateModalError("Le salon est fermé exceptionnellement toute la journée.");
+      return;
+    }
+
+    const startMinutes = parseTimeToMinutes(createTime);
+    const serviceSegments = getServiceSegmentsFromService(selectedCreateService, startMinutes);
+    const endMinutes = serviceSegments.totalEnd;
+
+
+    if (startMinutes < createDayStart) {
+      setCreateModalError(`L'heure de début doit être après l'ouverture (${settings?.opening_time?.slice(0, 5) || "09:00"}).`);
+      return;
+    }
+    if (endMinutes > createDayEnd) {
+      setCreateModalError("Le rendez-vous dépasse l’horaire de fermeture.");
+      return;
+    }
+
+    const blockedByAppointments = appointments.some((appointment) => {
+      if (appointment.appointment_date !== createDate) return false;
+      if (createStaffId && appointment.staff_id && appointment.staff_id !== createStaffId) return false;
+
+      const busySegments = getAppointmentBusySegments(appointment);
+
+      const overlapsFirst = busySegments.some((segment) =>
+        overlaps(
+          serviceSegments.segment1Start,
+          serviceSegments.segment1End,
+          segment.start,
+          segment.end
+        )
+      );
+
+      const overlapsSecond =
+        serviceSegments.after > 0 &&
+        busySegments.some((segment) =>
+          overlaps(
+            serviceSegments.segment2Start,
+            serviceSegments.segment2End,
+            segment.start,
+            segment.end
+          )
+        );
+
+      return overlapsFirst || overlapsSecond;
+    });
+
+    const blockedByClosures =
+      isBlockedByExceptionalClosure(
+        serviceSegments.segment1Start,
+        serviceSegments.segment1End,
+        exceptionClosures
+      ) ||
+      (serviceSegments.after > 0 &&
+        isBlockedByExceptionalClosure(
+          serviceSegments.segment2Start,
+          serviceSegments.segment2End,
+          exceptionClosures
+        ));
+
+    if (blockedByAppointments || blockedByClosures) {
+      setCreateModalError("Ce créneau est indisponible.");
+      return;
+    }
+
+    try {
+      setSavingCreate(true);
+      setCreateModalError("");
+
+      let clientId: string | null = null;
+
+      if (createClientMode === "existing") {
+        if (!createExistingClientId) {
+          setCreateModalError("Choisis un client existant.");
+          setSavingCreate(false);
+          return;
+        }
+        clientId = createExistingClientId;
+      } else {
+        const cleanPhone = normalizePhone(createPhone);
+
+        if (!createFirstName.trim() || !createLastName.trim()) {
+          setCreateModalError("Le prénom et le nom sont obligatoires.");
+          setSavingCreate(false);
+          return;
+        }
+
+        if (cleanPhone.length !== 10) {
+          setCreateModalError("Le téléphone doit contenir exactement 10 chiffres.");
+          setSavingCreate(false);
+          return;
+        }
+
+        const { data: existingClient } = await supabase
+          .from("clients")
+          .select("id")
+          .eq("phone", cleanPhone)
+          .maybeSingle();
+
+        if (existingClient?.id) {
+          clientId = existingClient.id;
+
+          const { error: updateClientError } = await supabase
+            .from("clients")
+            .update({
+              first_name: createFirstName.trim(),
+              last_name: createLastName.trim(),
+              email: createEmail.trim() || null,
+              notes: createClientNotes.trim() || null,
+            })
+            .eq("id", clientId);
+
+          if (updateClientError) throw new Error(updateClientError.message);
+        } else {
+          const { data: insertedClient, error: insertClientError } = await supabase
+            .from("clients")
+            .insert({
+              first_name: createFirstName.trim(),
+              last_name: createLastName.trim(),
+              phone: cleanPhone,
+              email: createEmail.trim() || null,
+              notes: createClientNotes.trim() || null,
+            })
+            .select("id")
+            .single();
+
+          if (insertClientError) throw new Error(insertClientError.message);
+          clientId = insertedClient.id;
+        }
+      }
+
+      const startTime = `${createTime}:00`;
+      const endTime = `${minutesToLabel(serviceSegments.totalEnd)}:00`;
+      const breakStartTime =
+        serviceSegments.pause > 0 ? `${minutesToLabel(serviceSegments.breakStart)}:00` : null;
+      const breakEndTime =
+        serviceSegments.pause > 0 ? `${minutesToLabel(serviceSegments.breakEnd)}:00` : null;
+
+      const { error } = await supabase.from("appointments").insert({
+        client_id: clientId,
+        service_id: selectedCreateService.id,
+        appointment_date: createDate,
+        start_time: startTime,
+        end_time: endTime,
+        break_start_time: breakStartTime,
+        break_end_time: breakEndTime,
+        status: "confirmed",
+        source: "salon",
+        client_message: createMessage.trim() || null,
+        internal_note: createInternalNote.trim() || null,
+        price_cents: selectedCreateService.price_cents,
+        staff_id: createStaffId || null,
+      });
+
+      if (error) throw new Error((error as Error).message);
+
+      await loadAppointments(selectedDate);
+      await loadClosuresForDay(selectedDate);
+      await loadInitialData();
+      closeCreateModal();
+      setCreateModalError("Rendez-vous ajouté ✅");
+    } catch (error: unknown) {
+      setCreateModalError(`Erreur : ${(error as Error).message ?? "Impossible d'ajouter le rendez-vous."}`);
+    } finally {
+      setSavingCreate(false);
+    }
+  };
+
+  const handleSaveAppointmentEdit = async () => {
+    if (!selectedAppointment) return;
+    if (!selectedEditService) {
+      setStatusMessage("Choisis une prestation.");
+      return;
+    }
+
+    if (!isOpenDayFromSettings(editAppointmentDate, settings)) {
+      setStatusMessage("Le salon est fermé ce jour-là.");
+      return;
+    }
+
+    const startMinutes = parseTimeToMinutes(editAppointmentTime);
+    const serviceSegments = getServiceSegmentsFromService(selectedEditService, startMinutes);
+    const endMinutes = serviceSegments.totalEnd;
+
+    if (endMinutes > (() => {
+      if (!selectedAppointment?.staff_id || !editAppointmentDate) return dayEnd;
+      const dow = new Date(editAppointmentDate + "T12:00:00").getDay();
+      const sched = staffSchedules.find((s) => s.staff_id === selectedAppointment.staff_id && s.day_of_week === dow);
+      return sched ? Math.min(dayEnd, parseTimeToMinutes(sched.closing_time.slice(0,5))) : dayEnd;
+    })()) {
+      setStatusMessage("Le rendez-vous dépasse l’horaire de fermeture.");
+      return;
+    }
+
+    const blockedByAppointments = appointments.some((appointment) => {
+      if (appointment.appointment_date !== editAppointmentDate) return false;
+      if (appointment.id === selectedAppointment.id) return false;
+      if (selectedAppointment.staff_id && appointment.staff_id && appointment.staff_id !== selectedAppointment.staff_id) return false;
+
+      const busySegments = getAppointmentBusySegments(appointment);
+
+      const overlapsFirst = busySegments.some((segment) =>
+        overlaps(
+          serviceSegments.segment1Start,
+          serviceSegments.segment1End,
+          segment.start,
+          segment.end
+        )
+      );
+
+      const overlapsSecond =
+        serviceSegments.after > 0 &&
+        busySegments.some((segment) =>
+          overlaps(
+            serviceSegments.segment2Start,
+            serviceSegments.segment2End,
+            segment.start,
+            segment.end
+          )
+        );
+
+      return overlapsFirst || overlapsSecond;
+    });
+
+    const blockedByClosures =
+      isBlockedByExceptionalClosure(
+        serviceSegments.segment1Start,
+        serviceSegments.segment1End,
+        exceptionClosures
+      ) ||
+      (serviceSegments.after > 0 &&
+        isBlockedByExceptionalClosure(
+          serviceSegments.segment2Start,
+          serviceSegments.segment2End,
+          exceptionClosures
+        ));
+
+    if (blockedByAppointments || blockedByClosures) {
+      setStatusMessage("Ce créneau est indisponible.");
+      return;
+    }
+
+    try {
+      setSavingEditAppointment(true);
+      setStatusMessage("");
+
+      const startTime = `${editAppointmentTime}:00`;
+      const endTime = `${minutesToLabel(serviceSegments.totalEnd)}:00`;
+      const breakStartTime =
+        serviceSegments.pause > 0 ? `${minutesToLabel(serviceSegments.breakStart)}:00` : null;
+      const breakEndTime =
+        serviceSegments.pause > 0 ? `${minutesToLabel(serviceSegments.breakEnd)}:00` : null;
+
+      const { error } = await supabase
+        .from("appointments")
+        .update({
+          appointment_date: editAppointmentDate,
+          start_time: startTime,
+          end_time: endTime,
+          break_start_time: breakStartTime,
+          break_end_time: breakEndTime,
+          service_id: selectedEditService.id,
+          client_message: editAppointmentMessage.trim() || null,
+          internal_note: editAppointmentInternalNote.trim() || null,
+          price_cents: selectedEditService.price_cents,
+        })
+        .eq("id", selectedAppointment.id);
+
+      if (error) throw new Error((error as Error).message);
+
+      await loadAppointments(selectedDate);
+      await loadClosuresForDay(selectedDate);
+
+      const updatedSelectedAppointment: AppointmentRow = {
+        ...selectedAppointment,
+        appointment_date: editAppointmentDate,
+        start_time: startTime,
+        end_time: endTime,
+        break_start_time: breakStartTime,
+        break_end_time: breakEndTime,
+        service_id: selectedEditService.id,
+        client_message: editAppointmentMessage.trim() || null,
+        internal_note: editAppointmentInternalNote.trim() || null,
+        price_cents: selectedEditService.price_cents,
+        services: {
+          id: selectedEditService.id,
+          name: selectedEditService.name,
+          duration_minutes: selectedEditService.duration_minutes,
+          duration_before_break: selectedEditService.duration_before_break,
+          break_duration: selectedEditService.break_duration,
+          duration_after_break: selectedEditService.duration_after_break,
+          price_cents: selectedEditService.price_cents,
+          category_id: selectedEditService.category_id,
+          categories: selectedEditService.categories,
+        },
+      };
+
+      setSelectedAppointment(updatedSelectedAppointment);
+      setIsEditingAppointment(false);
+      setStatusMessage("Rendez-vous modifié ✅");
+
+      if (editAppointmentDate !== selectedDate) {
+        closeAppointmentModal();
+      }
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible de modifier le rendez-vous."}`);
+    } finally {
+      setSavingEditAppointment(false);
+    }
+  };
+
+  const visualAppointmentSegments = useMemo<VisualAppointmentSegment[]>(() => {
+    const items: VisualAppointmentSegment[] = [];
+
+    for (const appointment of filteredAppointments) {
+      const busySegments = getAppointmentBusySegments(appointment);
+      const hasBreak = busySegments.length === 2;
+
+      busySegments.forEach((segment, index) => {
+        const top = (segment.start - dayStart) * PX_PER_MINUTE;
+        const realHeight = (segment.end - segment.start) * PX_PER_MINUTE;
+        const height = Math.max(realHeight, 44);
+
+        let sizeMode: "small" | "medium" | "large" = "medium";
+        if (height <= 58) sizeMode = "small";
+        else if (height >= 95) sizeMode = "large";
+
+        items.push({
+          id: `${appointment.id}-${index + 1}`,
+          appointmentId: appointment.id,
+          top,
+          height,
+          appointment,
+          label: `${minutesToLabel(segment.start)} → ${minutesToLabel(segment.end)}`,
+          isSecondPart: index === 1,
+          showPauseBadge: hasBreak && index === 0,
+          sizeMode,
+        });
+      });
+    }
+
+    return items.sort((a, b) => a.top - b.top);
+  }, [filteredAppointments, dayStart]);
+
+  const staffBreakBlock = useMemo(() => {
+    if (!selectedStaffScheduleToday?.has_break || !selectedStaffScheduleToday.break_start || !selectedStaffScheduleToday.break_end) return null;
+    const start = parseTimeToMinutes(selectedStaffScheduleToday.break_start.slice(0, 5));
+    const end = parseTimeToMinutes(selectedStaffScheduleToday.break_end.slice(0, 5));
+    return {
+      top: (start - dayStart) * PX_PER_MINUTE,
+      height: Math.max((end - start) * PX_PER_MINUTE, 24),
+      label: `${selectedStaffScheduleToday.break_start.slice(0,5)} → ${selectedStaffScheduleToday.break_end.slice(0,5)}`,
+    };
+  }, [selectedStaffScheduleToday, dayStart]);
+
+  const closureBlocks = useMemo(() => {
+    return exceptionClosures
+      .filter((closure) => !closure.is_all_day && closure.start_time && closure.end_time)
+      .map((closure) => {
+        const start = parseTimeToMinutes(closure.start_time!);
+        const end = parseTimeToMinutes(closure.end_time!);
+        const top = (start - dayStart) * PX_PER_MINUTE;
+        const height = Math.max((end - start) * PX_PER_MINUTE, 36);
+
+        return {
+          ...closure,
+          top,
+          height,
+        };
+      });
+  }, [exceptionClosures, dayStart]);
+
+  const renderAgendaCard = (segment: VisualAppointmentSegment) => {
+    const isSmall = segment.sizeMode === "small";
+    const isLarge = segment.sizeMode === "large";
+    const clientName = `${segment.appointment.clients?.first_name ?? ""} ${segment.appointment.clients?.last_name ?? ""}`.trim() || "Client";
+    const clientId = segment.appointment.clients?.id ?? segment.appointment.client_id ?? null;
+
+    return (
+      <button
+        key={segment.id}
+        type="button"
+        onClick={() => openAppointmentModal(segment.appointment)}
+        className={`absolute left-4 right-4 overflow-hidden rounded-[22px] border text-left shadow-[0_12px_28px_rgba(70,48,22,0.08)] transition hover:z-10 hover:scale-[1.006] hover:shadow-[0_18px_38px_rgba(70,48,22,0.12)] ${getCategoryCardClasses(
+          segment.appointment.services?.categories?.name
+        )} ${
+          isSmall ? "px-3 py-2" : isLarge ? "px-4 py-4" : "px-4 py-3"
+        }`}
+        style={{
+          top: segment.top,
+          height: segment.height,
+          ...getCategoryCardStyle(segment.appointment.services?.categories?.color),
+        }}
+      >
+        <div className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 ${isSmall ? "mb-1" : "mb-2"}`}>
+          <div
+            className={`hidden md:block shrink-0 font-semibold uppercase text-[var(--gold)] ${
+              isSmall
+                ? "text-[13px] tracking-[0.08em]"
+                : isLarge
+                ? "text-[16px] tracking-[0.10em]"
+                : "text-[15px] tracking-[0.09em]"
+            }`}
+          >
+            {segment.label}
+          </div>
+
+          <h3
+            className={`min-w-0 md:truncate whitespace-normal break-words md:text-center font-semibold leading-tight col-span-3 md:col-span-1 ${
+              isSmall ? "text-[11px] md:text-[16px]" : isLarge ? "text-[14px] md:text-[24px]" : "text-[12px] md:text-[20px]"
+            }`}
+          >
+            {segment.appointment.services?.name ?? "Prestation"}
+          </h3>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (clientId) loadClientDetails(clientId);
+            }}
+            className={`hidden md:block min-w-0 truncate text-right font-medium underline decoration-[#d8a646] underline-offset-4 transition hover:text-[var(--gold)] ${
+              isSmall ? "text-[14px]" : isLarge ? "text-[18px]" : "text-[17px]"
+            }`}
+          >
+            {clientName}
+          </button>
+        </div>
+
+      </button>
+    );
+  };
+
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff8ef_0,#f7efe4_38%,#f4eee7_100%)] text-[#1f1b17]">
+      <header className="md:sticky top-0 z-30 border-b border-[#eadfce]/80 bg-[#fffaf4]/90 shadow-[0_10px_30px_rgba(80,55,25,0.06)] backdrop-blur-xl">
+        <div className="mx-auto flex w-[min(1400px,calc(100%-24px))] items-center justify-between gap-3 py-3 md:py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-[#eadfce] bg-[#f4eadc] shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]">
+              <Image
+                src="/logo-pro.png"
+                alt="Boucle d’Or Pro"
+                width={56}
+                height={56}
+                priority
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--gold)] md:text-[11px]">
+                Back office
+              </div>
+              <div className="mt-0.5 text-xl font-semibold leading-none text-[#1f1b17] md:mt-1 md:text-3xl">
+                {settings?.salon_name || "Boucle d’Or"} Pro
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
+            <Link
+              href="/back-office"
+              className="rounded-xl bg-[#1f1b17] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+            >
+              Agenda
+            </Link>
+
+            <Link
+              href="/back-office/clients"
+              className="rounded-xl border border-[#eadfce] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+            >
+              Fiches clients
+            </Link>
+
+            <Link
+              href="/back-office/gestion"
+              className="rounded-xl border border-[#eadfce] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+            >
+              Gestion
+            </Link>
+
+            
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+            >
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section className="mx-auto w-[min(1400px,calc(100%-24px))] py-5 md:py-8">
+        <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[310px_1fr]">
+        <aside className="order-1 flex flex-col gap-4 lg:order-none md:gap-6">
+        <div className="rounded-[30px] border border-[#eadfce]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+            <div className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+              Navigation
+            </div>
+
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <button
+                type="button"
+                onClick={handleCalPrevMonth}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eadfce] bg-white/70 text-[#1f1b17] transition hover:border-[var(--gold)] hover:shadow-sm active:scale-95"
+              >
+                &#8249;
+              </button>
+              <span className="text-base font-semibold capitalize text-[#1f1b17]">
+                {MONTH_NAMES[calMonth]} {calYear}
+              </span>
+              <button
+                type="button"
+                onClick={handleCalNextMonth}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eadfce] bg-white/70 text-[#1f1b17] transition hover:border-[var(--gold)] hover:shadow-sm active:scale-95"
+              >
+                &#8250;
+              </button>
+            </div>
+
+            <div className="mb-2 grid grid-cols-7 gap-1">
+              {DAY_NAMES.map((name) => (
+                <div key={name} className="text-center text-[10px] font-bold uppercase tracking-wide text-[#9a8f83]">
+                  {name}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: calStartPadding }).map((_, i) => (
+                <div key={`pad-${i}`} className="aspect-square" />
+              ))}
+              {calDays.map((dateKey) => {
+                const dayNum = Number(dateKey.split("-")[2]);
+                const isSelected = selectedDate === dateKey;
+                const isToday = dateKey === getTodayKey();
+                const isClosed = !isOpenDayFromSettings(dateKey, settings);
+
+                return (
+                  <button
+                    key={dateKey}
+                    type="button"
+                    onClick={() => setSelectedDate(dateKey)}
+                    disabled={isClosed}
+                    className={`relative aspect-square rounded-xl border text-xs font-semibold transition duration-150 active:scale-95 ${
+                      isSelected
+                        ? "border-[var(--gold)] bg-[var(--gold)] text-white shadow-md"
+                        : isClosed
+                          ? "cursor-not-allowed border-transparent bg-[#f5f0ea] text-[#c5bbb2]"
+                          : "border-transparent bg-white/60 text-[#1f1b17] hover:border-[#d8b56d] hover:bg-white"
+                    }`}
+                  >
+                    {dayNum}
+                    {isToday && !isSelected && (
+                      <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--gold)]" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const today = getTodayKey();
+                setSelectedDate(today);
+                const now = new Date();
+                setCalYear(now.getFullYear());
+                setCalMonth(now.getMonth());
+              }}
+              className="mt-4 w-full rounded-2xl border border-[#eadfce] bg-white/70 py-2.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+            >
+              {"Aujourd’hui"}
+            </button>
+
+            <p className="mt-3 text-sm text-[#6e655c]">{selectedDate ? formatFrenchDate(selectedDate) : ""}</p>
+            <p className="mt-1 text-sm text-[#6e655c]">
+              Horaires : {settings?.opening_time?.slice(0, 5) || "09:00"} {"->"}{" "}
+              {settings?.closing_time?.slice(0, 5) || "19:00"}
+            </p>
+
+            {staff.length > 0 && (
+              <div className="mt-4">
+                <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Coiffeuse</div>
+                <div className="flex flex-wrap gap-2">
+                  {staff.map((member) => (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => setSelectedStaffId(member.id)}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedStaffId === member.id ? "text-[#1f1b17] ring-2 ring-[#1f1b17]" : "border border-[#eadfce] bg-white text-[#6f6254] hover:bg-[#f4eadc]"}`}
+                      style={selectedStaffId === member.id ? { backgroundColor: member.color } : {}}
+                    >
+                      {member.first_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {dayHasAllDayClosure ? (
+              <div className="mt-4 rounded-[16px] border border-[#efd7d7] bg-[#fff8f8] px-4 py-3 text-sm text-[#a33a3a]">
+                Fermeture exceptionnelle toute la journée
+              </div>
+            ) : null}
+        </div>
+
+        <div className="rounded-[30px] border border-[#eadfce]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+            <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+              Action
+            </div>
+            <h2 className="text-3xl">Ajout rapide</h2>
+
+            <div className="mt-5 grid gap-3">
+              <button
+                type="button"
+                disabled={dayHasAllDayClosure}
+                onClick={() =>
+                  openCreateModal(selectedDate, "")
+                }
+                className="rounded-2xl bg-[#1f1b17] px-4 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Ajouter un rendez-vous
+              </button>
+            </div>
+        </div>
+
+        <div className="rounded-[30px] border border-[#eadfce]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+            <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+              Résumé
+            </div>
+            <h2 className="text-3xl">Vue rapide</h2>
+
+            <div className="mt-5 grid gap-3">
+              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
+                <strong className="text-[#1f1b17]">Total jour</strong>
+                <span>{stats.total}</span>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
+                <strong className="text-[#1f1b17]">Confirmés</strong>
+                <span>{stats.confirmed}</span>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
+                <strong className="text-[#1f1b17]">Annulés</strong>
+                <span>{stats.cancelled}</span>
+              </div>
+              <div className="flex justify-between gap-4 text-[#6e655c]">
+                <strong className="text-[#1f1b17]">Terminés</strong>
+                <span>{stats.completed}</span>
+              </div>
+            </div>
+        </div>
+        </aside>
+        <section className="rounded-[30px] border border-[#eadfce]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+                Agenda
+              </div>
+              <h2 className="text-[44px] font-semibold leading-none">{formatFrenchDate(selectedDate)}</h2>
+            </div>
+            <p className="text-sm text-[#6e655c]">
+              Clique sur un rendez-vous pour le gérer.
+            </p>
+          </div>
+
+          {!isOpenDayFromSettings(selectedDate, settings) ? (
+            <div className="rounded-[24px] border border-dashed border-[#d7cabb] bg-white px-6 py-12 text-center text-[#6e655c]">
+              Le salon est fermé ce jour-là.
+            </div>
+          ) : dayHasAllDayClosure ? (
+            <div className="rounded-[24px] border border-dashed border-[#efd7d7] bg-white px-6 py-12 text-center text-[#a33a3a]">
+              Fermeture exceptionnelle sur toute la journée.
+            </div>
+          ) : statusMessage ? (
+            <>
+              <div className="mb-5 rounded-[16px] border border-[#c7e0ce] bg-[#f5fbf6] px-4 py-3 text-sm text-[#1f6a3a]">
+                {statusMessage}
+              </div>
+
+              {loading ? (
+                <div className="rounded-[20px] border border-dashed border-[#d7cabb] bg-white px-6 py-10 text-center text-[#6e655c]">
+                  Chargement de l’agenda...
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-[28px] border border-[#eadfce] bg-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                  <div className="grid grid-cols-[120px_1fr]">
+                    <div className="border-r border-[#efe6db] bg-[#fbf6ef]" />
+                    <div className="px-6 py-4">
+                      <div className="text-[18px] font-semibold text-[#1f1b17]">Planning du jour</div>
+                      <div className="text-[15px] text-[#6e655c]">
+                        Clique dans les zones libres pour ajouter un rendez-vous.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-[120px_1fr]">
+                    <div
+                      className="relative border-r border-[#efe6db] bg-[#fbf6ef]"
+                      style={{ height: dayHeight }}
+                    >
+                      {hourSlots.map((slot) => {
+                        if (slot === dayEnd) return null;
+                        const top = (slot - dayStart) * PX_PER_MINUTE;
+
+                        return (
+                          <div key={slot} className="absolute left-0 right-0 px-4" style={{ top }}>
+                            <div className="rounded-full bg-white px-3 py-2 text-center text-[15px] font-semibold text-[#6e655c] shadow-sm">
+                              {minutesToLabel(slot)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="relative bg-[#fffdf9]" style={{ height: dayHeight }}>
+                      {hourSlots.map((slot) => {
+                        if (slot === dayEnd) return null;
+                        const slotStart = slot;
+                        const slotEnd = slot + SLOT_STEP;
+                        const top = (slot - dayStart) * PX_PER_MINUTE;
+                        const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures)
+                          || (staffBreakBlock !== null && selectedStaffScheduleToday?.has_break && selectedStaffScheduleToday.break_start && selectedStaffScheduleToday.break_end
+                            ? slotStart < parseTimeToMinutes(selectedStaffScheduleToday.break_end.slice(0,5)) && slotEnd > parseTimeToMinutes(selectedStaffScheduleToday.break_start.slice(0,5))
+                            : false);
+
+                        return (
+                          <div
+                            key={slot}
+                            className={`absolute left-0 right-0 border-t ${
+                              slotBlocked ? "border-[#f1d7d7] bg-[#fff5f5]" : "border-[#f0e7dc]"
+                            }`}
+                            style={{ top, height: SLOT_STEP * PX_PER_MINUTE }}
+                          >
+                            <button
+                              type="button"
+                              disabled={slotBlocked}
+                              onClick={() => openCreateModal(selectedDate, minutesToLabel(slot))}
+                              className={`h-full w-full text-left transition ${
+                                slotBlocked ? "cursor-not-allowed opacity-60" : "hover:bg-[#f9f3eb]"
+                              }`}
+                            />
+                          </div>
+                        );
+                      })}
+
+                      {staffBreakBlock && (
+                        <div
+                          className="pointer-events-none absolute left-4 right-4 rounded-[18px] border border-[#e8d9b8] bg-[#fdf6e8]/90 p-2 text-xs text-[#9a7d3a]"
+                          style={{ top: staffBreakBlock.top, height: staffBreakBlock.height }}
+                        >
+                          <div className="font-semibold">Pause · {staffBreakBlock.label}</div>
+                        </div>
+                      )}
+
+                      {closureBlocks.map((closure) => (
+                        <div
+                          key={closure.id}
+                          className="pointer-events-none absolute left-4 right-4 rounded-[18px] border border-[#efc9c9] bg-[#fff1f1]/90 p-3 text-sm text-[#a33a3a]"
+                          style={{
+                            top: closure.top,
+                            height: closure.height,
+                          }}
+                        >
+                          <div className="font-semibold">Fermeture exceptionnelle</div>
+                          <div>
+                            {closure.start_time && closure.end_time
+                              ? `${formatTime(closure.start_time)} → ${formatTime(closure.end_time)}`
+                              : "Créneau fermé"}
+                          </div>
+                          {closure.reason ? <div>{closure.reason}</div> : null}
+                        </div>
+                      ))}
+
+                      {visualAppointmentSegments.map((segment) => renderAgendaCard(segment))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : loading ? (
+            <div className="rounded-[20px] border border-dashed border-[#d7cabb] bg-white px-6 py-10 text-center text-[#6e655c]">
+              Chargement de l’agenda...
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-[28px] border border-[#eadfce] bg-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+              <div className="grid grid-cols-[120px_1fr]">
+                <div className="border-r border-[#efe6db] bg-[#fbf6ef]" />
+                <div className="px-6 py-4">
+                  <div className="text-[18px] font-semibold text-[#1f1b17]">Planning du jour</div>
+                  <div className="text-[15px] text-[#6e655c]">
+                    Clique dans les zones libres pour ajouter un rendez-vous.
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[120px_1fr]">
+                <div
+                  className="relative border-r border-[#efe6db] bg-[#fbf6ef]"
+                  style={{ height: dayHeight }}
+                >
+                  {hourSlots.map((slot) => {
+                    if (slot === dayEnd) return null;
+                    const top = (slot - dayStart) * PX_PER_MINUTE;
+
+                    return (
+                      <div key={slot} className="absolute left-0 right-0 px-4" style={{ top }}>
+                        <div className="rounded-full bg-white px-3 py-2 text-center text-[15px] font-semibold text-[#6e655c] shadow-sm">
+                          {minutesToLabel(slot)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="relative bg-[#fffdf9]" style={{ height: dayHeight }}>
+                  {hourSlots.map((slot) => {
+                    if (slot === dayEnd) return null;
+                    const slotStart = slot;
+                    const slotEnd = slot + SLOT_STEP;
+                    const top = (slot - dayStart) * PX_PER_MINUTE;
+                    const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures)
+                      || (staffBreakBlock !== null && selectedStaffScheduleToday?.has_break && selectedStaffScheduleToday.break_start && selectedStaffScheduleToday.break_end
+                        ? slotStart < parseTimeToMinutes(selectedStaffScheduleToday.break_end.slice(0,5)) && slotEnd > parseTimeToMinutes(selectedStaffScheduleToday.break_start.slice(0,5))
+                        : false);
+
+                    return (
+                      <div
+                        key={slot}
+                        className={`absolute left-0 right-0 border-t ${
+                          slotBlocked ? "border-[#f1d7d7] bg-[#fff5f5]" : "border-[#f0e7dc]"
+                        }`}
+                        style={{ top, height: SLOT_STEP * PX_PER_MINUTE }}
+                      >
+                        <button
+                          type="button"
+                          disabled={slotBlocked}
+                          onClick={() => openCreateModal(selectedDate, minutesToLabel(slot))}
+                          className={`h-full w-full text-left transition ${
+                            slotBlocked ? "cursor-not-allowed opacity-60" : "hover:bg-[#f9f3eb]"
+                          }`}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  {closureBlocks.map((closure) => (
+                    <div
+                      key={closure.id}
+                      className="pointer-events-none absolute left-4 right-4 rounded-[18px] border border-[#efc9c9] bg-[#fff1f1]/90 p-3 text-sm text-[#a33a3a]"
+                      style={{
+                        top: closure.top,
+                        height: closure.height,
+                      }}
+                    >
+                      <div className="font-semibold">Fermeture exceptionnelle</div>
+                      <div>
+                        {closure.start_time && closure.end_time
+                          ? `${formatTime(closure.start_time)} → ${formatTime(closure.end_time)}`
+                          : "Créneau fermé"}
+                      </div>
+                      {closure.reason ? <div>{closure.reason}</div> : null}
+                    </div>
+                  ))}
+
+                  {visualAppointmentSegments.map((segment) => renderAgendaCard(segment))}
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+        </div>
+      </section>
+
+      {showCreateModal ? (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#1f1b17]/45 p-5 backdrop-blur-md">
+          <div className="flex min-h-full items-center justify-center">
+            <div className="w-full max-w-4xl rounded-[34px] border border-[#eadfce] bg-[#fffaf4] p-8 shadow-[0_30px_80px_rgba(31,27,23,0.20)]">
+              <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+                    Ajout manuel
+                  </div>
+                  <h2 className="text-4xl">Nouveau rendez-vous</h2>
+                  <p className="mt-3 text-[#6e655c]">
+                    {formatFrenchDate(createDate)} • {createTime}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={closeCreateModal}
+                    className="rounded-2xl border border-[#eadfce] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                  >
+                    Fermer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateAppointment}
+                    disabled={savingCreate}
+                    className="rounded-2xl bg-[#1f1b17] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
+                  >
+                    {savingCreate ? "Enregistrement..." : "Créer le rendez-vous"}
+                  </button>
+                </div>
+
+                {createModalError && (
+                  <div className="rounded-2xl border border-[#f5c6c6] bg-[#fff5f5] px-4 py-3 text-sm font-medium text-[#a33a3a]">
+                    {createModalError}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 grid gap-4">
+                <label className="grid gap-2 text-sm text-[#6e655c] md:max-w-[520px]">
+                  Catégorie
+                  <select
+                    value={createCategoryFilter}
+                    onChange={(e) => {
+                      setCreateCategoryFilter(e.target.value);
+                      setCreateServiceId("");
+                    }}
+                    className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                  >
+                    <option value="all">Toutes les catégories</option>
+                    {categoryOptions.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="grid gap-2 text-sm text-[#6e655c]">
+                  Prestation
+                  <select
+                    value={createServiceId}
+                    onChange={(e) => setCreateServiceId(e.target.value)}
+                    className="w-full rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                  >
+                    <option value="">Choisir une prestation</option>
+                    {filteredCreateServiceOptions.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-6 rounded-[24px] border border-[#eadfce] bg-white/90 p-5 shadow-sm">
+                <div className="mb-3 text-sm font-semibold">Client</div>
+
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateClientMode("existing");
+                      setCreateClientSearch("");
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-medium ${
+                      createClientMode === "existing"
+                        ? "bg-[#111111] text-white"
+                        : "border border-black/10 bg-white"
+                    }`}
+                  >
+                    Client existant
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateClientMode("new");
+                      setCreateExistingClientId("");
+                      setCreateClientSearch("");
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-medium ${
+                      createClientMode === "new"
+                        ? "bg-[#111111] text-white"
+                        : "border border-black/10 bg-white"
+                    }`}
+                  >
+                    Nouveau client
+                  </button>
+                </div>
+
+                {createClientMode === "existing" ? (
+                  <div className="grid gap-3 text-sm text-[#6e655c]">
+                    <label className="grid gap-2">
+                      Rechercher un client
+                      <input
+                        type="text"
+                        value={createClientSearch}
+                        onChange={(e) => {
+                          setCreateClientSearch(e.target.value);
+                          if (createExistingClientId) setCreateExistingClientId("");
+                        }}
+                        placeholder="Nom, prénom ou téléphone"
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      />
+                    </label>
+
+                    {selectedExistingClient ? (
+                      <div className="rounded-[16px] border border-[#d8eadf] bg-[#f7fcf8] px-4 py-3 text-[#1f6a3a]">
+                        <div className="text-sm font-semibold">Client sélectionné</div>
+                        <div className="mt-1 text-sm">
+                          {selectedExistingClient.first_name} {selectedExistingClient.last_name} •{" "}
+                          {selectedExistingClient.phone}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCreateExistingClientId("");
+                            setCreateClientSearch("");
+                          }}
+                          className="mt-3 rounded-full border border-[#cfe5d6] bg-white px-3 py-1.5 text-xs font-medium text-[#1f6a3a]"
+                        >
+                          Changer de client
+                        </button>
+                      </div>
+                    ) : createClientSearch.trim().length === 0 ? (
+                      <div className="rounded-[16px] border border-dashed border-[#e7ddd0] bg-[#fcfaf7] px-4 py-3 text-sm text-[#8a7f74]">
+                        Commence à taper un nom ou un numéro pour afficher les résultats.
+                      </div>
+                    ) : filteredExistingClients.length === 0 ? (
+                      <div className="rounded-[16px] border border-dashed border-[#e7ddd0] bg-[#fcfaf7] px-4 py-3 text-sm text-[#8a7f74]">
+                        Aucun résultat.
+                      </div>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto rounded-[16px] border border-[#e7ddd0] bg-white">
+                        {filteredExistingClients.map((client) => (
+                          <button
+                            key={client.id}
+                            type="button"
+                            onClick={() => {
+                              setCreateExistingClientId(client.id);
+                              setCreateClientSearch(
+                                `${client.first_name} ${client.last_name} • ${client.phone}`.trim()
+                              );
+                            }}
+                            className="flex w-full items-center justify-between gap-3 border-b border-[#f2ece3] px-4 py-3 text-left text-sm text-[#1f1b17] last:border-b-0 hover:bg-[#fcfaf7]"
+                          >
+                            <span className="font-medium">
+                              {client.first_name} {client.last_name}
+                            </span>
+                            <span className="text-[#8a7f74]">{client.phone}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="grid gap-2 text-sm text-[#6e655c]">
+                        Prénom
+                        <input
+                          type="text"
+                          value={createFirstName}
+                          onChange={(e) => setCreateFirstName(e.target.value)}
+                          className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        />
+                      </label>
+
+                      <label className="grid gap-2 text-sm text-[#6e655c]">
+                        Nom
+                        <input
+                          type="text"
+                          value={createLastName}
+                          onChange={(e) => setCreateLastName(e.target.value)}
+                          className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="grid gap-2 text-sm text-[#6e655c]">
+                        Téléphone
+                        <input
+                          type="tel"
+                          value={createPhone}
+                          onChange={(e) => setCreatePhone(e.target.value)}
+                          placeholder="06 00 00 00 00"
+                          className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        />
+                      </label>
+
+                      <label className="grid gap-2 text-sm text-[#6e655c]">
+                        E-mail
+                        <input
+                          type="email"
+                          value={createEmail}
+                          onChange={(e) => setCreateEmail(e.target.value)}
+                          className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Notes client
+                      <textarea
+                        value={createClientNotes}
+                        onChange={(e) => setCreateClientNotes(e.target.value)}
+                        className="min-h-[90px] rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 grid gap-6 md:grid-cols-2">
+                <div className="grid gap-2 text-sm text-[#6e655c]">
+                  <span className="font-medium">Date</span>
+                  <div className="rounded-2xl border border-[#eadfce] bg-white/90 p-4 shadow-sm">
+                    <div className="mb-3 flex items-center justify-between">
+                      <button type="button" onClick={() => { if (modalCalMonth === 0) { setModalCalYear(y => y - 1); setModalCalMonth(11); } else setModalCalMonth(m => m - 1); }} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eadfce] bg-white text-sm transition hover:bg-[#f4eadc]">‹</button>
+                      <span className="font-semibold text-[#1f1b17]">{MONTH_NAMES[modalCalMonth]} {modalCalYear}</span>
+                      <button type="button" onClick={() => { if (modalCalMonth === 11) { setModalCalYear(y => y + 1); setModalCalMonth(0); } else setModalCalMonth(m => m + 1); }} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eadfce] bg-white text-sm transition hover:bg-[#f4eadc]">›</button>
+                    </div>
+                    <div className="grid grid-cols-7 text-center text-[11px] font-bold uppercase tracking-wider text-[var(--gold)] mb-2">
+                      {["L","M","M","J","V","S","D"].map((d, i) => <span key={i}>{d}</span>)}
+                    </div>
+                    <div className="grid grid-cols-7 gap-y-1 text-center text-sm">
+                      {Array.from({ length: (new Date(modalCalYear, modalCalMonth, 1).getDay() + 6) % 7 }).map((_, i) => <span key={i} />)}
+                      {Array.from({ length: new Date(modalCalYear, modalCalMonth + 1, 0).getDate() }, (_, d) => {
+                        const dk = `${modalCalYear}-${String(modalCalMonth + 1).padStart(2, "0")}-${String(d + 1).padStart(2, "0")}`;
+                        const isSelected = createDate === dk;
+                        const now2 = new Date();
+                        const todayStr = `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,"0")}-${String(now2.getDate()).padStart(2,"0")}`;
+                        const isToday = dk === todayStr;
+                        const isClosed = !isOpenDayFromSettings(dk, settings);
+                        return (
+                          <button key={dk} type="button" onClick={() => setCreateDate(dk)}
+                            className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition ${isSelected ? "bg-[#1f1b17] text-white" : isClosed ? "text-[#c4b8a8] line-through" : isToday ? "border border-[var(--gold)] text-[var(--gold)]" : "hover:bg-[#f4eadc] text-[#1f1b17]"}`}>
+                            {d + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 text-sm text-[#6e655c]">
+                  <span className="font-medium">Heure de début</span>
+                  <div className="rounded-2xl border border-[#eadfce] bg-white/90 p-4 shadow-sm">
+                    <div className="flex flex-wrap gap-2">
+                      {Array.from({ length: Math.floor((createDayEnd - createDayStart) / 15) }, (_, i) => {
+                        const mins = createDayStart + i * 15;
+                        const h = String(Math.floor(mins / 60)).padStart(2, "0");
+                        const m = String(mins % 60).padStart(2, "0");
+                        const label = `${h}:${m}`;
+                        const isSelected = createTime === label;
+
+                        // Calcul disponibilité si une prestation est sélectionnée
+                        let isUnavailable = false;
+                        if (selectedCreateService) {
+                          const segs = getServiceSegmentsFromService(selectedCreateService, mins);
+                          if (segs.totalEnd > createDayEnd) {
+                            isUnavailable = true;
+                          } else {
+                            // Bloquer si créneau pendant pause de la coiffeuse
+                            if (createStaffSchedule?.has_break && createStaffSchedule.break_start && createStaffSchedule.break_end) {
+                              const bStart = parseTimeToMinutes(createStaffSchedule.break_start.slice(0,5));
+                              const bEnd = parseTimeToMinutes(createStaffSchedule.break_end.slice(0,5));
+                              if (segs.segment1Start < bEnd && segs.totalEnd > bStart) {
+                                isUnavailable = true;
+                              }
+                            }
+                            if (!isUnavailable) {
+                              const blockedByRdv = appointments.some((apt) => {
+                                if (apt.appointment_date !== createDate) return false;
+                                if (createStaffId && apt.staff_id && apt.staff_id !== createStaffId) return false;
+                                const busy = getAppointmentBusySegments(apt);
+                                return busy.some((seg) =>
+                                  overlaps(segs.segment1Start, segs.segment1End, seg.start, seg.end)
+                                ) || (segs.after > 0 && busy.some((seg) =>
+                                  overlaps(segs.segment2Start, segs.segment2End, seg.start, seg.end)
+                                ));
+                              });
+                              const blockedByClosure = isBlockedByExceptionalClosure(segs.segment1Start, segs.segment1End, exceptionClosures)
+                                || (segs.after > 0 && isBlockedByExceptionalClosure(segs.segment2Start, segs.segment2End, exceptionClosures));
+                              isUnavailable = blockedByRdv || blockedByClosure;
+                            }
+                          }
+                        }
+
+                        return (
+                          <button key={label} type="button"
+                            onClick={() => { if (!isUnavailable) setCreateTime(label); }}
+                            disabled={isUnavailable}
+                            title={isUnavailable ? "Créneau indisponible" : label}
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                              isSelected
+                                ? "bg-[#1f1b17] text-white"
+                                : isUnavailable
+                                  ? "border border-[#e8e0d8] bg-[#f5f2ee] text-[#c4b8a8] line-through cursor-not-allowed opacity-60"
+                                  : "border border-[#eadfce] bg-white text-[#1f1b17] hover:bg-[#f4eadc]"
+                            }`}>
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4">
+                {staff.length > 0 && (
+                  <label className="grid gap-2 text-sm text-[#6e655c]">
+                    Coiffeuse
+                    <select
+                      value={createStaffId}
+                      onChange={(e) => setCreateStaffId(e.target.value)}
+                      className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                    >
+                      <option value="">Pas de préférence</option>
+                      {staff.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.first_name} {member.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                <label className="grid gap-2 text-sm text-[#6e655c]">
+                  Message client
+                  <textarea
+                    value={createMessage}
+                    onChange={(e) => setCreateMessage(e.target.value)}
+                    className="min-h-[90px] rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                  />
+                </label>
+
+                <label className="grid gap-2 text-sm text-[#6e655c]">
+                  Note interne
+                  <textarea
+                    value={createInternalNote}
+                    onChange={(e) => setCreateInternalNote(e.target.value)}
+                    className="min-h-[90px] rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showAppointmentModal && selectedAppointment ? (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#1f1b17]/45 p-5 backdrop-blur-md">
+          <div className="flex min-h-full items-center justify-center">
+            <div className="w-full max-w-3xl rounded-[30px] border border-[#e7ddd0] bg-[#fcfaf7] p-8 shadow-[0_18px_50px_rgba(0,0,0,0.08)]">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+                    Détail du rendez-vous
+                  </div>
+                </div>
+
+                {!isEditingAppointment ? (
+                  <button
+                    type="button"
+                    onClick={closeAppointmentModal}
+                    className="rounded-2xl border border-[#eadfce] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                  >
+                    Fermer
+                  </button>
+                ) : null}
+              </div>
+
+              {!isEditingAppointment ? (
+                <>
+                  <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-4xl">
+                        {selectedAppointment.services?.name ?? "Prestation"}
+                      </h2>
+                      <p className="mt-2 text-[#6e655c]">
+                        {formatFrenchDate(selectedAppointment.appointment_date)} •{" "}
+                        {formatTime(selectedAppointment.start_time)} →{" "}
+                        {formatTime(selectedAppointment.end_time)}
+                      </p>
+                      {selectedAppointment.break_start_time && selectedAppointment.break_end_time ? (
+                        <p className="mt-1 text-sm text-[#a77722]">
+                          Pause : {formatTime(selectedAppointment.break_start_time)} →{" "}
+                          {formatTime(selectedAppointment.break_end_time)}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-[18px] border border-[#e7ddd0] bg-white p-4">
+                      <strong>Cliente / client</strong>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedAppointment.clients?.id) {
+                            closeAppointmentModal();
+                            loadClientDetails(selectedAppointment.clients.id);
+                          }
+                        }}
+                        className="mt-2 block text-left text-sm text-[#1f1b17] underline decoration-[#d8a646] underline-offset-4"
+                      >
+                        {selectedAppointment.clients?.first_name}{" "}
+                        {selectedAppointment.clients?.last_name}
+                      </button>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#e7ddd0] bg-white p-4">
+                      <strong>Téléphone</strong>
+                      <span className="mt-2 block text-sm text-[#6e655c]">
+                        {selectedAppointment.clients?.phone ?? "—"}
+                      </span>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#e7ddd0] bg-white p-4">
+                      <strong>Catégorie</strong>
+                      <span className="mt-2 block text-sm text-[#6e655c]">
+                        {selectedAppointment.services?.categories?.name ?? "Sans catégorie"}
+                      </span>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#e7ddd0] bg-white p-4">
+                      <strong>Tarif</strong>
+                      <span className="mt-2 block text-sm text-[#6e655c]">
+                        {formatPrice(selectedAppointment.price_cents)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedAppointment.client_message ? (
+                    <div className="mt-4 rounded-[18px] border border-[#e7ddd0] bg-white p-4">
+                      <strong>Message client</strong>
+                      <p className="mt-2 text-sm text-[#6e655c]">
+                        {selectedAppointment.client_message}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {selectedAppointment.internal_note ? (
+                    <div className="mt-4 rounded-[18px] border border-[#e7ddd0] bg-white p-4">
+                      <strong>Note interne</strong>
+                      <p className="mt-2 text-sm text-[#6e655c]">
+                        {selectedAppointment.internal_note}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-6 flex flex-wrap justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingAppointment(true)}
+                      className="rounded-2xl border border-[#eadfce] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                    >
+                      Modifier
+                    </button>
+
+                    {confirmCancelAppointment ? (
+                      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#efd7d7] bg-[#fff8f8] px-4 py-2">
+                        <span className="text-sm font-medium text-[#a33a3a]">Confirmer l'annulation ?</span>
+                        <button
+                          type="button"
+                          disabled={updatingId === selectedAppointment.id}
+                          onClick={async () => {
+                            await handleStatusChange(selectedAppointment.id, "cancelled");
+                            setConfirmCancelAppointment(false);
+                            closeAppointmentModal();
+                          }}
+                          className="rounded-xl bg-[#a33a3a] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                        >
+                          {updatingId === selectedAppointment.id ? "Annulation..." : "Oui, annuler"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmCancelAppointment(false)}
+                          className="rounded-xl border border-[#eadfce] bg-white px-4 py-2 text-sm font-medium hover:bg-white/70"
+                        >
+                          Non
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmCancelAppointment(true)}
+                        className="rounded-2xl bg-[#1f1b17] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90"
+                      >
+                        Annuler le RDV
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-4xl">Modifier le rendez-vous</h2>
+                      <p className="mt-2 text-[#6e655c]">
+                        Le rendez-vous se replacera automatiquement dans l’agenda.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingAppointment(false)}
+                        className="rounded-2xl border border-[#eadfce] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                      >
+                        Retour
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveAppointmentEdit}
+                        disabled={savingEditAppointment}
+                        className="rounded-2xl bg-[#1f1b17] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
+                      >
+                        {savingEditAppointment
+                          ? "Enregistrement..."
+                          : "Enregistrer les modifications"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Date
+                      <input
+                        type="date"
+                        value={editAppointmentDate}
+                        onChange={(e) => setEditAppointmentDate(e.target.value)}
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      />
+                    </label>
+
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Heure de début
+                      <input
+                        type="time"
+                        step={900}
+                        value={editAppointmentTime}
+                        onChange={(e) => setEditAppointmentTime(e.target.value)}
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-4 grid gap-4">
+                    <label className="grid gap-2 text-sm text-[#6e655c] md:max-w-[520px]">
+                      Catégorie
+                      <select
+                        value={editCategoryFilter}
+                        onChange={(e) => {
+                          setEditCategoryFilter(e.target.value);
+                          setEditAppointmentServiceId("");
+                        }}
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      >
+                        <option value="all">Toutes les catégories</option>
+                        {categoryOptions.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Prestation
+                      <select
+                        value={editAppointmentServiceId}
+                        onChange={(e) => setEditAppointmentServiceId(e.target.value)}
+                        className="w-full rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      >
+                        <option value="">Choisir une prestation</option>
+                        {filteredEditServiceOptions.map((service) => (
+                          <option key={service.id} value={service.id}>
+                            {service.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="mt-4 grid gap-4">
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Message client
+                      <textarea
+                        value={editAppointmentMessage}
+                        onChange={(e) => setEditAppointmentMessage(e.target.value)}
+                        className="min-h-[90px] rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      />
+                    </label>
+
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Note interne
+                      <textarea
+                        value={editAppointmentInternalNote}
+                        onChange={(e) => setEditAppointmentInternalNote(e.target.value)}
+                        className="min-h-[90px] rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedClient ? (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#1f1b17]/45 p-5 backdrop-blur-md">
+          <div className="flex min-h-full items-center justify-center">
+            <div className="w-full max-w-5xl rounded-[30px] border border-[#e7ddd0] bg-[#fcfaf7] p-8 shadow-[0_18px_50px_rgba(0,0,0,0.08)]">
+
+              <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">Fiche client</div>
+                  <h2 className="text-4xl">{selectedClient.first_name} {selectedClient.last_name}</h2>
+                  <p className="mt-3 text-[#6e655c]">
+                    {selectedClient.phone}{selectedClient.email ? ` • ${selectedClient.email}` : ""}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={closeClientModal}
+                    className="rounded-2xl border border-[#eadfce] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+                    Fermer
+                  </button>
+                  {!isEditingClient && (
+                    <button type="button" onClick={openClientEdit}
+                      className="rounded-2xl border border-[#eadfce] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+                      Modifier
+                    </button>
+                  )}
+                  <a href={`tel:${selectedClient.phone}`}
+                    className="rounded-2xl bg-[#1f1b17] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90">
+                    Appeler le client
+                  </a>
+                </div>
+              </div>
+
+              {isEditingClient ? (
+                <div className="grid gap-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Prénom
+                      <input type="text" value={editClientFirstName} onChange={(e) => setEditClientFirstName(e.target.value)}
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                    </label>
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Nom
+                      <input type="text" value={editClientLastName} onChange={(e) => setEditClientLastName(e.target.value)}
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                    </label>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      Téléphone
+                      <input type="tel" value={editClientPhone} onChange={(e) => setEditClientPhone(e.target.value)}
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                    </label>
+                    <label className="grid gap-2 text-sm text-[#6e655c]">
+                      E-mail
+                      <input type="email" value={editClientEmail} onChange={(e) => setEditClientEmail(e.target.value)}
+                        className="rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                    </label>
+                  </div>
+                  <label className="grid gap-2 text-sm text-[#6e655c]">
+                    Notes
+                    <textarea value={editClientNotes} onChange={(e) => setEditClientNotes(e.target.value)}
+                      className="min-h-[90px] rounded-2xl border border-[#eadfce] bg-white/90 px-4 py-3 text-[#1f1b17] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    <button type="button" onClick={() => setIsEditingClient(false)}
+                      className="rounded-2xl border border-[#eadfce] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+                      Annuler
+                    </button>
+                    <button type="button" onClick={handleSaveClient} disabled={savingClient}
+                      className="rounded-2xl bg-[#1f1b17] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50">
+                      {savingClient ? "Enregistrement..." : "Enregistrer"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {selectedClient.notes ? (
+                    <div className="mb-6 rounded-[18px] border border-[#e7ddd0] bg-white p-4">
+                      <strong>Notes</strong>
+                      <p className="mt-2 text-sm text-[#6e655c]">{selectedClient.notes}</p>
+                    </div>
+                  ) : null}
+                  <div className="mt-2">
+                    <div className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">Historique</div>
+                    {loadingClientDetails ? (
+                      <div className="rounded-[20px] border border-dashed border-[#d7cabb] bg-white px-6 py-10 text-center text-[#6e655c]">Chargement de l'historique...</div>
+                    ) : selectedClientAppointments.length === 0 ? (
+                      <div className="rounded-[20px] border border-dashed border-[#d7cabb] bg-white px-6 py-10 text-center text-[#6e655c]">Aucun rendez-vous trouvé.</div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {selectedClientAppointments.map((appointment) => (
+                          <article key={appointment.id} className="rounded-[20px] border border-[#e7ddd0] bg-white p-4">
+                            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <h3 className="text-xl">{appointment.services?.name ?? "Prestation"}</h3>
+                                <p className="mt-1 text-sm text-[#6e655c]">{appointment.services?.categories?.name ?? "Sans catégorie"}</p>
+                              </div>
+                              <span className={`rounded-full border px-3 py-2 text-sm font-semibold ${getBadgeClasses(appointment.status)}`}>
+                                {getStatusLabel(appointment.status)}
+                              </span>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-4">
+                              <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3"><strong>Date</strong><span className="mt-2 block text-sm text-[#6e655c]">{formatFrenchDate(appointment.appointment_date)}</span></div>
+                              <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3"><strong>Heure</strong><span className="mt-2 block text-sm text-[#6e655c]">{formatTime(appointment.start_time)} → {formatTime(appointment.end_time)}</span></div>
+                              <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3"><strong>Tarif</strong><span className="mt-2 block text-sm text-[#6e655c]">{formatPrice(appointment.price_cents)}</span></div>
+                              <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3"><strong>Statut</strong><span className="mt-2 block text-sm text-[#6e655c]">{getStatusLabel(appointment.status)}</span></div>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </main>
+  );
+}
