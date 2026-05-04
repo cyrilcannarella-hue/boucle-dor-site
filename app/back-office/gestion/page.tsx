@@ -1076,7 +1076,7 @@ export default function BackOfficeGestionPage() {
         </div>
       </div>
     </div>
-  </div>
+    </div>
   );
 
   const equipeTabContent = (
