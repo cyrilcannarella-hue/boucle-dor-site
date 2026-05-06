@@ -46,6 +46,7 @@ type SalonSettings = {
   is_open_friday: boolean;
   is_open_saturday: boolean;
   is_open_sunday: boolean;
+  promo_text?: string | null;
 };
 
 type ClosureRow = {
@@ -235,7 +236,8 @@ export default function BackOfficeGestionPage() {
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"closures" | "settings" | "categories" | "staff" | "services">("closures");
+  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "staff" | "categories" | "services">("closures");
+  const [savingPromo, setSavingPromo] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = selectedClient ? "hidden" : "";
@@ -577,6 +579,27 @@ export default function BackOfficeGestionPage() {
     } finally { setDeletingStaffId(null); }
   };
 
+  const handleSavePromo = async () => {
+    if (!settings) return;
+    try {
+      setSavingPromo(true);
+      setStatusMessage("");
+      const { data, error } = await supabase
+        .from("salon_settings")
+        .update({ promo_text: settings.promo_text?.trim() || null })
+        .eq("id", settings.id)
+        .select("*")
+        .single();
+      if (error) throw new Error(error.message);
+      setSettings(data as SalonSettings);
+      setStatusMessage("Promotion enregistrée ✅");
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+    } finally {
+      setSavingPromo(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -807,6 +830,7 @@ export default function BackOfficeGestionPage() {
             </h1>
             <p className="mt-3 text-base leading-7 text-[#6f6254]">
               {activeTab === "closures" && "Gérez les fermetures exceptionnelles du salon."}
+              {activeTab === "promotions" && "Bandeau affiché sur la page d'accueil, juste sous la navigation."}
               {activeTab === "settings" && "Horaires, jours d'ouverture et coordonnées du salon."}
               {activeTab === "categories" && "Créez et modifiez les catégories de prestations."}
               {activeTab === "staff" && "Gérez votre équipe et leurs horaires de travail."}
@@ -830,6 +854,7 @@ export default function BackOfficeGestionPage() {
               <nav className="flex flex-col gap-1.5 md:sticky md:top-[76px] md:w-44 md:shrink-0">
                 {([
                   { id: "closures" as const, label: "Fermetures", icon: "📆" },
+                  { id: "promotions" as const, label: "Promotions", icon: "🎁" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
                   { id: "staff" as const, label: "Équipe", icon: "💇" },
                   { id: "categories" as const, label: "Catégories", icon: "🏷️" },
@@ -985,6 +1010,43 @@ export default function BackOfficeGestionPage() {
                   </div>
                 </div>
               </section>
+              )}
+              {activeTab === "promotions" && (
+              <div className={cardClass + " p-5 md:p-7"}>
+                <div className="mb-6">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#b98b3d]">
+                    <span className="text-xl">🎁</span>
+                    Promotion
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight">Bandeau promotionnel</h2>
+                  <p className="mt-1 text-sm text-[#6f6254]">Affiché sur la page d'accueil juste sous la navigation. Laisser vide pour masquer le bandeau.</p>
+                </div>
+
+                <label className="grid gap-2 text-sm font-semibold text-[#6f6254]">
+                  Texte du bandeau
+                  <textarea
+                    value={settings?.promo_text ?? ""}
+                    onChange={(e) => settings && setSettings({ ...settings, promo_text: e.target.value })}
+                    placeholder="Ex : Offre spéciale printemps — 20% sur toutes les colorations jusqu'au 30 avril"
+                    rows={3}
+                    className={fieldClass + " resize-none"}
+                  />
+                </label>
+
+                <div className="mt-5 flex items-center justify-between gap-4">
+                  <p className="text-sm text-[#9a9089]">
+                    {settings?.promo_text?.trim() ? "✅ Bandeau actif" : "⬜ Bandeau masqué"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSavePromo}
+                    disabled={savingPromo}
+                    className={primaryButtonClass}
+                  >
+                    {savingPromo ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+              </div>
               )}
               {activeTab === "settings" && (
               <section className={cardClass + " p-5 md:p-7"}>

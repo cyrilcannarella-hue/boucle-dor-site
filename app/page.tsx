@@ -20,6 +20,7 @@ type SalonSettings = {
   is_open_friday: boolean;
   is_open_saturday: boolean;
   is_open_sunday: boolean;
+  promo_text?: string | null;
 };
 
 const fadeUp = {
@@ -281,6 +282,12 @@ useEffect(() => {
           </div>
         </div>
       </header>
+
+      {settings?.promo_text?.trim() ? (
+        <div className="relative z-40 bg-[#1f1b17] px-4 py-2.5 text-center text-sm font-medium text-[#f3d27a]">
+          {settings.promo_text.trim()}
+        </div>
+      ) : null}
 
       <section className="relative z-10 mx-auto grid w-[min(1200px,calc(100%-32px))] gap-6 py-8 lg:grid-cols-[1.05fr_0.95fr]">
         <motion.div
