@@ -235,6 +235,7 @@ export default function BackOfficeGestionPage() {
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"closures" | "settings" | "categories" | "staff" | "services">("closures");
 
   useEffect(() => {
     document.body.style.overflow = selectedClient ? "hidden" : "";
@@ -805,7 +806,11 @@ export default function BackOfficeGestionPage() {
               Gestion
             </h1>
             <p className="mt-3 text-base leading-7 text-[#6f6254]">
-              Horaires, fermetures, catégories et prestations du salon.
+              {activeTab === "closures" && "Gérez les fermetures exceptionnelles du salon."}
+              {activeTab === "settings" && "Horaires, jours d'ouverture et coordonnées du salon."}
+              {activeTab === "categories" && "Créez et modifiez les catégories de prestations."}
+              {activeTab === "staff" && "Gérez votre équipe et leurs horaires de travail."}
+              {activeTab === "services" && "Créez et modifiez les prestations proposées."}
             </p>
           </div>
         </div>
@@ -821,7 +826,32 @@ export default function BackOfficeGestionPage() {
               Chargement de la gestion du salon...
             </div>
           ) : (
-            <div className="grid gap-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+              <nav className="flex flex-row flex-wrap gap-1.5 md:sticky md:top-[76px] md:w-44 md:shrink-0 md:flex-col">
+                {([
+                  { id: "closures" as const, label: "Fermetures", icon: "📆" },
+                  { id: "settings" as const, label: "Salon", icon: "🏪" },
+                  { id: "categories" as const, label: "Catégories", icon: "🏷️" },
+                  { id: "staff" as const, label: "Équipe", icon: "💇" },
+                  { id: "services" as const, label: "Prestations", icon: "✂️" },
+                ]).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-semibold text-left transition ${
+                      activeTab === tab.id
+                        ? "bg-[#1f1b17] text-white shadow-[0_8px_20px_rgba(31,27,23,0.2)]"
+                        : "border border-[#eadfce] bg-white/80 text-[#4d453d] hover:-translate-y-0.5 hover:bg-white"
+                    }`}
+                  >
+                    <span className="text-base">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </nav>
+              <div className="min-w-0 flex-1">
+              {activeTab === "closures" && (
               <section className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
@@ -955,7 +985,8 @@ export default function BackOfficeGestionPage() {
                   </div>
                 </div>
               </section>
-
+              )}
+              {activeTab === "settings" && (
               <section className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
@@ -1066,10 +1097,9 @@ export default function BackOfficeGestionPage() {
                   </div>
                 )}
               </section>
-
-              <section className="grid gap-5">
-                <div className="grid gap-5 md:grid-cols-[0.85fr_1.15fr]">
-                <div className={cardClass + " p-5 md:p-7"}>
+              )}
+              {activeTab === "categories" && (
+              <div className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#b98b3d]">
                       <span className="text-xl">🏷️</span>
@@ -1210,10 +1240,10 @@ export default function BackOfficeGestionPage() {
                       {savingCategory ? "Ajout..." : "Ajouter la catégorie"}
                     </button>
                   </div>
-                </div>
-
-                {/* ─── Coiffeuses dans le sous-grid ─── */}
-                <div className={cardClass + " p-5 md:p-7"}>
+              </div>
+              )}
+              {activeTab === "staff" && (
+              <div className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#b98b3d]">
                       <span className="text-xl">💇</span> Équipe
@@ -1406,10 +1436,10 @@ export default function BackOfficeGestionPage() {
                       </button>
                     </div>
                   </div>
-                </div>
-                </div>{/* fin sous-grid catégories+coiffeuses */}
-
-                <div className={cardClass + " p-5 md:p-7"}>{/* prestations pleine largeur */}
+              </div>
+              )}
+              {activeTab === "services" && (
+              <div className={cardClass + " p-5 md:p-7"}>
                   <div className="mb-6">
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[#b98b3d]">
                       <span className="text-xl">✂️</span>
@@ -1747,9 +1777,9 @@ export default function BackOfficeGestionPage() {
                       </button>
                     </div>
                   </div>
-                </div>
-                            </section>
-
+              </div>
+              )}
+              </div>
             </div>
           )}
       </section>
