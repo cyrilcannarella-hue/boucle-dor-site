@@ -827,7 +827,7 @@ export default function BackOfficeGestionPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-              <nav className="flex flex-row flex-wrap gap-1.5 md:sticky md:top-[76px] md:w-44 md:shrink-0 md:flex-col">
+              <nav className="flex flex-col gap-1.5 md:sticky md:top-[76px] md:w-44 md:shrink-0">
                 {([
                   { id: "closures" as const, label: "Fermetures", icon: "📆" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
