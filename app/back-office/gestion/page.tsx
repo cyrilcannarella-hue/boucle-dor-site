@@ -831,8 +831,8 @@ export default function BackOfficeGestionPage() {
                 {([
                   { id: "closures" as const, label: "Fermetures", icon: "📆" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
-                  { id: "categories" as const, label: "Catégories", icon: "🏷️" },
                   { id: "staff" as const, label: "Équipe", icon: "💇" },
+                  { id: "categories" as const, label: "Catégories", icon: "🏷️" },
                   { id: "services" as const, label: "Prestations", icon: "✂️" },
                 ]).map((tab) => (
                   <button
