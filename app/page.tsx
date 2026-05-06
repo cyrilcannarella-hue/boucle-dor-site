@@ -284,8 +284,14 @@ useEffect(() => {
       </header>
 
       {settings?.promo_text?.trim() ? (
-        <div className="relative z-40 bg-[#1f1b17] px-4 py-2.5 text-center text-sm font-medium text-[#f3d27a]">
-          {settings.promo_text.trim()}
+        <div className="relative z-40 overflow-hidden bg-gradient-to-r from-[#1a1208] via-[#2d1f0a] to-[#1a1208] px-4 py-3">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(216,166,70,0.18),transparent_65%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d8a646]/50 to-transparent" />
+          <p className="relative text-center text-sm font-semibold tracking-wide text-[#f3d27a]">
+            <span className="mr-2.5 opacity-60">✦</span>
+            {settings.promo_text.trim()}
+            <span className="ml-2.5 opacity-60">✦</span>
+          </p>
         </div>
       ) : null}
 
