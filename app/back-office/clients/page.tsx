@@ -461,7 +461,7 @@ export default function BackOfficeClientsPage() {
           <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
             <Link href="/back-office" className="rounded-xl border border-[#eadfce] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Agenda</Link>
             <Link href="/back-office/clients" className="rounded-xl bg-[#1f1b17] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm">Fiches clients</Link>
-            <Link href="/back-office/gestion" className="rounded-xl border border-[#eadfce] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Gestion</Link>
+            <Link href="/back-office/gestion" className="rounded-xl border border-[#eadfce] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Admin</Link>
             <button type="button" onClick={handleLogout} className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Déconnexion</button>
           </div>
         </div>

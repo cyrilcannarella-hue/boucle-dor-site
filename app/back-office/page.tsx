@@ -1514,7 +1514,7 @@ export default function BackOfficePage() {
               href="/back-office/gestion"
               className="rounded-xl border border-[#eadfce] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
-              Gestion
+              Admin
             </Link>
 
             

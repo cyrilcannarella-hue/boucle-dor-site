@@ -784,7 +784,7 @@ export default function BackOfficeGestionPage() {
               href="/back-office/gestion"
               className="rounded-xl bg-[#1f1b17] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
-              Gestion
+              Admin
             </Link>
 
             <button
@@ -801,9 +801,9 @@ export default function BackOfficeGestionPage() {
       <section className="mx-auto w-[min(1400px,calc(100%-32px))] py-8">
         <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#b98b3d]">Gestion salon</p>
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#b98b3d]">Admin salon</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-tight md:text-5xl">
-              Gestion
+              Admin
             </h1>
             <p className="mt-3 text-base leading-7 text-[#6f6254]">
               {activeTab === "closures" && "Gérez les fermetures exceptionnelles du salon."}
