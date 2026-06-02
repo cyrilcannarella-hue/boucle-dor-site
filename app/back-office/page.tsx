@@ -1877,8 +1877,8 @@ export default function BackOfficePage() {
         </div>
         </aside>
         <section className="rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <div>
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div className="min-w-0">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
                 Agenda
               </div>
@@ -1896,7 +1896,7 @@ export default function BackOfficePage() {
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <div className="flex rounded-2xl border border-[var(--card-border)] bg-white/80 p-1">
                 <button
                   type="button"
