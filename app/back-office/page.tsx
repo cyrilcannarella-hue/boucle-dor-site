@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
@@ -497,6 +497,10 @@ export default function BackOfficePage() {
   const [weekAppointments, setWeekAppointments] = useState<AppointmentRow[]>([]);
   const [loadingWeek, setLoadingWeek] = useState(false);
 
+  const agendaViewRef = useRef(agendaView);
+  const weekDaysRef = useRef<string[]>([]);
+  useEffect(() => { agendaViewRef.current = agendaView; }, [agendaView]);
+
   useEffect(() => {
     fetch("/api/brevo-credits")
       .then((r) => r.json())
@@ -708,6 +712,12 @@ export default function BackOfficePage() {
           if (!date || date === selectedDate) {
             loadAppointments(selectedDate);
           }
+          const wd = weekDaysRef.current;
+          if (agendaViewRef.current === "week" && wd.length === 7) {
+            if (!date || (date >= wd[0] && date <= wd[6])) {
+              loadWeekAppointments(wd[0], wd[6]);
+            }
+          }
         }
       )
       .subscribe();
@@ -715,6 +725,10 @@ export default function BackOfficePage() {
     // Polling de secours toutes les 30s pour capter les UPDATE non transmis par Realtime
     const interval = setInterval(() => {
       loadAppointments(selectedDate);
+      const wd = weekDaysRef.current;
+      if (agendaViewRef.current === "week" && wd.length === 7) {
+        loadWeekAppointments(wd[0], wd[6]);
+      }
     }, 30000);
 
     return () => {
@@ -727,6 +741,10 @@ export default function BackOfficePage() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         loadAppointments(selectedDate);
+        const wd = weekDaysRef.current;
+        if (agendaViewRef.current === "week" && wd.length === 7) {
+          loadWeekAppointments(wd[0], wd[6]);
+        }
       }
     };
 
@@ -1501,6 +1519,7 @@ export default function BackOfficePage() {
       return `${day.getFullYear()}-${pad2(day.getMonth() + 1)}-${pad2(day.getDate())}`;
     });
   }, [selectedDate]);
+  useEffect(() => { weekDaysRef.current = weekDays; }, [weekDays]);
 
   const weekGlobalStart = useMemo(() => {
     if (!settings) return parseTimeToMinutes("09:00");
