@@ -495,6 +495,7 @@ export default function BackOfficePage() {
   const [smsCredits, setSmsCredits] = useState<number | null>(null);
   const [agendaView, setAgendaView] = useState<"day" | "week">("day");
   const [weekAppointments, setWeekAppointments] = useState<AppointmentRow[]>([]);
+  const [weekExceptionClosures, setWeekExceptionClosures] = useState<ExceptionClosure[]>([]);
   const [loadingWeek, setLoadingWeek] = useState(false);
 
   const agendaViewRef = useRef(agendaView);
@@ -631,6 +632,23 @@ export default function BackOfficePage() {
     setLoadingWeek(false);
   };
 
+  const loadWeekClosures = async (weekStart: string, weekEnd: string) => {
+    const { data } = await supabase
+      .from("exception_closures")
+      .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .gte("closure_date", weekStart)
+      .lte("closure_date", weekEnd)
+      .order("closure_date", { ascending: true });
+    setWeekExceptionClosures((data ?? []) as ExceptionClosure[]);
+  };
+
+  const loadWeekData = async (weekStart: string, weekEnd: string) => {
+    await Promise.all([
+      loadWeekAppointments(weekStart, weekEnd),
+      loadWeekClosures(weekStart, weekEnd),
+    ]);
+  };
+
   const loadInitialData = async () => {
     const { data: settingsData } = await supabase
       .from("salon_settings")
@@ -715,7 +733,7 @@ export default function BackOfficePage() {
           const wd = weekDaysRef.current;
           if (agendaViewRef.current === "week" && wd.length === 7) {
             if (!date || (date >= wd[0] && date <= wd[6])) {
-              loadWeekAppointments(wd[0], wd[6]);
+              loadWeekData(wd[0], wd[6]);
             }
           }
         }
@@ -727,7 +745,7 @@ export default function BackOfficePage() {
       loadAppointments(selectedDate);
       const wd = weekDaysRef.current;
       if (agendaViewRef.current === "week" && wd.length === 7) {
-        loadWeekAppointments(wd[0], wd[6]);
+        loadWeekData(wd[0], wd[6]);
       }
     }, 30000);
 
@@ -743,7 +761,7 @@ export default function BackOfficePage() {
         loadAppointments(selectedDate);
         const wd = weekDaysRef.current;
         if (agendaViewRef.current === "week" && wd.length === 7) {
-          loadWeekAppointments(wd[0], wd[6]);
+          loadWeekData(wd[0], wd[6]);
         }
       }
     };
@@ -975,7 +993,7 @@ export default function BackOfficePage() {
 
       await loadAppointments(selectedDate);
       if (agendaView === "week" && weekDays.length === 7) {
-        await loadWeekAppointments(weekDays[0], weekDays[6]);
+        await loadWeekData(weekDays[0], weekDays[6]);
       }
       setStatusMessage(
         newStatus === "cancelled" ? "Rendez-vous annulé ✅" : "Statut mis à jour ✅"
@@ -1289,7 +1307,7 @@ export default function BackOfficePage() {
       await loadClosuresForDay(selectedDate);
       await loadInitialData();
       if (agendaView === "week" && weekDays.length === 7) {
-        await loadWeekAppointments(weekDays[0], weekDays[6]);
+        await loadWeekData(weekDays[0], weekDays[6]);
       }
       closeCreateModal();
       setCreateModalError("Rendez-vous ajouté ✅");
@@ -1405,7 +1423,7 @@ export default function BackOfficePage() {
       await loadAppointments(selectedDate);
       await loadClosuresForDay(selectedDate);
       if (agendaView === "week" && weekDays.length === 7) {
-        await loadWeekAppointments(weekDays[0], weekDays[6]);
+        await loadWeekData(weekDays[0], weekDays[6]);
       }
 
       const updatedSelectedAppointment: AppointmentRow = {
@@ -1558,7 +1576,7 @@ export default function BackOfficePage() {
 
   useEffect(() => {
     if (agendaView === "week" && weekDays.length === 7) {
-      loadWeekAppointments(weekDays[0], weekDays[6]);
+      loadWeekData(weekDays[0], weekDays[6]);
     }
   }, [agendaView, weekDays[0]]);
 
@@ -1972,17 +1990,22 @@ export default function BackOfficePage() {
                       const d = parseDateKey(dk);
                       const isToday = dk === getTodayKey();
                       const isSelected = dk === selectedDate;
+                      const dayClosures = weekExceptionClosures.filter(c => c.closure_date === dk);
+                      const hasAllDayClosure = dayClosures.some(c => c.is_all_day);
                       return (
                         <button
                           key={dk}
                           type="button"
                           onClick={() => { setSelectedDate(dk); setAgendaView("day"); }}
-                          className="border-l border-[#efe6db] py-3 text-center transition hover:bg-[#f9f3eb]"
+                          className={`border-l border-[#efe6db] py-3 text-center transition ${hasAllDayClosure ? "bg-[#fff5f5] hover:bg-[#fff0f0]" : "hover:bg-[#f9f3eb]"}`}
                         >
                           <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--nav-text)]">{dayNames[d.getDay()]}</div>
                           <div className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-[var(--text-main)] text-white" : isToday ? "ring-2 ring-[var(--gold)] text-[var(--gold)]" : "text-[var(--text-main)]"}`}>
                             {d.getDate()}
                           </div>
+                          {hasAllDayClosure && (
+                            <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-[#a33a3a]">Fermé</div>
+                          )}
                         </button>
                       );
                     })}
@@ -2008,6 +2031,7 @@ export default function BackOfficePage() {
                     {openDays.map((dk) => {
                       const segs = getWeekDaySegments(dk);
                       const slotPx = SLOT_STEP * pxPerMinuteWeek;
+                      const dayClosures = weekExceptionClosures.filter(c => c.closure_date === dk);
                       return (
                         <div
                           key={dk}
@@ -2018,12 +2042,14 @@ export default function BackOfficePage() {
                           {weekHourSlots.map((slot) => {
                             if (slot === weekGlobalEnd) return null;
                             const top = (slot - weekGlobalStart) * pxPerMinuteWeek;
+                            const slotBlocked = isBlockedByExceptionalClosure(slot, slot + SLOT_STEP, dayClosures);
                             return (
                               <button
                                 key={slot}
                                 type="button"
+                                disabled={slotBlocked}
                                 onClick={() => openCreateModal(dk, minutesToLabel(slot))}
-                                className="absolute left-0 right-0 border-t border-[#f0e7dc] transition hover:bg-[#f4ede3]"
+                                className={`absolute left-0 right-0 border-t transition ${slotBlocked ? "border-[#f1d7d7] bg-[#fff5f5] cursor-not-allowed" : "border-[#f0e7dc] hover:bg-[#f4ede3]"}`}
                                 style={{ top, height: slotPx }}
                               />
                             );
