@@ -1,18 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { BRAND_NAME_PRO } from "@/lib/theme";
+import { createClient } from "@supabase/supabase-js";
 
-export const metadata: Metadata = {
-  title: BRAND_NAME_PRO,
-  manifest: "/manifest-backoffice.json?v=2",
-  icons: {
-    icon: "/icon-pro-192.png?v=2",
-    apple: "/icon-pro-192.png?v=2",
-  },
-};
+async function getSettings() {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    );
+    const { data } = await supabase
+      .from("salon_settings")
+      .select("salon_name, color_page_bg")
+      .single();
+    return data;
+  } catch {
+    return null;
+  }
+}
 
-export const viewport: Viewport = {
-  themeColor: "#F5EBDD",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getSettings();
+  const salonName = data?.salon_name || "Boucle d'Or";
+  return {
+    title: `${salonName} Pro`,
+    manifest: "/manifest-backoffice.json",
+    icons: {
+      icon: "/icon-pro-192.png?v=2",
+      apple: "/icon-pro-192.png?v=2",
+    },
+  };
+}
+
+export async function generateViewport(): Promise<Viewport> {
+  const data = await getSettings();
+  return { themeColor: data?.color_page_bg || "#F5EBDD" };
+}
 
 export default function BackOfficeLayout({
   children,

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BRAND_NAME } from "@/lib/theme";
@@ -80,6 +81,30 @@ type SalonSettings = {
   is_open_friday: boolean;
   is_open_saturday: boolean;
   is_open_sunday: boolean;
+  opening_time_monday?: string | null;
+  closing_time_monday?: string | null;
+  opening_time_tuesday?: string | null;
+  closing_time_tuesday?: string | null;
+  opening_time_wednesday?: string | null;
+  closing_time_wednesday?: string | null;
+  opening_time_thursday?: string | null;
+  closing_time_thursday?: string | null;
+  opening_time_friday?: string | null;
+  closing_time_friday?: string | null;
+  opening_time_saturday?: string | null;
+  closing_time_saturday?: string | null;
+  opening_time_sunday?: string | null;
+  closing_time_sunday?: string | null;
+  color_page_bg?: string | null;
+  color_contact_bg?: string | null;
+  color_titles?: string | null;
+  color_header_bg?: string | null;
+  color_text_main?: string | null;
+  color_text_secondary?: string | null;
+  color_card_border?: string | null;
+  color_accents?: string | null;
+  color_nav_text?: string | null;
+  logo_image_url?: string | null;
 };
 
 type StaffRow = {
@@ -101,7 +126,14 @@ type StaffSchedule = {
   break_end: string | null;
 };
 
+type QuestionRow = {
+  id: string;
+  question: string;
+  display_order: number;
+};
+
 const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+const DAY_SLUGS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 const dayNamesFull = [
   "dimanche",
   "lundi",
@@ -125,6 +157,14 @@ const monthNames = [
   "novembre",
   "décembre",
 ];
+
+function hexToRgb(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
 
 function makeLocalDate(year: number, monthIndex: number, day: number) {
   return new Date(year, monthIndex, day, 12, 0, 0, 0);
@@ -272,13 +312,14 @@ function getAppointmentBusySegments(appointment: BusyAppointment) {
 
 export default function ReservationPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [orderedCategories, setOrderedCategories] = useState<string[]>([]);
 
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [loadingServices, setLoadingServices] = useState(true);
   const [servicesError, setServicesError] = useState("");
 
-  const [settings, setSettings] = useState<SalonSettings | null>(null);
+  const [settings, setSettings] = useState<SalonSettings | null>(() => { try { const c = localStorage.getItem("bo_settings_cache"); return c ? JSON.parse(c) : null; } catch { return null; } });
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
@@ -304,6 +345,10 @@ export default function ReservationPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  const serviceSectionRef = useRef<HTMLElement | null>(null);
   const dateSectionRef = useRef<HTMLElement | null>(null);
   const staffSectionRef = useRef<HTMLElement | null>(null);
   const slotSectionRef = useRef<HTMLElement | null>(null);
@@ -329,6 +374,18 @@ export default function ReservationPage() {
         .maybeSingle();
 
       setSettings((settingsData ?? null) as SalonSettings | null);
+      if (settingsData) { try { localStorage.setItem("bo_settings_cache", JSON.stringify(settingsData)); } catch {} }
+
+      const { data: categoriesData } = await supabase
+        .from("categories")
+        .select("name, display_order")
+        .order("display_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (categoriesData) {
+        const names = categoriesData.map((c: { name: string }) => c.name);
+        setOrderedCategories(names);
+        if (names.length > 0) setCategoryFilter(names[0]);
+      }
 
       const { data, error } = await supabase
         .from("services")
@@ -401,6 +458,14 @@ export default function ReservationPage() {
         .order("day_of_week", { ascending: true });
 
       setStaffSchedules((schedulesData ?? []) as StaffSchedule[]);
+
+      const { data: questionsData } = await supabase
+        .from("questionnaire_questions")
+        .select("id, question, display_order")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: true });
+      setQuestions((questionsData ?? []) as QuestionRow[]);
     };
 
     loadInitialData();
@@ -436,14 +501,24 @@ export default function ReservationPage() {
     };
   }, [selectedDateKey]);
 
-  const openingMinutes = useMemo(
-    () => parseTime(settings?.opening_time?.slice(0, 5) || "09:00"),
-    [settings],
-  );
-  const closingMinutes = useMemo(
-    () => parseTime(settings?.closing_time?.slice(0, 5) || "19:00"),
-    [settings],
-  );
+  const openingMinutes = useMemo(() => {
+    if (!settings) return parseTime("09:00");
+    const dow = selectedDateKey ? new Date(selectedDateKey + "T12:00:00").getDay() : 1;
+    const slug = DAY_SLUGS[dow];
+    const t = (settings[`opening_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
+      ?? settings.opening_time?.slice(0, 5)
+      ?? "09:00";
+    return parseTime(t);
+  }, [settings, selectedDateKey]);
+  const closingMinutes = useMemo(() => {
+    if (!settings) return parseTime("19:00");
+    const dow = selectedDateKey ? new Date(selectedDateKey + "T12:00:00").getDay() : 1;
+    const slug = DAY_SLUGS[dow];
+    const t = (settings[`closing_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
+      ?? settings.closing_time?.slice(0, 5)
+      ?? "19:00";
+    return parseTime(t);
+  }, [settings, selectedDateKey]);
 
   const filteredServices = useMemo(() => {
     return categoryFilter === "all"
@@ -551,14 +626,14 @@ export default function ReservationPage() {
 
     if (segments.totalEnd > effectiveClosing) return false;
 
-    // Bloquer si créneau pendant la pause de la coiffeuse
+    // Bloquer si créneau pendant la pause de la prestataire
     if (staffSchedule?.has_break && staffSchedule.break_start && staffSchedule.break_end) {
       const bStart = parseTime(staffSchedule.break_start.slice(0, 5));
       const bEnd = parseTime(staffSchedule.break_end.slice(0, 5));
       if (segments.segment1Start < bEnd && segments.totalEnd > bStart) return false;
     }
 
-    // Filtrer les RDV selon la coiffeuse sélectionnée
+    // Filtrer les RDV selon la prestataire sélectionnée
     const relevantAppointments = selectedStaffId
       ? appointments.filter((a) => a.staff_id === selectedStaffId || a.staff_id === null)
       : appointments;
@@ -590,7 +665,7 @@ export default function ReservationPage() {
     return staffSchedules.find((s) => s.staff_id === staffId && s.day_of_week === dow) ?? null;
   };
 
-  // Schedule de la coiffeuse sélectionnée pour la date choisie
+  // Schedule de la prestataire sélectionnée pour la date choisie
   const selectedStaffSchedule = useMemo(() => {
     if (!selectedStaffId || !selectedDateKey) return null;
     return getStaffScheduleForDate(selectedStaffId, selectedDateKey);
@@ -618,17 +693,31 @@ export default function ReservationPage() {
       const slotStart = parseTime(slot.label);
       const isPast = isToday && slotStart <= currentMinutes;
 
-      return {
-        ...slot,
-        available: !isPast && isSlotAvailable(
+      let available: boolean;
+
+      if (!selectedStaffId && staff.length > 1) {
+        available = !isPast && staff.some((member) => {
+          const sched = getStaffScheduleForDate(member.id, selectedDateKey);
+          if (!sched || !sched.is_open) return false;
+          const memberOpen = parseTime(sched.opening_time.slice(0, 5));
+          const memberClose = parseTime(sched.closing_time.slice(0, 5));
+          const segs = getServiceSegments(selectedService, slotStart);
+          if (segs.totalEnd > memberClose || slotStart < memberOpen) return false;
+          const memberAppts = busyAppointments.filter((a) => a.staff_id === member.id || a.staff_id === null);
+          return isSlotAvailable(slotStart, selectedService, memberAppts, exceptionClosures, memberClose, sched);
+        });
+      } else {
+        available = !isPast && isSlotAvailable(
           slotStart,
           selectedService,
           busyAppointments,
           exceptionClosures,
           effectiveClosingMinutes,
           selectedStaffSchedule,
-        ),
-      };
+        );
+      }
+
+      return { ...slot, available };
     });
   }, [
     selectedService,
@@ -640,6 +729,8 @@ export default function ReservationPage() {
     todayKey,
     selectedStaffId,
     selectedStaffSchedule,
+    staff,
+    staffSchedules,
   ]);
 
   const handleSelectDate = async (date: Date) => {
@@ -702,10 +793,33 @@ export default function ReservationPage() {
       setLastName(data.last_name ?? "");
       setEmail(data.email ?? "");
       setIsKnownClient(true);
+
+      const { data: apptData } = await supabase
+        .from("appointments")
+        .select("id, appointment_date, appointment_answers(question_id, answer)")
+        .eq("client_id", data.id)
+        .order("appointment_date", { ascending: false })
+        .order("start_time", { ascending: false })
+        .limit(10);
+
+      if (apptData) {
+        type ApptWithAnswers = { id: string; appointment_answers: { question_id: string; answer: string }[] };
+        const recent = (apptData as ApptWithAnswers[]).find(
+          (a) => a.appointment_answers && a.appointment_answers.length > 0
+        );
+        if (recent) {
+          const prefilled: Record<string, string> = {};
+          for (const a of recent.appointment_answers) {
+            prefilled[a.question_id] = a.answer;
+          }
+          setAnswers(prefilled);
+        }
+      }
       return;
     }
 
     setIsKnownClient(false);
+    setAnswers({});
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -730,6 +844,15 @@ export default function ReservationPage() {
       setStatus("Merci de choisir une date et un créneau disponible.");
       setShowConfirmation(false);
       return;
+    }
+
+    if (questions.length > 0) {
+      const unanswered = questions.filter((q) => !answers[q.id]?.trim());
+      if (unanswered.length > 0) {
+        setStatus("Merci de répondre à toutes les questions du questionnaire avant de confirmer.");
+        setShowConfirmation(false);
+        return;
+      }
     }
 
     try {
@@ -842,7 +965,7 @@ export default function ReservationPage() {
         }
       }
 
-      // Assignation automatique si "Pas de préférence" et plusieurs coiffeuses
+      // Assignation automatique si "Pas de préférence" et plusieurs prestataires
       let assignedStaffId: string | null = selectedStaffId || null;
 
       if (!assignedStaffId && staff.length > 0) {
@@ -879,7 +1002,7 @@ export default function ReservationPage() {
         }
       }
 
-      const { error: appointmentError } = await supabase
+      const { data: newAppointment, error: appointmentError } = await supabase
         .from("appointments")
         .insert({
           client_id: clientId,
@@ -894,14 +1017,50 @@ export default function ReservationPage() {
           client_message: message || null,
           price_cents: selectedService.priceCents,
           staff_id: assignedStaffId,
-        });
+        })
+        .select("id")
+        .single();
 
       if (appointmentError) {
         throw new Error(appointmentError.message);
       }
 
+      if (questions.length > 0 && newAppointment?.id) {
+        const answersPayload = questions.map((q) => ({
+          appointment_id: newAppointment.id,
+          question_id: q.id,
+          question_text: q.question,
+          answer: answers[q.id]?.trim() ?? "",
+        }));
+        await supabase.from("appointment_answers").insert(answersPayload);
+      }
+
       setStatus("Rendez-vous confirmé ✅");
       setShowConfirmation(true);
+
+      const phoneDigits = phone.replace(/\D/g, "");
+      let toPhone: string;
+      if (phoneDigits.startsWith("0033")) {
+        toPhone = `+33${phoneDigits.slice(4)}`;
+      } else if (phoneDigits.startsWith("33") && phoneDigits.length === 11) {
+        toPhone = `+${phoneDigits}`;
+      } else if (phoneDigits.startsWith("0") && phoneDigits.length === 10) {
+        toPhone = `+33${phoneDigits.slice(1)}`;
+      } else {
+        toPhone = `+${phoneDigits}`;
+      }
+      fetch("/api/send-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: toPhone,
+          firstName,
+          serviceName: selectedService.name,
+          date: appointmentDate,
+          time: selectedTime,
+        }),
+      }).catch(() => {});
+
       await Promise.all([
         loadBusyAppointmentsForDay(appointmentDate),
         loadClosuresForDay(appointmentDate),
@@ -916,21 +1075,56 @@ export default function ReservationPage() {
     }
   };
 
+  const colorButtons = settings?.color_accents || "#111111";
+  const colorPageBg = settings?.color_page_bg || "#f5e9dc";
+  const colorTitles = settings?.color_titles || "#b98b3d";
+  const colorHeaderBg = settings?.color_header_bg || "#F2E8D9";
+  const colorTextMain = settings?.color_text_main || "#1f1b17";
+  const colorTextSecondary = settings?.color_text_secondary || "#6e655c";
+  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
+  const colorAccents = settings?.color_accents || "#d8a646";
+  const colorNavText = settings?.color_nav_text || "#4d4034";
+  const logoUrl = settings?.logo_image_url || "/icon-192.png";
+  const salonName = (settings?.salon_name || "Boucle d'Or").replace(/['‘’‛]/g, "'");
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#fff7e8_0,#f8efe1_34%,#f3e6d4_62%,#fffaf4_100%)] text-[#1f1b17]">
-      <div className="pointer-events-none fixed -left-24 top-20 h-72 w-72 rounded-full bg-[#d4af37]/20 blur-3xl" />
+    <main
+      className="relative min-h-screen overflow-hidden"
+      style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}` }}
+    >
+      <style>{`
+        :root {
+          --gold: ${colorTitles};
+          --text-secondary: ${colorTextSecondary};
+          --card-border: ${colorCardBorder};
+          --nav-text: ${colorNavText};
+          --text-main: ${colorTextMain};
+          --accents: ${colorAccents};
+          --page-bg: ${colorPageBg};
+        }
+      `}</style>
+      <div className="pointer-events-none fixed -left-24 top-20 h-72 w-72 rounded-full bg-[var(--accents)]/20 blur-3xl" />
       <div className="pointer-events-none fixed -right-28 top-72 h-80 w-80 rounded-full bg-[var(--gold)]/10 blur-3xl" />
-      <header className="sticky top-0 z-40 border-b border-[#e8d9c4]/60 bg-[#F2E8D9] shadow-[0_12px_30px_rgba(90,63,30,0.06)]">
+      <header
+        className="sticky top-0 z-40 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
+        style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
+      >
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-[2px]" style={{ background: `linear-gradient(to right, transparent, ${colorAccents}99, transparent)` }} />
+          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 130%, ${colorAccents}28, transparent 55%)` }} />
+          <div className="header-sweep absolute inset-y-0 w-1/3" style={{ background: `linear-gradient(to right, transparent, ${colorAccents}28, transparent)` }} />
+        </div>
         <div className="mx-auto flex w-[min(1200px,calc(100%-28px))] items-center justify-between gap-4 py-3">
           <Link href="/" className="group flex items-center gap-3">
-            <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border border-[#eadfce] bg-[#f4eadc] shadow-[0_12px_26px_rgba(185,139,61,0.18)]">
-              <img src="/icon-192.png" alt={BRAND_NAME} className="h-full w-full object-cover" />
+            <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border border-[var(--card-border)] bg-[var(--page-bg)] shadow-[0_12px_26px_rgba(185,139,61,0.18)]">
+              <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />
             </div>
             <span>
               <span className="block text-2xl leading-none tracking-tight sm:text-3xl">
-                Boucle d<span className="text-[var(--gold)]">’Or</span>
+                <SalonNameGradient name={salonName} goldColor={colorTextMain} goldEndColor={colorAccents} />
               </span>
-              <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.28em] text-[#8a7863]">
+              <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
                 Réservation en ligne
               </span>
             </span>
@@ -939,142 +1133,69 @@ export default function ReservationPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="rounded-full border border-[#d8c8b3]/70 bg-white/50 px-4 py-2 text-sm font-semibold text-[#4a3a2c] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
+              className="rounded-full border border-[var(--card-border)]/70 bg-white/50 px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
             >
               Accueil
             </Link>
             <Link
               href="/espace-client"
-              className="hidden rounded-full border border-[#d8c8b3]/70 bg-white/50 px-4 py-2 text-sm font-semibold text-[#4a3a2c] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)] sm:inline-flex"
+              className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)] sm:inline-flex"
+              style={{ backgroundColor: colorButtons, color: colorTextMain }}
             >
-              Espace client
+              Mes réservations
             </Link>
           </div>
         </div>
       </header>
 
-      <section className="mx-auto grid w-[min(1200px,calc(100%-28px))] gap-6 py-8 sm:py-10 lg:grid-cols-[0.78fr_1.22fr]">
-        <aside className="grid gap-5">
-          <div className="rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-              Étapes
-            </div>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Comment réserver
-            </h2>
+      <section className="mx-auto grid w-[min(860px,calc(100%-28px))] gap-6 py-8 sm:py-10">
 
-            <div className="mt-5 grid gap-3">
-              {[
-                [
-                  "1",
-                  "Choisissez une prestation",
-                  "La durée influence les disponibilités.",
-                ],
-                ["2", "Choisissez une date", ""],
-                [
-                  "3",
-                  "Choisissez un créneau",
-                  "Les créneaux déjà pris ou fermés sont grisés.",
-                ],
-              ].map(([n, title, text]) => (
-                <div
-                  key={n}
-                  className="grid grid-cols-[40px_1fr] gap-4 rounded-[20px] border border-white/70 bg-white/70 p-4 shadow-sm"
-                >
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-[#22180f] to-[#7b5a2e] font-bold text-white shadow-[0_8px_18px_rgba(60,40,20,0.18)]">
-                    {n}
-                  </div>
-                  <div>
-                    <strong>{title}</strong>
-                    {text ? (
-                      <p className="mt-1 text-sm text-[#6e655c]">{text}</p>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Catégories */}
+        <section className="rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+          <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+            1 • Catégorie
           </div>
-
-          <div className="hidden lg:block rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-              Résumé
-            </div>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Votre sélection
-            </h2>
-
-            <div className="mt-5 grid gap-3">
-              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Catégorie</strong>
-                <span>
-                  {selectedService ? selectedService.category : "Chargement..."}
-                </span>
-              </div>
-              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Prestation</strong>
-                <span>
-                  {selectedService ? selectedService.name : "Chargement..."}
-                </span>
-              </div>
-              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Durée</strong>
-                <span>
-                  {selectedService ? `${selectedService.duration} min` : "--"}
-                </span>
-              </div>
-              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Date</strong>
-                <span>{selectedDateLabel}</span>
-              </div>
-              <div className="flex justify-between gap-4 border-b border-[#e7ddd0] pb-3 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Heure</strong>
-                <span>{selectedTime}</span>
-              </div>
-              <div className="flex justify-between gap-4 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Total</strong>
-                <span className="font-semibold text-[var(--gold)]">
-                  {selectedService ? selectedService.price : "--"}
-                </span>
-              </div>
-            </div>
+          <h2 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+            Choisissez une catégorie
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {(orderedCategories.length > 0
+              ? orderedCategories.filter((cat) => services.some((s) => s.category === cat))
+              : [...new Set(services.map((s) => s.category))]
+            ).map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => { setCategoryFilter(cat); scrollToSection(serviceSectionRef); }}
+                className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 ${
+                  categoryFilter === cat
+                    ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_10px_22px_rgba(185,139,61,0.18)] text-[var(--text-main)]"
+                    : "border-[var(--card-border)] bg-white/80 text-[var(--text-main)] hover:border-[var(--gold)]"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
-        </aside>
+        </section>
 
         <div className="grid gap-5">
-          <section className="rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
-            <div className="mb-4 flex items-end justify-between gap-4">
-              <div>
-                <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-                  1 • Prestations
-                </div>
-                <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                  Choisissez votre service
-                </h2>
+          <section ref={serviceSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+            <div className="mb-4">
+              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                2 • Prestations
               </div>
-              <p className="text-sm text-[#6e655c]">
-                Filtre par catégorie puis sélection.
-              </p>
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Choisissez votre service
+              </h2>
             </div>
 
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="mb-4 min-w-[220px] rounded-2xl border border-[#e2d3bf] bg-white/80 px-4 py-3 text-[#2b2116] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[#d4af37]/15"
-            >
-              <option value="all">Toutes les catégories</option>
-              {[...new Set(services.map((s) => s.category))].map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-
             {loadingServices ? (
-              <p className="text-[#6e655c]">Chargement des prestations...</p>
+              <p className="text-[var(--text-secondary)]">Chargement des prestations...</p>
             ) : servicesError ? (
               <p className="text-red-600">Erreur : {servicesError}</p>
             ) : filteredServices.length === 0 ? (
-              <p className="text-[#6e655c]">Aucune prestation visible.</p>
+              <p className="text-[var(--text-secondary)]">Aucune prestation visible.</p>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {filteredServices.map((service) => {
@@ -1086,7 +1207,7 @@ export default function ReservationPage() {
                       type="button"
                       onClick={() => {
                         setSelectedService(service);
-                        scrollToSection(staff.length > 0 ? staffSectionRef : dateSectionRef);
+                        scrollToSection(staff.length > 1 ? staffSectionRef : dateSectionRef);
                         if (selectedDateKey) {
                           Promise.all([
                             loadBusyAppointmentsForDay(selectedDateKey),
@@ -1096,22 +1217,22 @@ export default function ReservationPage() {
                       }}
                       className={`rounded-[24px] border p-5 text-left shadow-sm transition-all duration-200 ease-out active:scale-[0.95] ${
                         active
-                          ? "scale-[1.015] border-[#2b2116] bg-[#2b2116] text-white shadow-[0_18px_42px_rgba(43,33,22,0.28)] ring-2 ring-[#d4af37]/35"
-                          : "border-[#e7ddd0] bg-white/86 text-[#2b2116] hover:-translate-y-1 hover:scale-[1.015] hover:border-[#d8b56d] hover:shadow-[0_16px_34px_rgba(90,63,30,0.10)]"
+                          ? "scale-[1.015] border-[var(--text-main)] bg-[var(--text-main)] text-white shadow-[0_18px_42px_rgba(43,33,22,0.28)] ring-2 ring-[#d4af37]/35"
+                          : "border-[var(--card-border)] bg-white/86 text-[var(--text-main)] hover:-translate-y-1 hover:scale-[1.015] hover:border-[var(--gold)] hover:shadow-[0_16px_34px_rgba(90,63,30,0.10)]"
                       }`}
                     >
                       <div className="mb-3 flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <h3 className="text-xl">{service.name}</h3>
                           {active ? (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#d4af37] text-sm font-bold text-[#2b2116] shadow-sm">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accents)] text-sm font-bold text-[var(--text-main)] shadow-sm">
                               ✓
                             </span>
                           ) : null}
                         </div>
                         <span
                           className={`whitespace-nowrap font-semibold ${
-                            active ? "text-[#f7d37a]" : "text-[var(--gold)]"
+                            active ? "text-[var(--gold)]" : "text-[var(--gold)]"
                           }`}
                         >
                           {service.price}
@@ -1119,7 +1240,7 @@ export default function ReservationPage() {
                       </div>
                       <div
                         className={`text-sm ${
-                          active ? "text-white/75" : "text-[#6e655c]"
+                          active ? "text-white/75" : "text-[var(--text-secondary)]"
                         }`}
                       >
                         {service.duration} min • {service.category}
@@ -1131,14 +1252,14 @@ export default function ReservationPage() {
             )}
           </section>
 
-          {staff.length > 0 && (
+          {staff.length > 1 && (
             <section ref={staffSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
               <div className="mb-5">
-                <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-                  2 • Coiffeuse
+                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                  3 • Prestataire
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                  Choisissez votre coiffeuse
+                  Choisissez votre prestataire
                 </h2>
               </div>
 
@@ -1152,15 +1273,15 @@ export default function ReservationPage() {
                   }}
                   className={`rounded-[22px] border p-4 text-left shadow-sm transition-all duration-200 active:scale-[0.98] ${
                     selectedStaffId === ""
-                      ? "border-[var(--gold)] bg-[#fff8e8] shadow-[0_16px_34px_rgba(185,139,61,0.16)]"
-                      : "border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d]"
+                      ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16)]"
+                      : "border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)]"
                   }`}
                 >
-                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl border border-[#eadfce] bg-gradient-to-br from-[#f4eadc] to-[#e8d5b8] text-lg">
+                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-[var(--page-bg)] to-[var(--page-bg)] text-lg">
                     ✨
                   </div>
                   <div className="font-semibold">Pas de préférence</div>
-                  <div className="mt-1 text-xs text-[#6e655c]">La première disponible</div>
+                  <div className="mt-1 text-xs text-[var(--text-secondary)]">La première disponible</div>
                 </button>
                 )}
 
@@ -1174,15 +1295,11 @@ export default function ReservationPage() {
                     }}
                     className={`rounded-[22px] border p-4 text-left shadow-sm transition-all duration-200 active:scale-[0.98] ${
                       selectedStaffId === member.id
-                        ? "border-[var(--gold)] bg-[#fff8e8] shadow-[0_16px_34px_rgba(185,139,61,0.16)]"
-                        : "border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d]"
+                        ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16)]"
+                        : "border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)]"
                     }`}
                   >
-                    <div
-                      className="mb-2 h-10 w-10 rounded-2xl border border-[#eadfce]"
-                      style={{ backgroundColor: member.color }}
-                    />
-                    <div className="font-semibold">{member.first_name} {member.last_name}</div>
+                    <div className="font-semibold">{member.first_name}</div>
                   </button>
                 ))}
               </div>
@@ -1192,8 +1309,8 @@ export default function ReservationPage() {
           <section ref={dateSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-                  {staff.length > 0 ? "3 • Date" : "2 • Date"}
+                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                  {staff.length > 1 ? "4 • Date" : "3 • Date"}
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   Choisissez votre date
@@ -1209,22 +1326,22 @@ export default function ReservationPage() {
                 disabled={!canGoPrev}
                 className={`flex h-9 w-9 items-center justify-center rounded-full border transition duration-200 ${
                   canGoPrev
-                    ? "border-[#e7ddd0] bg-white/80 text-[#2b2116] hover:border-[#d8b56d] hover:shadow-md active:scale-95"
-                    : "cursor-not-allowed border-[#e7ddd0] bg-white/40 text-[#b1a799]"
+                    ? "border-[var(--card-border)] bg-white/80 text-[var(--text-main)] hover:border-[var(--gold)] hover:shadow-md active:scale-95"
+                    : "cursor-not-allowed border-[var(--card-border)] bg-white/40 text-[var(--text-secondary)]"
                 }`}
                 aria-label="Mois précédent"
               >
                 ‹
               </button>
 
-              <span className="text-base font-semibold capitalize text-[#1f1b17]">
+              <span className="text-base font-semibold capitalize text-[var(--text-main)]">
                 {monthNames[calendarMonth]} {calendarYear}
               </span>
 
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e7ddd0] bg-white/80 text-[#2b2116] transition duration-200 hover:border-[#d8b56d] hover:shadow-md active:scale-95"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--card-border)] bg-white/80 text-[var(--text-main)] transition duration-200 hover:border-[var(--gold)] hover:shadow-md active:scale-95"
                 aria-label="Mois suivant"
               >
                 ›
@@ -1235,7 +1352,7 @@ export default function ReservationPage() {
               {dayNames.map((name) => (
                 <div
                   key={name}
-                  className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[#6e655c]"
+                  className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]"
                 >
                   {name}
                 </div>
@@ -1262,7 +1379,7 @@ export default function ReservationPage() {
                       const closed = !isOpenDayFromSettings(date, settings);
                       const staffClosed = selectedStaffMember ? (() => {
                         const sched = getStaffScheduleForDate(selectedStaffMember.id, key);
-                        return sched ? !sched.is_open : false;
+                        return sched ? !sched.is_open : true;
                       })() : false;
                       const active = selectedDateKey === key;
                       const isToday = key === todayKey;
@@ -1276,10 +1393,10 @@ export default function ReservationPage() {
                           onClick={() => handleSelectDate(date)}
                           className={`relative aspect-square min-h-[40px] rounded-2xl border p-1 text-center transition duration-200 active:scale-95 sm:min-h-[56px] ${
                             disabled
-                              ? "cursor-not-allowed border-[#e7ddd0] bg-[#eee7dc]/80 text-[#b1a799]"
+                              ? "cursor-not-allowed border-[var(--card-border)] bg-[var(--page-bg)]/80 text-[var(--text-secondary)]"
                               : active
-                                ? "border-[var(--gold)] bg-[#fff8e8] shadow-[0_16px_34px_rgba(185,139,61,0.16),inset_0_0_0_1px_var(--gold)]"
-                                : "border-[#e7ddd0] bg-white/86 hover:-translate-y-1 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.10)]"
+                                ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16),inset_0_0_0_1px_var(--gold)]"
+                                : "border-[var(--card-border)] bg-white/86 hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.10)]"
                           }`}
                         >
                           <div className="flex h-full items-center justify-center text-sm font-bold sm:text-base">
@@ -1300,14 +1417,14 @@ export default function ReservationPage() {
           <section ref={slotSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-                  {staff.length > 0 ? "4 • Créneau" : "3 • Créneau"}
+                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                  {staff.length > 1 ? "5 • Créneau" : "4 • Créneau"}
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   Choisissez votre moment
                 </h2>
               </div>
-              <p className="text-sm text-[#6e655c]">
+              <p className="text-sm text-[var(--text-secondary)]">
                 Horaires salon :{" "}
                 {settings?.opening_time?.slice(0, 5) || "09:00"} à{" "}
                 {settings?.closing_time?.slice(0, 5) || "19:00"}
@@ -1326,8 +1443,8 @@ export default function ReservationPage() {
                   }}
                   className={`rounded-2xl border px-4 py-3 text-center font-semibold shadow-sm transition duration-200 active:scale-95 ${
                     selectedTime === slot.label
-                      ? "border-[var(--gold)] bg-[#fff8e8] shadow-[0_16px_34px_rgba(185,139,61,0.16),inset_0_0_0_1px_var(--gold)]"
-                      : "border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)]"
+                      ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16),inset_0_0_0_1px_var(--gold)]"
+                      : "border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)]"
                   } ${!selectedDateKey || !slot.available ? "cursor-not-allowed opacity-40" : ""}`}
                 >
                   {slot.label}
@@ -1339,45 +1456,45 @@ export default function ReservationPage() {
           <section ref={contactSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-                  {staff.length > 0 ? "5 • Coordonnées" : "4 • Coordonnées"}
+                <div className="mb-2 inline-flex whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                  {staff.length > 1 ? "6 • Coordonnées" : "5 • Coordonnées"}
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   Confirmez votre rendez-vous
                 </h2>
               </div>
-              <p className="text-sm text-[#6e655c]">
+              <p className="text-sm text-[var(--text-secondary)]">
                 Téléphone obligatoire, e-mail facultatif.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="grid gap-2 text-sm text-[#6e655c]">
+                <label className="grid gap-2 text-sm text-[var(--text-secondary)]">
                   Prénom
                   <input
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="rounded-[16px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[#1f1b17] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                 </label>
 
-                <label className="grid gap-2 text-sm text-[#6e655c]">
+                <label className="grid gap-2 text-sm text-[var(--text-secondary)]">
                   Nom
                   <input
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="rounded-[16px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[#1f1b17] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                 </label>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="grid gap-2 text-sm text-[#6e655c]">
+                <label className="grid gap-2 text-sm text-[var(--text-secondary)]">
                   Téléphone
                   <input
                     type="tel"
@@ -1385,11 +1502,11 @@ export default function ReservationPage() {
                     onChange={(e) => void handlePhoneChange(e.target.value)}
                     required
                     placeholder="06 00 00 00 00"
-                    className="rounded-[16px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[#1f1b17] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                   {phone.length === 10 ? (
                     <span
-                      className={`text-xs ${isKnownClient ? "text-[#1f6a3a]" : "text-[#6e655c]"}`}
+                      className={`text-xs ${isKnownClient ? "text-[#1f6a3a]" : "text-[var(--text-secondary)]"}`}
                     >
                       {isKnownClient
                         ? "Client reconnu, les informations ont été préremplies."
@@ -1398,32 +1515,58 @@ export default function ReservationPage() {
                   ) : null}
                 </label>
 
-                <label className="grid gap-2 text-sm text-[#6e655c]">
+                <label className="grid gap-2 text-sm text-[var(--text-secondary)]">
                   E-mail (facultatif)
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="votreadresse@email.com"
-                    className="rounded-[16px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[#1f1b17] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                 </label>
               </div>
 
-              <label className="grid gap-2 text-sm text-[#6e655c]">
+              <label className="grid gap-2 text-sm text-[var(--text-secondary)]">
                 Message au salon
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Une précision sur votre rendez-vous..."
-                  className="min-h-[110px] rounded-[16px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[#1f1b17] outline-none"
+                  className="min-h-[110px] rounded-[16px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                 />
               </label>
 
-              <div className="mt-2 flex flex-col gap-4 rounded-[24px] border border-[#ead7b7] bg-gradient-to-br from-[#fffaf0] to-[#fff5df] p-5 shadow-[0_16px_36px_rgba(185,139,61,0.10)] md:flex-row md:items-center md:justify-between">
+              {questions.length > 0 && (
+                <div className="grid gap-4 rounded-[24px] border border-[var(--card-border)] bg-white/60 p-5">
+                  <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">Questionnaire</div>
+                  {questions.map((q) => (
+                    <label key={q.id} className="grid gap-2 text-sm text-[var(--text-secondary)]">
+                      <span>
+                        {q.question} <span className="text-rose-500">*</span>
+                      </span>
+                      <input
+                        type="text"
+                        value={answers[q.id] ?? ""}
+                        onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                        placeholder="Votre réponse..."
+                        className="rounded-[16px] border border-[var(--card-border)] bg-white/86 px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {status ? (
+                <div className="rounded-[16px] border border-[#c7e0ce] bg-[#f5fbf6] px-4 py-3 text-sm text-[#1f6a3a]">
+                  {status}
+                </div>
+              ) : null}
+
+              <div className="mt-2 flex flex-col gap-4 rounded-[24px] border border-[var(--card-border)] bg-gradient-to-br from-[var(--page-bg)] to-[var(--page-bg)] p-5 shadow-[0_16px_36px_rgba(185,139,61,0.10)] md:flex-row md:items-center md:justify-between">
                 <div>
                   <strong>Rendez-vous prêt à être confirmé</strong>
-                  <p className="mt-1 text-sm text-[#6e655c]">
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
                     {selectedService ? selectedService.category : "—"} •{" "}
                     {selectedService ? selectedService.name : "—"} •{" "}
                     {selectedDateLabel} • {selectedTime} •{" "}
@@ -1434,17 +1577,12 @@ export default function ReservationPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-full bg-gradient-to-r from-[#14110d] to-[#5d4020] px-6 py-4 font-semibold text-white shadow-[0_14px_30px_rgba(30,20,10,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(30,20,10,0.22)] disabled:opacity-50"
+                  className="rounded-full px-6 py-4 font-semibold text-white shadow-[0_14px_30px_rgba(30,20,10,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(30,20,10,0.22)] disabled:opacity-50"
+                  style={{ backgroundColor: colorButtons }}
                 >
                   {saving ? "Enregistrement..." : "Confirmer le rendez-vous"}
                 </button>
               </div>
-
-              {status ? (
-                <div className="rounded-[16px] border border-[#c7e0ce] bg-[#f5fbf6] px-4 py-3 text-sm text-[#1f6a3a]">
-                  {status}
-                </div>
-              ) : null}
             </form>
           </section>
         </div>
@@ -1452,60 +1590,60 @@ export default function ReservationPage() {
 
       {showConfirmation && selectedService ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/45 p-5 backdrop-blur-md sm:items-center">
-          <div className="my-auto w-full max-w-3xl rounded-[32px] border border-white/60 bg-[#fffaf4]/95 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.16)] backdrop-blur-xl sm:p-8">
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+          <div className="my-auto w-full max-w-3xl rounded-[32px] border border-white/60 bg-[var(--page-bg)]/95 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.16)] backdrop-blur-xl sm:p-8">
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
               Rendez-vous confirmé
             </div>
             <h2 className="text-4xl">
               Merci, votre réservation est validée ✅
             </h2>
-            <p className="mt-3 text-[#6e655c]">
+            <p className="mt-3 text-[var(--text-secondary)]">
               Votre rendez-vous a bien été enregistré. Voici votre
               récapitulatif.
             </p>
 
             <div className="mt-6 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[18px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Cliente / client</strong>
-                <span className="mt-2 block text-sm text-[#6e655c]">
+                <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {firstName} {lastName}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Téléphone</strong>
-                <span className="mt-2 block text-sm text-[#6e655c]">
+                <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {phone}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Prestation</strong>
-                <span className="mt-2 block text-sm text-[#6e655c]">
+                <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {selectedService.name}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Date et heure</strong>
-                <span className="mt-2 block text-sm text-[#6e655c]">
+                <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {selectedDateLabel} à {selectedTime}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Tarif</strong>
-                <span className="mt-2 block text-sm text-[#6e655c]">
+                <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {selectedService.price}
                 </span>
               </div>
               {selectedStaffId && staff.find((m) => m.id === selectedStaffId) ? (
-                <div className="rounded-[18px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
-                  <strong>Coiffeuse</strong>
-                  <span className="mt-2 block text-sm text-[#6e655c]">
-                    {(() => { const m = staff.find((s) => s.id === selectedStaffId); return m ? `${m.first_name} ${m.last_name}` : ""; })()}
+                <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+                  <strong>Prestataire</strong>
+                  <span className="mt-2 block text-sm text-[var(--text-secondary)]">
+                    {(() => { const m = staff.find((s) => s.id === selectedStaffId); return m ? m.first_name : ""; })()}
                   </span>
                 </div>
               ) : null}
-              <div className="rounded-[18px] border border-[#e7ddd0] bg-white/86 hover:border-[#d8b56d] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Salon</strong>
-                <span className="mt-2 block text-sm text-[#6e655c]">
+                <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {settings?.salon_name || "Boucle d’Or"}
                 </span>
               </div>
@@ -1514,13 +1652,14 @@ export default function ReservationPage() {
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <a
                 href="/espace-client"
-                className="rounded-full border border-[#d8c8b3] bg-white/60 px-5 py-3 font-semibold transition hover:bg-white hover:shadow-md"
+                className="rounded-full border border-[var(--card-border)] bg-white/60 px-5 py-3 font-semibold transition hover:bg-white hover:shadow-md"
               >
                 Gérer mon rendez-vous
               </a>
               <a
                 href="/"
-                className="rounded-full bg-gradient-to-r from-[#14110d] to-[#5d4020] px-5 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5"
+                className="rounded-full px-5 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5"
+                style={{ backgroundColor: colorButtons }}
               >
                 Retour à l’accueil
               </a>

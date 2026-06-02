@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BRAND_NAME } from "@/lib/theme";
@@ -68,6 +69,15 @@ type SalonSettings = {
   is_open_saturday: boolean;
   is_open_sunday: boolean;
   phone?: string | null;
+  color_page_bg?: string | null;
+  color_titles?: string | null;
+  color_header_bg?: string | null;
+  color_text_main?: string | null;
+  color_text_secondary?: string | null;
+  color_card_border?: string | null;
+  color_accents?: string | null;
+  color_nav_text?: string | null;
+  logo_image_url?: string | null;
 };
 
 const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -94,6 +104,14 @@ const monthNames = [
   "novembre",
   "décembre",
 ];
+
+function hexToRgb(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
 
 function formatFrenchDate(dateStr: string) {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -268,7 +286,7 @@ export default function EspaceClientPage() {
   const [exceptionClosures, setExceptionClosures] = useState<
     ExceptionClosure[]
   >([]);
-  const [settings, setSettings] = useState<SalonSettings | null>(null);
+  const [settings, setSettings] = useState<SalonSettings | null>(() => { try { const c = localStorage.getItem("bo_settings_cache"); return c ? JSON.parse(c) : null; } catch { return null; } });
 
   const next30Days = useMemo(() => getNext30Days(), []);
   const openingMinutes = useMemo(
@@ -290,6 +308,7 @@ export default function EspaceClientPage() {
         .maybeSingle();
 
       setSettings((data ?? null) as SalonSettings | null);
+      if (data) { try { localStorage.setItem("bo_settings_cache", JSON.stringify(data)); } catch {} }
     };
 
     loadSettings();
@@ -681,22 +700,57 @@ export default function EspaceClientPage() {
     }
   };
 
+  const colorButtons = settings?.color_accents || "#111111";
+  const colorPageBg = settings?.color_page_bg || "#f5e9dc";
+  const colorTitles = settings?.color_titles || "#b98b3d";
+  const colorHeaderBg = settings?.color_header_bg || "#F2E8D9";
+  const colorTextMain = settings?.color_text_main || "#1f1b17";
+  const colorTextSecondary = settings?.color_text_secondary || "#6e655c";
+  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
+  const colorAccents = settings?.color_accents || "#d8a646";
+  const colorNavText = settings?.color_nav_text || "#4d4034";
+  const logoUrl = settings?.logo_image_url || "/icon-192.png";
+  const salonName = (settings?.salon_name || "Boucle d'Or").replace(/['‘’‛]/g, "'");
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#fff7e8_0,#f8efe1_34%,#f3e6d4_62%,#fffaf4_100%)] text-[#1f1b17]">
-      <div className="pointer-events-none fixed -left-28 top-16 h-56 w-56 sm:h-72 sm:w-72 rounded-full bg-[#d4af37]/20 blur-3xl" />
+    <main
+      className="relative min-h-screen overflow-hidden"
+      style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}` }}
+    >
+      <style>{`
+        :root {
+          --gold: ${colorTitles};
+          --text-secondary: ${colorTextSecondary};
+          --card-border: ${colorCardBorder};
+          --nav-text: ${colorNavText};
+          --text-main: ${colorTextMain};
+          --accents: ${colorAccents};
+          --page-bg: ${colorPageBg};
+        }
+      `}</style>
+      <div className="pointer-events-none fixed -left-28 top-16 h-56 w-56 sm:h-72 sm:w-72 rounded-full bg-[var(--accents)]/20 blur-3xl" />
       <div className="pointer-events-none fixed -right-32 top-72 h-56 w-56 sm:h-80 sm:w-80 rounded-full bg-[var(--gold)]/10 blur-3xl" />
-      <header className="sticky top-0 z-40 border-b border-[#e8d9c4]/60 bg-[#F2E8D9] shadow-[0_12px_30px_rgba(90,63,30,0.06)]">
+      <header
+        className="sticky top-0 z-40 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
+        style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
+      >
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-[2px]" style={{ background: `linear-gradient(to right, transparent, ${colorAccents}99, transparent)` }} />
+          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 130%, ${colorAccents}28, transparent 55%)` }} />
+          <div className="header-sweep absolute inset-y-0 w-1/3" style={{ background: `linear-gradient(to right, transparent, ${colorAccents}28, transparent)` }} />
+        </div>
         <div className="mx-auto flex w-[min(1200px,calc(100%-20px))] items-center justify-between gap-2 py-2.5 sm:w-[min(1200px,calc(100%-28px))] sm:gap-4 sm:py-3">
           <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="h-11 w-11 sm:h-14 sm:w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border border-[#eadfce] bg-[#f4eadc] shadow-[0_12px_26px_rgba(185,139,61,0.18)]">
-              <img src="/icon-192.png" alt={BRAND_NAME} className="h-full w-full object-cover" />
+            <div className="h-11 w-11 sm:h-14 sm:w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border border-[var(--card-border)] bg-[var(--page-bg)] shadow-[0_12px_26px_rgba(185,139,61,0.18)]">
+              <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />
             </div>
             <span>
-              <span className="block truncate text-xl leading-none tracking-tight sm:text-3xl">
-                Boucle d<span className="text-[var(--gold)]">’Or</span>
+              <span className="block text-xl leading-none tracking-tight sm:text-3xl">
+                <SalonNameGradient name={salonName} goldColor={colorTextMain} goldEndColor={colorAccents} />
               </span>
-              <span className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.28em] text-[#8a7863] sm:block">
-                Espace client
+              <span className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)] sm:block">
+                Mes réservations
               </span>
             </span>
           </Link>
@@ -704,13 +758,14 @@ export default function EspaceClientPage() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
               href="/"
-              className="rounded-full border border-[#d8c8b3]/70 bg-white/50 px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-[#4a3a2c] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
+              className="rounded-full border border-[var(--card-border)]/70 bg-white/50 px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
             >
               Accueil
             </Link>
             <Link
               href="/reservation"
-              className="hidden rounded-full border border-[#d8c8b3]/70 bg-white/50 px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-[#4a3a2c] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)] sm:inline-flex"
+              className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)] sm:inline-flex"
+              style={{ backgroundColor: colorButtons, color: colorTextMain }}
             >
               Réserver
             </Link>
@@ -721,33 +776,33 @@ export default function EspaceClientPage() {
       <section className="mx-auto grid w-[min(1200px,calc(100%-20px))] gap-4 py-4 sm:w-[min(1200px,calc(100%-28px))] sm:gap-6 sm:py-10 lg:grid-cols-[0.78fr_1.22fr]">
         <aside className="contents lg:grid lg:gap-5">
           <div className="order-1 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
               Recherche
             </div>
             <h2 className="text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-3xl">
               Retrouvez votre rendez-vous
             </h2>
-            <p className="mt-3 text-sm leading-6 text-[#6e655c] sm:text-base">
+            <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
               Entrez le numéro utilisé lors de la réservation pour consulter,
               modifier ou annuler votre rendez-vous.
             </p>
 
             <form onSubmit={handleSearch} className="mt-5 grid gap-3 sm:gap-4">
-              <label className="grid gap-2 text-sm text-[#6e655c]">
+              <label className="grid gap-2 text-sm text-[var(--text-secondary)]">
                 Téléphone
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="06 00 00 00 00"
-                  className="min-h-[48px] rounded-2xl border border-[#e2d3bf] bg-white/80 px-4 py-3 text-[#2b2116] shadow-sm outline-none transition placeholder:text-[#b8ab9d] focus:border-[var(--gold)] focus:ring-4 focus:ring-[#d4af37]/15"
+                  className="min-h-[48px] rounded-2xl border border-[var(--card-border)] bg-white/80 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--gold)] focus:ring-4 focus:ring-[#d4af37]/15"
                 />
               </label>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[#22180f] to-[#7b5a2e] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(60,40,20,0.16)] transition hover:-translate-y-0.5 disabled:opacity-50"
+                className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[var(--text-main)] to-[var(--gold)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(60,40,20,0.16)] transition hover:-translate-y-0.5 disabled:opacity-50"
               >
                 {loading ? "Recherche..." : "Retrouvez votre rendez-vous"}
               </button>
@@ -761,7 +816,7 @@ export default function EspaceClientPage() {
           </div>
 
           <div className="order-3 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
               Information
             </div>
             <h2 className="text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-3xl">
@@ -769,19 +824,19 @@ export default function EspaceClientPage() {
             </h2>
 
             <div className="mt-5 grid gap-3">
-              <div className="grid gap-1 border-b sm:flex sm:justify-between sm:gap-4 border-[#e7ddd0] pb-3 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Téléphone salon</strong>
+              <div className="grid gap-1 border-b sm:flex sm:justify-between sm:gap-4 border-[var(--card-border)] pb-3 text-[var(--text-secondary)]">
+                <strong className="text-[var(--text-main)]">Téléphone salon</strong>
                 <span>{settings?.phone || "09 86 67 88 30"}</span>
               </div>
-              <div className="grid gap-1 border-b sm:flex sm:justify-between sm:gap-4 border-[#e7ddd0] pb-3 text-[#6e655c]">
-                <strong className="text-[#1f1b17]">Horaires</strong>
+              <div className="grid gap-1 border-b sm:flex sm:justify-between sm:gap-4 border-[var(--card-border)] pb-3 text-[var(--text-secondary)]">
+                <strong className="text-[var(--text-main)]">Horaires</strong>
                 <span>
                   {settings?.opening_time?.slice(0, 5) || "09:00"} à{" "}
                   {settings?.closing_time?.slice(0, 5) || "19:00"}
                 </span>
               </div>
-              <div className="grid gap-1 text-[#6e655c] sm:flex sm:justify-between sm:gap-4">
-                <strong className="text-[#1f1b17]">Jours ouverts</strong>
+              <div className="grid gap-1 text-[var(--text-secondary)] sm:flex sm:justify-between sm:gap-4">
+                <strong className="text-[var(--text-main)]">Jours ouverts</strong>
                 <span>{formatOpenDays(settings)}</span>
               </div>
             </div>
@@ -791,7 +846,7 @@ export default function EspaceClientPage() {
         <section className="order-2 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
-              <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
                 Résultats
               </div>
               <h2 className="text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-3xl">
@@ -801,7 +856,7 @@ export default function EspaceClientPage() {
           </div>
 
           {visibleAppointments.length === 0 ? (
-            <div className="rounded-[20px] border border-dashed border-[#d7cabb] bg-white px-4 py-8 sm:px-6 sm:py-10 text-center text-[#6e655c]">
+            <div className="rounded-[20px] border border-dashed border-[var(--card-border)] bg-white px-4 py-8 sm:px-6 sm:py-10 text-center text-[var(--text-secondary)]">
               Aucun rendez-vous à venir affiché pour le moment.
             </div>
           ) : (
@@ -809,77 +864,77 @@ export default function EspaceClientPage() {
               {visibleAppointments.map((appointment) => (
                 <article
                   key={appointment.id}
-                  className="rounded-[22px] border border-[#e7ddd0] bg-white/86 p-4 shadow-sm sm:rounded-[24px] sm:p-5"
+                  className="rounded-[22px] border border-[var(--card-border)] bg-white/86 p-4 shadow-sm sm:rounded-[24px] sm:p-5"
                 >
                   <div className="mb-4 grid gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-between">
                     <div>
                       <h3 className="text-xl leading-tight sm:text-2xl">
                         {appointment.services?.name ?? "Prestation"}
                       </h3>
-                      <p className="mt-1 text-[#6e655c]">
+                      <p className="mt-1 text-[var(--text-secondary)]">
                         {appointment.services?.categories?.name ??
                           "Sans catégorie"}{" "}
                         • {appointment.services?.duration_minutes ?? "--"} min
                       </p>
                     </div>
 
-                    <span className="w-fit rounded-full bg-[#f4ebdc] px-3 py-2 text-sm font-semibold text-[#8a6626]">
+                    <span className="w-fit rounded-full bg-[var(--page-bg)] px-3 py-2 text-sm font-semibold text-[var(--gold)]">
                       {formatPrice(appointment.price_cents)}
                     </span>
                   </div>
 
                   <div className="grid gap-2.5 sm:gap-3 md:grid-cols-2">
-                    <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3.5 sm:rounded-[18px] sm:p-4">
+                    <div className="rounded-[16px] border border-[var(--card-border)] bg-[var(--page-bg)] p-3.5 sm:rounded-[18px] sm:p-4">
                       <strong>Cliente / client</strong>
-                      <span className="mt-2 block text-sm text-[#6e655c]">
+                      <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                         {appointment.clients?.first_name}{" "}
                         {appointment.clients?.last_name}
                       </span>
                     </div>
 
-                    <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3.5 sm:rounded-[18px] sm:p-4">
+                    <div className="rounded-[16px] border border-[var(--card-border)] bg-[var(--page-bg)] p-3.5 sm:rounded-[18px] sm:p-4">
                       <strong>Téléphone</strong>
-                      <span className="mt-2 block text-sm text-[#6e655c]">
+                      <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                         {appointment.clients?.phone}
                       </span>
                     </div>
 
-                    <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3.5 sm:rounded-[18px] sm:p-4">
+                    <div className="rounded-[16px] border border-[var(--card-border)] bg-[var(--page-bg)] p-3.5 sm:rounded-[18px] sm:p-4">
                       <strong>Date</strong>
-                      <span className="mt-2 block text-sm text-[#6e655c]">
+                      <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                         {formatFrenchDate(appointment.appointment_date)}
                       </span>
                     </div>
 
-                    <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3.5 sm:rounded-[18px] sm:p-4">
+                    <div className="rounded-[16px] border border-[var(--card-border)] bg-[var(--page-bg)] p-3.5 sm:rounded-[18px] sm:p-4">
                       <strong>Heure</strong>
-                      <span className="mt-2 block text-sm text-[#6e655c]">
+                      <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                         {formatFrenchTime(appointment.start_time)} →{" "}
                         {formatFrenchTime(appointment.end_time)}
                       </span>
                     </div>
 
-                    <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3.5 sm:rounded-[18px] sm:p-4">
+                    <div className="rounded-[16px] border border-[var(--card-border)] bg-[var(--page-bg)] p-3.5 sm:rounded-[18px] sm:p-4">
                       <strong>Statut</strong>
-                      <span className="mt-2 block text-sm text-[#6e655c]">
+                      <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                         {appointment.status === "confirmed" ? "Confirmé" : appointment.status === "completed" ? "Terminé" : "Annulé"}
                       </span>
                     </div>
 
                     {appointment.staff ? (
-                      <div className="rounded-[16px] border border-[#e7ddd0] bg-[#fcfaf7] p-3.5 sm:rounded-[18px] sm:p-4">
-                        <strong>Coiffeuse</strong>
-                        <span className="mt-2 block text-sm text-[#6e655c]">
-                          {appointment.staff.first_name} {appointment.staff.last_name}
+                      <div className="rounded-[16px] border border-[var(--card-border)] bg-[var(--page-bg)] p-3.5 sm:rounded-[18px] sm:p-4">
+                        <strong>Prestataire</strong>
+                        <span className="mt-2 block text-sm text-[var(--text-secondary)]">
+                          {appointment.staff.first_name}
                         </span>
                       </div>
                     ) : null}
                   </div>
 
                   {appointment.client_message ? (
-                    <div className="mt-4 rounded-[18px] border border-[#e7ddd0] bg-[#fcfaf7] p-4">
+                    <div className="mt-4 rounded-[18px] border border-[var(--card-border)] bg-[var(--page-bg)] p-4">
                       <strong>Message laissé au salon</strong>
-                      <p className="mt-2 text-sm text-[#6e655c]">
+                      <p className="mt-2 text-sm text-[var(--text-secondary)]">
                         {appointment.client_message}
                       </p>
                     </div>
@@ -888,7 +943,7 @@ export default function EspaceClientPage() {
                   <div className="mt-4 grid gap-2.5 sm:flex sm:flex-wrap sm:gap-3">
                     <a
                       href={`tel:${(settings?.phone || "0986678830").replace(/\s+/g, "")}`}
-                      className="min-h-[48px] rounded-full border border-black/10 px-5 py-3 text-center font-medium hover:bg-[#fcfaf7]"
+                      className="min-h-[48px] rounded-full border border-black/10 px-5 py-3 text-center font-medium hover:bg-[var(--page-bg)]"
                     >
                       Appeler le salon
                     </a>
@@ -896,7 +951,7 @@ export default function EspaceClientPage() {
                     <button
                       type="button"
                       onClick={() => openEdit(appointment)}
-                      className="min-h-[48px] rounded-full border border-black/10 px-5 py-3 text-center font-medium hover:bg-[#fcfaf7]"
+                      className="min-h-[48px] rounded-full border border-black/10 px-5 py-3 text-center font-medium hover:bg-[var(--page-bg)]"
                     >
                       Modifier le rendez-vous
                     </button>
@@ -927,7 +982,8 @@ export default function EspaceClientPage() {
                       <button
                         type="button"
                         onClick={() => setConfirmCancelId(appointment.id)}
-                        className="min-h-[48px] rounded-full bg-[#111111] px-5 py-3 font-medium text-white hover:opacity-90"
+                        className="min-h-[48px] rounded-full px-5 py-3 font-medium text-white hover:opacity-90"
+                        style={{ backgroundColor: colorButtons }}
                       >
                         Annuler le rendez-vous
                       </button>
@@ -944,13 +1000,13 @@ export default function EspaceClientPage() {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-3 sm:p-5 backdrop-blur-sm">
           <div className="flex min-h-full items-center justify-center">
             <div className="w-full max-w-4xl rounded-[24px] border border-white/50 bg-white/90 p-4 sm:rounded-[30px] sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.14)] backdrop-blur-xl">
-              <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
+              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
                 Modifier le rendez-vous
               </div>
               <h2 className="text-2xl leading-tight sm:text-4xl">
                 Choisissez une nouvelle date et un nouveau créneau
               </h2>
-              <p className="mt-3 text-sm leading-6 text-[#6e655c] sm:text-base">
+              <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
                 {editingAppointment.services?.name ?? "Prestation"} •{" "}
                 {editingAppointment.services?.duration_minutes ?? "--"} min
               </p>
@@ -966,7 +1022,7 @@ export default function EspaceClientPage() {
                   {dayNames.map((name) => (
                     <div
                       key={name}
-                      className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[#6e655c]"
+                      className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]"
                     >
                       {name}
                     </div>
@@ -984,7 +1040,7 @@ export default function EspaceClientPage() {
                           (_, index) => (
                             <div
                               key={`pad-${index}`}
-                              className="min-h-[48px] rounded-[14px] bg-[#f2ece4] opacity-40 sm:min-h-[68px] sm:rounded-[16px]"
+                              className="min-h-[48px] rounded-[14px] bg-[var(--page-bg)] opacity-40 sm:min-h-[68px] sm:rounded-[16px]"
                             />
                           ),
                         )}
@@ -1002,10 +1058,10 @@ export default function EspaceClientPage() {
                               onClick={() => handleSelectDate(date)}
                               className={`min-h-[48px] rounded-[14px] border p-1.5 text-left transition sm:min-h-[68px] sm:rounded-[16px] sm:p-2 ${
                                 closed
-                                  ? "cursor-not-allowed border-[#e7ddd0] bg-[#f0ebe3] text-[#9a8f83]"
+                                  ? "cursor-not-allowed border-[var(--card-border)] bg-[var(--page-bg)] text-[var(--text-secondary)]"
                                   : active
-                                    ? "border-[var(--gold)] bg-[#fffaf2] shadow-[inset_0_0_0_1px_var(--gold)]"
-                                    : "border-[#e7ddd0] bg-white hover:-translate-y-[1px]"
+                                    ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[inset_0_0_0_1px_var(--gold)]"
+                                    : "border-[var(--card-border)] bg-white hover:-translate-y-[1px]"
                               }`}
                             >
                               <div className="font-bold">{date.getDate()}</div>
@@ -1027,8 +1083,8 @@ export default function EspaceClientPage() {
                     onClick={() => setSelectedTime(slot.label)}
                     className={`min-h-[48px] rounded-[16px] border px-3 py-3 text-center font-semibold ${
                       selectedTime === slot.label
-                        ? "border-[var(--gold)] bg-[#fffaf2] shadow-[inset_0_0_0_1px_var(--gold)]"
-                        : "border-[#e7ddd0] bg-white"
+                        ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[inset_0_0_0_1px_var(--gold)]"
+                        : "border-[var(--card-border)] bg-white"
                     } ${!selectedDateKey || !slot.available ? "cursor-not-allowed opacity-40" : ""}`}
                   >
                     {slot.label}
@@ -1036,9 +1092,9 @@ export default function EspaceClientPage() {
                 ))}
               </div>
 
-              <div className="mt-5 rounded-[20px] border border-[#ead7b7] bg-[#fffaf2] p-4 sm:mt-6 sm:p-5">
+              <div className="mt-5 rounded-[20px] border border-[var(--card-border)] bg-[var(--page-bg)] p-4 sm:mt-6 sm:p-5">
                 <strong>Nouveau rendez-vous</strong>
-                <p className="mt-1 text-sm text-[#6e655c]">
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
                   {selectedDateKey
                     ? `${formatDateLabel(
                         makeLocalDate(
@@ -1063,7 +1119,8 @@ export default function EspaceClientPage() {
                   type="button"
                   onClick={handleSaveEdit}
                   disabled={savingEdit}
-                  className="min-h-[48px] rounded-full bg-[#111111] px-5 py-3 font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  className="min-h-[48px] rounded-full px-5 py-3 font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: colorButtons }}
                 >
                   {savingEdit
                     ? "Enregistrement..."
