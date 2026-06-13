@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@supabase/supabase-js";
+import { getCurrentSalon } from "@/lib/salon";
+import { SalonProvider } from "@/components/SalonProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,11 +20,16 @@ const geistMono = Geist_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   let salonName = "Boucle d'Or";
   try {
+    const salon = await getCurrentSalon();
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
     );
-    const { data } = await supabase.from("salon_settings").select("salon_name").single();
+    const { data } = await supabase
+      .from("salon_settings")
+      .select("salon_name")
+      .eq("salon_id", salon.id)
+      .single();
     if (data?.salon_name) salonName = data.salon_name;
   } catch {}
 
@@ -54,17 +61,21 @@ export const viewport: Viewport = {
   themeColor: "#F5E9DC",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const salon = await getCurrentSalon();
+
   return (
     <html
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SalonProvider salon={salon}>{children}</SalonProvider>
+      </body>
     </html>
   );
 }

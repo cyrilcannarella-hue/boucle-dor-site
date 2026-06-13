@@ -5,6 +5,7 @@ import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { useSalon } from "@/hooks/useSalon";
 
 type ClientRow = {
   id: string;
@@ -104,6 +105,7 @@ function hexToRgb(hex: string): string {
 export default function BackOfficeClientsPage() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const { id: salonId } = useSalon();
 
   const [settings, setSettings] = useState<SalonSettings | null>(() => {
     try {
@@ -148,8 +150,10 @@ export default function BackOfficeClientsPage() {
       const { data, error } = await supabase
         .from("clients")
         .select("id, first_name, last_name, phone, email, notes")
+        .eq("salon_id", salonId)
         .order("last_name", { ascending: true })
-        .order("first_name", { ascending: true });
+        .order("first_name", { ascending: true })
+        .limit(10000);
 
       if (error) throw new Error((error as Error).message);
 
@@ -167,13 +171,14 @@ export default function BackOfficeClientsPage() {
     supabase
       .from("salon_settings")
       .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text")
+      .eq("salon_id", salonId)
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
         if (data) { try { localStorage.setItem("bo_settings_cache", JSON.stringify(data)); } catch {} }
         setSettings((data ?? null) as SalonSettings | null);
       });
-  }, []);
+  }, [salonId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -218,6 +223,7 @@ export default function BackOfficeClientsPage() {
           )
         `
         )
+        .eq("salon_id", salonId)
         .eq("client_id", client.id)
         .order("appointment_date", { ascending: false })
         .order("start_time", { ascending: false });
@@ -267,6 +273,7 @@ export default function BackOfficeClientsPage() {
       const { data: existingPhoneClient, error: existingPhoneError } = await supabase
         .from("clients")
         .select("id")
+        .eq("salon_id", salonId)
         .eq("phone", cleanPhone)
         .neq("id", selectedClient.id)
         .maybeSingle();
@@ -288,7 +295,8 @@ export default function BackOfficeClientsPage() {
           email: editEmail.trim() || null,
           notes: editNotes.trim() || null,
         })
-        .eq("id", selectedClient.id);
+        .eq("id", selectedClient.id)
+        .eq("salon_id", salonId);
 
       if (error) throw new Error((error as Error).message);
 
@@ -326,12 +334,14 @@ export default function BackOfficeClientsPage() {
       const { error: apptError } = await supabase
         .from("appointments")
         .delete()
-        .eq("client_id", selectedClient.id);
+        .eq("client_id", selectedClient.id)
+        .eq("salon_id", salonId);
       if (apptError) throw new Error(apptError.message);
       const { error } = await supabase
         .from("clients")
         .delete()
-        .eq("id", selectedClient.id);
+        .eq("id", selectedClient.id)
+        .eq("salon_id", salonId);
       if (error) throw new Error((error as Error).message);
       setClients((prev) => prev.filter((c) => c.id !== selectedClient.id));
       closeClientModal();
@@ -423,7 +433,7 @@ export default function BackOfficeClientsPage() {
       const rows = lines.slice(1).map((l) => parseCSVLine(l));
 
       // Récupérer les téléphones existants pour éviter les doublons
-      const { data: existingData } = await supabase.from("clients").select("phone");
+      const { data: existingData } = await supabase.from("clients").select("phone").eq("salon_id", salonId).limit(10000);
       const existingPhones = new Set((existingData ?? []).filter((r: { phone: string | null }) => r.phone).map((r: { phone: string | null }) => normalizePhone(r.phone!)));
 
       const toInsert: { first_name: string; last_name: string; phone: string; email: string | null; notes: string | null }[] = [];
@@ -449,7 +459,7 @@ export default function BackOfficeClientsPage() {
         return;
       }
 
-      const { error } = await supabase.from("clients").insert(toInsert);
+      const { error } = await supabase.from("clients").insert(toInsert.map((c) => ({ ...c, salon_id: salonId })));
       if (error) throw new Error(error.message);
 
       await loadClients();
@@ -462,14 +472,15 @@ export default function BackOfficeClientsPage() {
   };
 
   const filteredClients = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const term = normalize(search.trim());
     if (!term) return clients;
 
     return clients.filter((client) => {
-      const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-      const reverseName = `${client.last_name} ${client.first_name}`.toLowerCase();
-      const phone = (client.phone ?? "").toLowerCase();
-      const email = (client.email ?? "").toLowerCase();
+      const fullName = normalize(`${client.first_name} ${client.last_name}`);
+      const reverseName = normalize(`${client.last_name} ${client.first_name}`);
+      const phone = (client.phone ?? "");
+      const email = normalize(client.email ?? "");
 
       return fullName.includes(term) || reverseName.includes(term) || phone.includes(term) || email.includes(term);
     });

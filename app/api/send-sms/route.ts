@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getCurrentSalon } from "@/lib/salon";
 
 export async function POST(req: NextRequest) {
   const { to, firstName, serviceName, date, time } = await req.json();
@@ -18,8 +19,9 @@ export async function POST(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (supabaseUrl && serviceKey) {
+    const salon = await getCurrentSalon();
     const supabase = createClient(supabaseUrl, serviceKey);
-    const { data } = await supabase.from("salon_settings").select("sms_sender, salon_name").single();
+    const { data } = await supabase.from("salon_settings").select("sms_sender, salon_name").eq("salon_id", salon.id).single();
     if (data?.sms_sender) smsSender = data.sms_sender;
     if (data?.salon_name) salonName = data.salon_name;
   }

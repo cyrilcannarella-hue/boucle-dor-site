@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { useSalon } from "@/hooks/useSalon";
 
 type SalonSettings = {
   id: string;
@@ -27,6 +28,7 @@ function hexToRgb(hex: string) {
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { id: salonId } = useSalon();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,10 +40,10 @@ export default function LoginPage() {
     supabase
       .from("salon_settings")
       .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg")
-      .limit(1)
+      .eq("salon_id", salonId)
       .single()
       .then(({ data }) => { if (data) setSettings(data as SalonSettings); });
-  }, []);
+  }, [salonId]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,6 +4,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { BRAND_NAME } from "@/lib/theme";
+import { useSalon } from "@/hooks/useSalon";
 
 type SalonSettings = {
   id: string;
@@ -128,6 +129,7 @@ const SalonNamePremium = memo(function SalonNamePremium({
 });
 
 export default function Home() {
+  const { id: salonId } = useSalon();
   const [settings, setSettings] = useState<SalonSettings | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -217,14 +219,14 @@ useEffect(() => {
       const { data } = await supabase
         .from("salon_settings")
         .select("*")
-        .limit(1)
+        .eq("salon_id", salonId)
         .maybeSingle();
 
       setSettings((data ?? null) as SalonSettings | null);
     };
 
     loadSettings();
-  }, []);
+  }, [salonId]);
 
   const salonName = settings?.salon_name || "Boucle d’Or";
   const salonPhone = settings?.phone || "09 86 67 88 30";

@@ -5,6 +5,7 @@ import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BRAND_NAME } from "@/lib/theme";
+import { useSalon } from "@/hooks/useSalon";
 
 type AppointmentRow = {
   id: string;
@@ -270,6 +271,7 @@ function isBlockedByExceptionalClosure(
 }
 
 export default function EspaceClientPage() {
+  const { id: salonId } = useSalon();
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -304,6 +306,7 @@ export default function EspaceClientPage() {
       const { data } = await supabase
         .from("salon_settings")
         .select("*")
+        .eq("salon_id", salonId)
         .limit(1)
         .maybeSingle();
 
@@ -312,7 +315,7 @@ export default function EspaceClientPage() {
     };
 
     loadSettings();
-  }, []);
+  }, [salonId]);
 
   useEffect(() => {
     if (editingAppointment) {
@@ -333,6 +336,7 @@ export default function EspaceClientPage() {
     const { data: clientRows, error: clientError } = await supabase
       .from("clients")
       .select("id, first_name, last_name, phone, email")
+      .eq("salon_id", salonId)
       .eq("phone", digitsOnly);
 
     if (clientError) {
@@ -379,6 +383,7 @@ export default function EspaceClientPage() {
         )
       `,
       )
+      .eq("salon_id", salonId)
       .in("client_id", clientIds)
       .in("status", ["confirmed", "completed"])
       .gte("appointment_date", new Date().toISOString().slice(0, 10))
@@ -401,6 +406,7 @@ export default function EspaceClientPage() {
     const { data, error } = await supabase
       .from("appointments")
       .select("id, appointment_date, start_time, end_time, status")
+      .eq("salon_id", salonId)
       .eq("appointment_date", appointmentDate)
       .in("status", ["confirmed", "completed"])
       .order("start_time", { ascending: true });
@@ -422,6 +428,7 @@ export default function EspaceClientPage() {
     const { data, error } = await supabase
       .from("exception_closures")
       .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .eq("salon_id", salonId)
       .eq("closure_date", appointmentDate)
       .order("start_time", { ascending: true });
 
@@ -479,7 +486,8 @@ export default function EspaceClientPage() {
       const { error } = await supabase
         .from("appointments")
         .update({ status: "cancelled" })
-        .eq("id", appointmentId);
+        .eq("id", appointmentId)
+        .eq("salon_id", salonId);
 
       if (error) {
         throw new Error((error as Error).message);
@@ -681,7 +689,8 @@ export default function EspaceClientPage() {
           start_time: startTime,
           end_time: endTime,
         })
-        .eq("id", editingAppointment.id);
+        .eq("id", editingAppointment.id)
+        .eq("salon_id", salonId);
 
       if (error) {
         throw new Error((error as Error).message);

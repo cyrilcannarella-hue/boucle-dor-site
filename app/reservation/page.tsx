@@ -5,6 +5,7 @@ import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BRAND_NAME } from "@/lib/theme";
+import { useSalon } from "@/hooks/useSalon";
 
 type Service = {
   id: string;
@@ -311,6 +312,7 @@ function getAppointmentBusySegments(appointment: BusyAppointment) {
 }
 
 export default function ReservationPage() {
+  const { id: salonId } = useSalon();
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [orderedCategories, setOrderedCategories] = useState<string[]>([]);
 
@@ -370,7 +372,7 @@ export default function ReservationPage() {
       const { data: settingsData } = await supabase
         .from("salon_settings")
         .select("*")
-        .limit(1)
+        .eq("salon_id", salonId)
         .maybeSingle();
 
       setSettings((settingsData ?? null) as SalonSettings | null);
@@ -379,6 +381,7 @@ export default function ReservationPage() {
       const { data: categoriesData } = await supabase
         .from("categories")
         .select("name, display_order")
+        .eq("salon_id", salonId)
         .order("display_order", { ascending: true })
         .order("name", { ascending: true });
       if (categoriesData) {
@@ -403,6 +406,7 @@ export default function ReservationPage() {
           )
         `,
         )
+        .eq("salon_id", salonId)
         .eq("is_visible", true)
         .order("display_order", { ascending: true });
 
@@ -445,6 +449,7 @@ export default function ReservationPage() {
       const { data: staffData } = await supabase
         .from("staff")
         .select("id, first_name, last_name, color")
+        .eq("salon_id", salonId)
         .eq("is_active", true)
         .order("last_name", { ascending: true });
 
@@ -455,6 +460,7 @@ export default function ReservationPage() {
       const { data: schedulesData } = await supabase
         .from("staff_schedules")
         .select("*")
+        .eq("salon_id", salonId)
         .order("day_of_week", { ascending: true });
 
       setStaffSchedules((schedulesData ?? []) as StaffSchedule[]);
@@ -462,6 +468,7 @@ export default function ReservationPage() {
       const { data: questionsData } = await supabase
         .from("questionnaire_questions")
         .select("id, question, display_order")
+        .eq("salon_id", salonId)
         .eq("is_active", true)
         .order("display_order", { ascending: true })
         .order("created_at", { ascending: true });
@@ -469,7 +476,7 @@ export default function ReservationPage() {
     };
 
     loadInitialData();
-  }, []);
+  }, [salonId]);
 
   useEffect(() => {
     if (!selectedDateKey) return;
@@ -566,6 +573,7 @@ export default function ReservationPage() {
       .select(
         "id, start_time, end_time, break_start_time, break_end_time, status, staff_id",
       )
+      .eq("salon_id", salonId)
       .eq("appointment_date", appointmentDate)
       .in("status", ["confirmed", "completed"])
       .order("start_time", { ascending: true });
@@ -585,6 +593,7 @@ export default function ReservationPage() {
     const { data, error } = await supabase
       .from("exception_closures")
       .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .eq("salon_id", salonId)
       .eq("closure_date", appointmentDate)
       .order("start_time", { ascending: true });
 
@@ -780,6 +789,7 @@ export default function ReservationPage() {
     const { data, error } = await supabase
       .from("clients")
       .select("id, first_name, last_name, email")
+      .eq("salon_id", salonId)
       .eq("phone", normalizedPhone)
       .maybeSingle<ExistingClientRow>();
 
@@ -797,6 +807,7 @@ export default function ReservationPage() {
       const { data: apptData } = await supabase
         .from("appointments")
         .select("id, appointment_date, appointment_answers(question_id, answer)")
+        .eq("salon_id", salonId)
         .eq("client_id", data.id)
         .order("appointment_date", { ascending: false })
         .order("start_time", { ascending: false })
@@ -903,6 +914,7 @@ export default function ReservationPage() {
         await supabase
           .from("clients")
           .select("id")
+          .eq("salon_id", salonId)
           .eq("phone", normalizedPhone)
           .maybeSingle<ClientRow>();
 
@@ -921,7 +933,8 @@ export default function ReservationPage() {
             email: email || null,
             notes: message || null,
           })
-          .eq("id", clientId);
+          .eq("id", clientId)
+          .eq("salon_id", salonId);
 
         if (updateClientError) {
           throw new Error(updateClientError.message);
@@ -931,6 +944,7 @@ export default function ReservationPage() {
           await supabase
             .from("clients")
             .insert({
+              salon_id: salonId,
               first_name: firstName,
               last_name: lastName,
               phone: normalizedPhone,
@@ -952,6 +966,7 @@ export default function ReservationPage() {
         const { data: existingAppointment } = await supabase
           .from("appointments")
           .select("id")
+          .eq("salon_id", salonId)
           .eq("client_id", clientId)
           .eq("appointment_date", appointmentDate)
           .eq("start_time", startTime)
@@ -1005,6 +1020,7 @@ export default function ReservationPage() {
       const { data: newAppointment, error: appointmentError } = await supabase
         .from("appointments")
         .insert({
+          salon_id: salonId,
           client_id: clientId,
           service_id: selectedService.id,
           appointment_date: appointmentDate,
@@ -1027,6 +1043,7 @@ export default function ReservationPage() {
 
       if (questions.length > 0 && newAppointment?.id) {
         const answersPayload = questions.map((q) => ({
+          salon_id: salonId,
           appointment_id: newAppointment.id,
           question_id: q.id,
           question_text: q.question,

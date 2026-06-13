@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { getCurrentSalon } from "@/lib/salon";
 
 async function getSettings() {
   try {
+    const salon = await getCurrentSalon();
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
@@ -10,6 +12,7 @@ async function getSettings() {
     const { data } = await supabase
       .from("salon_settings")
       .select("salon_name, color_page_bg")
+      .eq("salon_id", salon.id)
       .single();
     return data;
   } catch {

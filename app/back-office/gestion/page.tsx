@@ -5,6 +5,7 @@ import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { useSalon } from "@/hooks/useSalon";
 
 function hexToRgb(hex: string) {
   const clean = hex.replace("#", "");
@@ -248,6 +249,7 @@ function normalizePhone(value: string) {
 export default function BackOfficeGestionPage() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const { id: salonId } = useSalon();
 
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -380,7 +382,7 @@ export default function BackOfficeGestionPage() {
 
   useEffect(() => {
     loadGestionData();
-  }, []);
+  }, [salonId]);
 
   const loadGestionData = async () => {
     try {
@@ -388,22 +390,24 @@ export default function BackOfficeGestionPage() {
       setStatusMessage("");
 
       const [settingsRes, closuresRes, categoriesRes, servicesRes, clientsRes, staffRes, schedulesRes, questionsRes] = await Promise.all([
-        supabase.from("salon_settings").select("*").limit(1).maybeSingle(),
-        supabase.from("exception_closures").select("*").order("closure_date", { ascending: true }),
-        supabase.from("categories").select("id, name, color, display_order").order("display_order", { ascending: true }).order("name", { ascending: true }),
+        supabase.from("salon_settings").select("*").eq("salon_id", salonId).limit(1).maybeSingle(),
+        supabase.from("exception_closures").select("*").eq("salon_id", salonId).order("closure_date", { ascending: true }),
+        supabase.from("categories").select("id, name, color, display_order").eq("salon_id", salonId).order("display_order", { ascending: true }).order("name", { ascending: true }),
         supabase
           .from("services")
           .select("id, name, duration_minutes, price_cents, category_id, display_order, is_visible, duration_before_break, break_duration, duration_after_break, categories(name, color)")
+          .eq("salon_id", salonId)
           .order("display_order", { ascending: true })
           .order("name", { ascending: true }),
         supabase
           .from("clients")
           .select("id, first_name, last_name, phone, email, notes")
+          .eq("salon_id", salonId)
           .order("last_name", { ascending: true })
           .order("first_name", { ascending: true }),
-        supabase.from("staff").select("id, first_name, last_name, color, is_active").order("last_name", { ascending: true }),
-        supabase.from("staff_schedules").select("*").order("day_of_week", { ascending: true }),
-        supabase.from("questionnaire_questions").select("id, question, is_active, display_order").order("display_order", { ascending: true }).order("created_at", { ascending: true }),
+        supabase.from("staff").select("id, first_name, last_name, color, is_active").eq("salon_id", salonId).order("last_name", { ascending: true }),
+        supabase.from("staff_schedules").select("*").eq("salon_id", salonId).order("day_of_week", { ascending: true }),
+        supabase.from("questionnaire_questions").select("id, question, is_active, display_order").eq("salon_id", salonId).order("display_order", { ascending: true }).order("created_at", { ascending: true }),
       ]);
 
       if (settingsRes.error) throw new Error(settingsRes.error.message);
@@ -461,7 +465,7 @@ export default function BackOfficeGestionPage() {
       setSavingSettings(true);
       setStatusMessage("");
 
-      const { data: oldData } = await supabase.from("salon_settings").select("*").eq("id", settings.id).single();
+      const { data: oldData } = await supabase.from("salon_settings").select("*").eq("id", settings.id).eq("salon_id", salonId).single();
       const oldSettings = oldData as SalonSettings | null;
 
       const { data, error } = await supabase
@@ -497,6 +501,7 @@ export default function BackOfficeGestionPage() {
           closing_time_sunday: settings.closing_time_sunday ?? null,
         })
         .eq("id", settings.id)
+        .eq("salon_id", salonId)
         .select("*")
         .single();
       if (error) throw new Error((error as Error).message);
@@ -539,14 +544,14 @@ export default function BackOfficeGestionPage() {
             if (adjOpen >= adjClose) { adjOpen = newOpen; adjClose = newClose; }
 
             if (adjOpen !== staffOpen || adjClose !== staffClose) {
-              await supabase.from("staff_schedules").update({ opening_time: adjOpen, closing_time: adjClose }).eq("id", sched.id);
+              await supabase.from("staff_schedules").update({ opening_time: adjOpen, closing_time: adjClose }).eq("id", sched.id).eq("salon_id", salonId);
               schedulesChanged = true;
             }
           }
         }
 
         if (schedulesChanged) {
-          const { data: refreshed } = await supabase.from("staff_schedules").select("*").order("day_of_week", { ascending: true });
+          const { data: refreshed } = await supabase.from("staff_schedules").select("*").eq("salon_id", salonId).order("day_of_week", { ascending: true });
           if (refreshed) setStaffSchedules(refreshed as StaffSchedule[]);
         }
       }
@@ -568,6 +573,7 @@ export default function BackOfficeGestionPage() {
       setSavingClosure(true);
       setStatusMessage("");
       const { error } = await supabase.from("exception_closures").insert({
+        salon_id: salonId,
         closure_date: newClosureDate,
         is_all_day: newClosureAllDay,
         start_time: newClosureAllDay ? "00:00" : newClosureStartTime,
@@ -593,7 +599,7 @@ export default function BackOfficeGestionPage() {
     try {
       setDeletingClosureId(id);
       setStatusMessage("");
-      const { error } = await supabase.from("exception_closures").delete().eq("id", id);
+      const { error } = await supabase.from("exception_closures").delete().eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error((error as Error).message);
       setClosures((prev) => prev.filter((closure) => closure.id !== id));
       setStatusMessage("Fermeture supprimée ✅");
@@ -613,7 +619,7 @@ export default function BackOfficeGestionPage() {
     try {
       setSavingCategory(true);
       setStatusMessage("");
-      const { error } = await supabase.from("categories").insert({ name, color: newCategoryColor });
+      const { error } = await supabase.from("categories").insert({ salon_id: salonId, name, color: newCategoryColor });
       if (error) throw new Error((error as Error).message);
       setNewCategoryName("");
       setNewCategoryColor(COLOR_OPTIONS[0]);
@@ -634,14 +640,14 @@ export default function BackOfficeGestionPage() {
     const updated = reordered.map((c, i) => ({ ...c, display_order: i }));
     setCategories(updated);
     const supabase = createClient();
-    await Promise.all(updated.map((c) => supabase.from("categories").update({ display_order: c.display_order }).eq("id", c.id)));
+    await Promise.all(updated.map((c) => supabase.from("categories").update({ display_order: c.display_order }).eq("id", c.id).eq("salon_id", salonId)));
   };
 
   const handleUpdateCategory = async (id: string, values: Partial<Pick<CategoryRow, "name" | "color" | "display_order">>) => {
     try {
       setUpdatingCategoryId(id);
       setStatusMessage("");
-      const { error } = await supabase.from("categories").update(values).eq("id", id);
+      const { error } = await supabase.from("categories").update(values).eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error((error as Error).message);
       setCategories((prev) => prev.map((category) => (category.id === id ? { ...category, ...values } : category)));
     } catch (error: unknown) {
@@ -655,7 +661,7 @@ export default function BackOfficeGestionPage() {
     try {
       setDeletingCategoryId(id);
       setStatusMessage("");
-      const { error } = await supabase.from("categories").delete().eq("id", id);
+      const { error } = await supabase.from("categories").delete().eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error((error as Error).message);
       setCategories((prev) => prev.filter((category) => category.id !== id));
       setStatusMessage("Catégorie supprimée ✅");
@@ -685,6 +691,7 @@ export default function BackOfficeGestionPage() {
       setSavingService(true);
       setStatusMessage("");
       const { error } = await supabase.from("services").insert({
+        salon_id: salonId,
         name,
         duration_minutes: total,
         duration_before_break: before,
@@ -726,7 +733,7 @@ export default function BackOfficeGestionPage() {
         const after = Number(cleanValues.duration_after_break ?? current?.duration_after_break ?? 0);
         cleanValues.duration_minutes = getTotalDuration(before, pause, after);
       }
-      const { error } = await supabase.from("services").update(cleanValues).eq("id", id);
+      const { error } = await supabase.from("services").update(cleanValues).eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error((error as Error).message);
       await loadGestionData();
     } catch (error: unknown) {
@@ -740,7 +747,7 @@ export default function BackOfficeGestionPage() {
     try {
       setDeletingServiceId(id);
       setStatusMessage("");
-      const { error } = await supabase.from("services").delete().eq("id", id);
+      const { error } = await supabase.from("services").delete().eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error((error as Error).message);
       setServices((prev) => prev.filter((service) => service.id !== id));
       setStatusMessage("Prestation supprimée ✅");
@@ -759,7 +766,7 @@ export default function BackOfficeGestionPage() {
       setSavingStaff(true);
       setStatusMessage("");
       const { data: newStaff, error } = await supabase.from("staff").insert({
-        first_name: first, last_name: last, color: newStaffColor, is_active: true,
+        salon_id: salonId, first_name: first, last_name: last, color: newStaffColor, is_active: true,
       }).select("id").single();
       if (error) throw new Error(error.message);
 
@@ -767,6 +774,7 @@ export default function BackOfficeGestionPage() {
       const salonOpen = settings?.opening_time?.slice(0,5) ?? "09:00";
       const salonClose = settings?.closing_time?.slice(0,5) ?? "19:00";
       const defaultSchedules = [0,1,2,3,4,5,6].map((day) => ({
+        salon_id: salonId,
         staff_id: newStaff.id,
         day_of_week: day,
         is_open: day >= 1 && day <= 5,
@@ -790,7 +798,7 @@ export default function BackOfficeGestionPage() {
   const handleUpdateStaff = async (id: string, values: Partial<StaffRow>) => {
     try {
       setUpdatingStaffId(id);
-      const { error } = await supabase.from("staff").update(values).eq("id", id);
+      const { error } = await supabase.from("staff").update(values).eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, ...values } : s)));
     } catch (err: unknown) {
@@ -800,7 +808,7 @@ export default function BackOfficeGestionPage() {
 
   const handleUpdateSchedule = async (scheduleId: string, values: Partial<StaffSchedule>) => {
     try {
-      const { error } = await supabase.from("staff_schedules").update(values).eq("id", scheduleId);
+      const { error } = await supabase.from("staff_schedules").update(values).eq("id", scheduleId).eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setStaffSchedules((prev) => prev.map((s) => (s.id === scheduleId ? { ...s, ...values } : s)));
     } catch (err: unknown) {
@@ -811,7 +819,7 @@ export default function BackOfficeGestionPage() {
   const handleDeleteStaff = async (id: string) => {
     try {
       setDeletingStaffId(id);
-      const { error } = await supabase.from("staff").delete().eq("id", id);
+      const { error } = await supabase.from("staff").delete().eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setStaff((prev) => prev.filter((s) => s.id !== id));
       setConfirmDeleteStaffId(null);
@@ -835,6 +843,7 @@ export default function BackOfficeGestionPage() {
           promo_bg_color: promoBgColorState,
         })
         .eq("id", settings.id)
+        .eq("salon_id", salonId)
         .select("*")
         .single();
       if (error) throw new Error(error.message);
@@ -854,7 +863,7 @@ export default function BackOfficeGestionPage() {
       setSavingQuestion(true);
       setStatusMessage("");
       const maxOrder = questions.reduce((max, q) => Math.max(max, q.display_order), -1);
-      const { error } = await supabase.from("questionnaire_questions").insert({ question: text, is_active: true, display_order: maxOrder + 1 });
+      const { error } = await supabase.from("questionnaire_questions").insert({ salon_id: salonId, question: text, is_active: true, display_order: maxOrder + 1 });
       if (error) throw new Error(error.message);
       setNewQuestion("");
       setStatusMessage("Question ajoutée ✅");
@@ -869,7 +878,7 @@ export default function BackOfficeGestionPage() {
   const handleUpdateQuestion = async (id: string, values: Partial<Pick<QuestionRow, "question" | "is_active" | "display_order">>) => {
     try {
       setUpdatingQuestionId(id);
-      const { error } = await supabase.from("questionnaire_questions").update(values).eq("id", id);
+      const { error } = await supabase.from("questionnaire_questions").update(values).eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, ...values } : q)));
     } catch (err: unknown) {
@@ -882,7 +891,7 @@ export default function BackOfficeGestionPage() {
   const handleDeleteQuestion = async (id: string) => {
     try {
       setDeletingQuestionId(id);
-      const { error } = await supabase.from("questionnaire_questions").delete().eq("id", id);
+      const { error } = await supabase.from("questionnaire_questions").delete().eq("id", id).eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setQuestions((prev) => prev.filter((q) => q.id !== id));
       setConfirmDeleteQuestionId(null);
@@ -933,6 +942,7 @@ export default function BackOfficeGestionPage() {
           )
         `
         )
+        .eq("salon_id", salonId)
         .eq("client_id", client.id)
         .order("appointment_date", { ascending: false })
         .order("start_time", { ascending: false });
@@ -981,6 +991,7 @@ export default function BackOfficeGestionPage() {
       const { data: existingPhoneClient, error: existingPhoneError } = await supabase
         .from("clients")
         .select("id")
+        .eq("salon_id", salonId)
         .eq("phone", cleanPhone)
         .neq("id", selectedClient.id)
         .maybeSingle();
@@ -1004,7 +1015,8 @@ export default function BackOfficeGestionPage() {
           email: editEmail.trim() || null,
           notes: editNotes.trim() || null,
         })
-        .eq("id", selectedClient.id);
+        .eq("id", selectedClient.id)
+        .eq("salon_id", salonId);
 
       if (error) throw new Error((error as Error).message);
 
@@ -1049,7 +1061,8 @@ export default function BackOfficeGestionPage() {
           hero_description: appearanceHeroDescription.trim() || null,
           hero_features: appearanceHeroFeatures,
         })
-        .eq("id", settings.id);
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? {
         ...prev,
@@ -1073,7 +1086,8 @@ export default function BackOfficeGestionPage() {
       const { error } = await supabase
         .from("salon_settings")
         .update({ site_prestations: appearancePrestations })
-        .eq("id", settings.id);
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? { ...prev, site_prestations: appearancePrestations } : prev);
       setStatusMessage("Prestations enregistrées ✅");
@@ -1095,7 +1109,8 @@ export default function BackOfficeGestionPage() {
           apropos_title: appearanceAproposTitle.trim() || null,
           apropos_text: appearanceAproposText.trim() || null,
         })
-        .eq("id", settings.id);
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? {
         ...prev,
@@ -1118,7 +1133,8 @@ export default function BackOfficeGestionPage() {
       const { error } = await supabase
         .from("salon_settings")
         .update({ site_reviews: appearanceReviews })
-        .eq("id", settings.id);
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? { ...prev, site_reviews: appearanceReviews } : prev);
       setStatusMessage("Avis enregistrés ✅");
@@ -1140,7 +1156,8 @@ export default function BackOfficeGestionPage() {
           salon_name: appearanceSalonName.trim() || settings.salon_name,
           salon_subtitle: appearanceSalonSubtitle.trim() || null,
         })
-        .eq("id", settings.id);
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? {
         ...prev,
@@ -1177,7 +1194,8 @@ export default function BackOfficeGestionPage() {
           color_nav_text: appearanceTextMain,
           color_gradient_end: appearanceTitles,
         })
-        .eq("id", settings.id);
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? {
         ...prev,
@@ -1229,7 +1247,8 @@ export default function BackOfficeGestionPage() {
       const { error: updateError } = await supabase
         .from("salon_settings")
         .update({ [column]: publicUrl })
-        .eq("id", settings.id);
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
       if (updateError) throw new Error(updateError.message);
       setSettings((prev) => prev ? { ...prev, [column]: publicUrl } : prev);
       const label = type === "hero" ? "hero" : type === "apropos" ? "à propos" : type === "logo-pro" ? "logo pro" : "logo";

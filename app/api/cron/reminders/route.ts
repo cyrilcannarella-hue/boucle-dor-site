@@ -34,47 +34,53 @@ export async function GET(req: NextRequest) {
   const supabase = createClient(supabaseUrl, serviceKey);
   const tomorrow = getTomorrowParis();
 
-  const { data: settingsData } = await supabase.from("salon_settings").select("sms_sender, salon_name").single();
-  const smsSender = settingsData?.sms_sender || "BoucleDor";
-  const salonName = settingsData?.salon_name || "Boucle d'Or";
+  const { data: salons } = await supabase.from("salons").select("id, name").eq("status", "active");
 
-  const { data: appointments, error } = await supabase
-    .from("appointments")
-    .select("start_time, clients(first_name, phone), services(name)")
-    .eq("appointment_date", tomorrow)
-    .eq("status", "confirmed");
+  let sent = 0;
+  let failed = 0;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  for (const salon of salons ?? []) {
+    const { data: settingsData } = await supabase.from("salon_settings").select("sms_sender, salon_name").eq("salon_id", salon.id).single();
+    const smsSender = settingsData?.sms_sender || "BoucleDor";
+    const salonName = settingsData?.salon_name || salon.name;
+
+    const { data: appointments, error } = await supabase
+      .from("appointments")
+      .select("start_time, clients(first_name, phone), services(name)")
+      .eq("salon_id", salon.id)
+      .eq("appointment_date", tomorrow)
+      .eq("status", "confirmed");
+
+    if (error) continue;
+
+    const results = await Promise.allSettled(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (appointments ?? []).map(async (appt: any) => {
+        const client = Array.isArray(appt.clients) ? appt.clients[0] : appt.clients;
+        const service = Array.isArray(appt.services) ? appt.services[0] : appt.services;
+
+        const phone = client?.phone;
+        if (!phone) return;
+
+        const to = formatPhoneE164(phone);
+        const prenom = client?.first_name ? ` ${client.first_name}` : "";
+        const prestation = service?.name ? ` pour ${service.name}` : "";
+        const heure = appt.start_time?.slice(0, 5) ?? "";
+        const content = `Rappel : votre RDV${prestation} est demain à ${heure} chez ${salonName}. À bientôt ! 💇‍♀️`;
+
+        const res = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
+          method: "POST",
+          headers: { "api-key": brevoKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ sender: smsSender, recipient: to, content, type: "transactional" }),
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+      })
+    );
+
+    sent += results.filter((r) => r.status === "fulfilled").length;
+    failed += results.filter((r) => r.status === "rejected").length;
   }
-
-  const results = await Promise.allSettled(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (appointments ?? []).map(async (appt: any) => {
-      const client = Array.isArray(appt.clients) ? appt.clients[0] : appt.clients;
-      const service = Array.isArray(appt.services) ? appt.services[0] : appt.services;
-
-      const phone = client?.phone;
-      if (!phone) return;
-
-      const to = formatPhoneE164(phone);
-      const prenom = client?.first_name ? ` ${client.first_name}` : "";
-      const prestation = service?.name ? ` pour ${service.name}` : "";
-      const heure = appt.start_time?.slice(0, 5) ?? "";
-      const content = `Rappel : votre RDV${prestation} est demain à ${heure} chez ${salonName}. À bientôt ! 💇‍♀️`;
-
-      const res = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
-        method: "POST",
-        headers: { "api-key": brevoKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ sender: smsSender, recipient: to, content, type: "transactional" }),
-      });
-
-      if (!res.ok) throw new Error(await res.text());
-    })
-  );
-
-  const sent = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results.filter((r) => r.status === "rejected").length;
 
   return NextResponse.json({ tomorrow, sent, failed });
 }

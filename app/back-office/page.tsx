@@ -5,6 +5,7 @@ import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { useSalon } from "@/hooks/useSalon";
 
 type RealtimePayload = {
   new?: { appointment_date?: string };
@@ -152,6 +153,8 @@ type VisualAppointmentSegment = {
   isSecondPart: boolean;
   showPauseBadge: boolean;
   sizeMode: "small" | "medium" | "large";
+  column: number;
+  totalColumns: number;
 };
 
 type CategoryOption = {
@@ -240,6 +243,49 @@ function minutesToLabel(min: number) {
 
 function overlaps(startA: number, endA: number, startB: number, endB: number) {
   return startA < endB && endA > startB;
+}
+
+function assignColumns(segments: VisualAppointmentSegment[]): VisualAppointmentSegment[] {
+  const n = segments.length;
+  if (n === 0) return [];
+
+  const doOverlap = (a: VisualAppointmentSegment, b: VisualAppointmentSegment) =>
+    a.top < b.top + b.height && b.top < a.top + a.height;
+
+  const parent = Array.from({ length: n }, (_, i) => i);
+  const find = (x: number): number => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  const union = (x: number, y: number) => { parent[find(x)] = find(y); };
+
+  for (let i = 0; i < n; i++)
+    for (let j = i + 1; j < n; j++)
+      if (doOverlap(segments[i], segments[j])) union(i, j);
+
+  const groups = new Map<number, number[]>();
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root)!.push(i);
+  }
+
+  const columns = new Array(n).fill(0);
+  const totalCols = new Array(n).fill(1);
+
+  for (const indices of groups.values()) {
+    if (indices.length === 1) continue;
+    indices.sort((a, b) => segments[a].top - segments[b].top);
+    const colEndTimes: number[] = [];
+    for (const idx of indices) {
+      const seg = segments[idx];
+      let col = 0;
+      while (colEndTimes[col] !== undefined && colEndTimes[col] > seg.top) col++;
+      columns[idx] = col;
+      colEndTimes[col] = seg.top + seg.height;
+    }
+    const total = Math.max(...indices.map((i) => columns[i])) + 1;
+    for (const idx of indices) totalCols[idx] = total;
+  }
+
+  return segments.map((seg, i) => ({ ...seg, column: columns[i], totalColumns: totalCols[i] }));
 }
 
 function normalizePhone(value: string) {
@@ -402,12 +448,14 @@ function getAppointmentBusySegments(appointment: AppointmentRow): BusySegment[] 
 export default function BackOfficePage() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const { id: salonId } = useSalon();
 
   const [selectedDate, setSelectedDate] = useState("");
 
   const nowRef = new Date();
   const [calYear, setCalYear] = useState(nowRef.getFullYear());
   const [calMonth, setCalMonth] = useState(nowRef.getMonth());
+  const [nowMinutes, setNowMinutes] = useState(() => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); });
 
   const calDays = Array.from(
     { length: new Date(calYear, calMonth + 1, 0).getDate() },
@@ -444,9 +492,11 @@ export default function BackOfficePage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [confirmCancelAppointment, setConfirmCancelAppointment] = useState(false);
 
+  const [hoveredWeekSegId, setHoveredWeekSegId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [savingCreate, setSavingCreate] = useState(false);
   const [createModalError, setCreateModalError] = useState("");
+  const [createOverlapWarning, setCreateOverlapWarning] = useState(false);
 
   const [createDate, setCreateDate] = useState("");
   const [modalCalMonth, setModalCalMonth] = useState(nowRef.getMonth());
@@ -584,6 +634,7 @@ export default function BackOfficePage() {
         )
       `
       )
+      .eq("salon_id", salonId)
       .eq("appointment_date", dateValue)
       .in("status", ["confirmed", "completed"])
       .order("start_time", { ascending: true });
@@ -603,6 +654,7 @@ export default function BackOfficePage() {
     const { data, error } = await supabase
       .from("exception_closures")
       .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .eq("salon_id", salonId)
       .eq("closure_date", dateValue)
       .order("start_time", { ascending: true });
 
@@ -624,6 +676,7 @@ export default function BackOfficePage() {
       .select(`id, appointment_date, start_time, end_time, break_start_time, break_end_time, status, source, price_cents, client_message, internal_note, client_id, service_id, staff_id,
         services(id, name, duration_minutes, duration_before_break, break_duration, duration_after_break, price_cents, category_id, categories(id, name, color)),
         clients(id, first_name, last_name, phone, email, notes)`)
+      .eq("salon_id", salonId)
       .gte("appointment_date", weekStart)
       .lte("appointment_date", weekEnd)
       .in("status", ["confirmed", "completed"])
@@ -636,6 +689,7 @@ export default function BackOfficePage() {
     const { data } = await supabase
       .from("exception_closures")
       .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .eq("salon_id", salonId)
       .gte("closure_date", weekStart)
       .lte("closure_date", weekEnd)
       .order("closure_date", { ascending: true });
@@ -653,6 +707,7 @@ export default function BackOfficePage() {
     const { data: settingsData } = await supabase
       .from("salon_settings")
       .select("*")
+      .eq("salon_id", salonId)
       .limit(1)
       .maybeSingle();
 
@@ -662,8 +717,10 @@ export default function BackOfficePage() {
     const { data: clientsData } = await supabase
       .from("clients")
       .select("id, first_name, last_name, phone, email, notes")
+      .eq("salon_id", salonId)
       .order("last_name", { ascending: true })
-      .order("first_name", { ascending: true });
+      .order("first_name", { ascending: true })
+      .limit(10000);
 
     setClients((clientsData ?? []) as ClientRow[]);
 
@@ -685,6 +742,7 @@ export default function BackOfficePage() {
         )
       `
       )
+      .eq("salon_id", salonId)
       .eq("is_visible", true)
       .order("display_order", { ascending: true });
 
@@ -693,6 +751,7 @@ export default function BackOfficePage() {
     const { data: staffData } = await supabase
       .from("staff")
       .select("id, first_name, last_name, color, is_active")
+      .eq("salon_id", salonId)
       .eq("is_active", true)
       .order("last_name", { ascending: true });
 
@@ -703,6 +762,7 @@ export default function BackOfficePage() {
     const { data: schedulesData } = await supabase
       .from("staff_schedules")
       .select("*")
+      .eq("salon_id", salonId)
       .order("day_of_week", { ascending: true });
 
     setStaffSchedules((schedulesData ?? []) as StaffSchedule[]);
@@ -811,17 +871,21 @@ export default function BackOfficePage() {
   }, [appointments, selectedStaffId]);
 
   const stats = useMemo(() => {
-    const confirmed = filteredAppointments.filter((a) => a.status === "confirmed").length;
-    const cancelled = filteredAppointments.filter((a) => a.status === "cancelled").length;
-    const completed = filteredAppointments.filter((a) => a.status === "completed").length;
+    const upcoming = filteredAppointments.filter((a) => {
+      const endMinutes = parseTimeToMinutes(a.end_time.slice(0, 5));
+      return endMinutes > nowMinutes || a.appointment_date > getTodayKey();
+    }).length;
+    const past = filteredAppointments.filter((a) => {
+      const endMinutes = parseTimeToMinutes(a.end_time.slice(0, 5));
+      return endMinutes <= nowMinutes && a.appointment_date <= getTodayKey();
+    }).length;
 
     return {
       total: filteredAppointments.length,
-      confirmed,
-      cancelled,
-      completed,
+      upcoming,
+      past,
     };
-  }, [filteredAppointments]);
+  }, [filteredAppointments, nowMinutes]);
 
   const categoryOptions = useMemo<CategoryOption[]>(() => {
     const map = new Map<string, CategoryOption>();
@@ -916,16 +980,14 @@ export default function BackOfficePage() {
   }, [clients]);
 
   const filteredExistingClients = useMemo(() => {
-    const query = createClientSearch.trim().toLowerCase();
+    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const query = normalize(createClientSearch.trim());
 
     if (!query) return [];
 
     return clientSortedOptions
       .filter((client) => {
-        const haystack = `${client.first_name ?? ""} ${client.last_name ?? ""} ${client.phone ?? ""}`
-          .toLowerCase()
-          .trim();
-
+        const haystack = normalize(`${client.first_name ?? ""} ${client.last_name ?? ""} ${client.phone ?? ""}`.trim());
         return haystack.includes(query);
       })
       .slice(0, 12);
@@ -987,7 +1049,8 @@ export default function BackOfficePage() {
       const { error } = await supabase
         .from("appointments")
         .update({ status: newStatus })
-        .eq("id", appointmentId);
+        .eq("id", appointmentId)
+        .eq("salon_id", salonId);
 
       if (error) throw new Error((error as Error).message);
 
@@ -1028,6 +1091,8 @@ export default function BackOfficePage() {
 
   const closeCreateModal = () => {
     setShowCreateModal(false);
+    setCreateOverlapWarning(false);
+    setCreateModalError("");
   };
 
   const loadClientDetails = async (clientId: string) => {
@@ -1055,6 +1120,7 @@ export default function BackOfficePage() {
         )
       `
       )
+      .eq("salon_id", salonId)
       .eq("client_id", clientId)
       .order("appointment_date", { ascending: false })
       .order("start_time", { ascending: false });
@@ -1108,7 +1174,8 @@ export default function BackOfficePage() {
           email: editClientEmail.trim() || null,
           notes: editClientNotes.trim() || null,
         })
-        .eq("id", selectedClient.id);
+        .eq("id", selectedClient.id)
+        .eq("salon_id", salonId);
 
       if (error) throw new Error(error.message);
 
@@ -1129,7 +1196,7 @@ export default function BackOfficePage() {
     }
   };
 
-  const handleCreateAppointment = async () => {
+  const handleCreateAppointment = async (forceOverlap = false) => {
     if (!selectedCreateService) {
       setCreateModalError("Choisis une prestation.");
       return;
@@ -1201,14 +1268,20 @@ export default function BackOfficePage() {
           exceptionClosures
         ));
 
-    if (blockedByAppointments || blockedByClosures) {
-      setCreateModalError("Ce créneau est indisponible.");
+    if (blockedByClosures) {
+      setCreateModalError("Ce créneau est bloqué par une fermeture exceptionnelle.");
+      return;
+    }
+
+    if (blockedByAppointments && !forceOverlap) {
+      setCreateOverlapWarning(true);
       return;
     }
 
     try {
       setSavingCreate(true);
       setCreateModalError("");
+      setCreateOverlapWarning(false);
 
       let clientId: string | null = null;
 
@@ -1227,6 +1300,7 @@ export default function BackOfficePage() {
           const { data: existingClient } = await supabase
             .from("clients")
             .select("id")
+            .eq("salon_id", salonId)
             .eq("phone", cleanPhone)
             .maybeSingle();
 
@@ -1241,12 +1315,14 @@ export default function BackOfficePage() {
                   email: createEmail.trim() || null,
                   notes: createClientNotes.trim() || null,
                 })
-                .eq("id", clientId);
+                .eq("id", clientId)
+                .eq("salon_id", salonId);
             }
           } else {
             const { data: insertedClient, error: insertClientError } = await supabase
               .from("clients")
               .insert({
+                salon_id: salonId,
                 first_name: createFirstName.trim() || "—",
                 last_name: createLastName.trim() || "",
                 phone: cleanPhone,
@@ -1264,6 +1340,7 @@ export default function BackOfficePage() {
           const { data: insertedClient, error: insertClientError } = await supabase
             .from("clients")
             .insert({
+              salon_id: salonId,
               first_name: createFirstName.trim() || "—",
               last_name: createLastName.trim() || "",
               phone: null,
@@ -1286,6 +1363,7 @@ export default function BackOfficePage() {
         serviceSegments.pause > 0 ? `${minutesToLabel(serviceSegments.breakEnd)}:00` : null;
 
       const { error } = await supabase.from("appointments").insert({
+        salon_id: salonId,
         client_id: clientId,
         service_id: selectedCreateService.id,
         appointment_date: createDate,
@@ -1416,7 +1494,8 @@ export default function BackOfficePage() {
           internal_note: editAppointmentInternalNote.trim() || null,
           price_cents: selectedEditService.price_cents,
         })
-        .eq("id", selectedAppointment.id);
+        .eq("id", selectedAppointment.id)
+        .eq("salon_id", salonId);
 
       if (error) throw new Error((error as Error).message);
 
@@ -1490,11 +1569,13 @@ export default function BackOfficePage() {
           isSecondPart: index === 1,
           showPauseBadge: hasBreak && index === 0,
           sizeMode,
+          column: 0,
+          totalColumns: 1,
         });
       });
     }
 
-    return items.sort((a, b) => a.top - b.top);
+    return assignColumns(items.sort((a, b) => a.top - b.top));
   }, [filteredAppointments, dayStart]);
 
   const staffBreakBlock = useMemo(() => {
@@ -1580,6 +1661,14 @@ export default function BackOfficePage() {
     }
   }, [agendaView, weekDays[0]]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const n = new Date();
+      setNowMinutes(n.getHours() * 60 + n.getMinutes());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const getWeekDaySegments = (dateKey: string): VisualAppointmentSegment[] => {
     const dayAppts = weekAppointments.filter(
       (a) => a.appointment_date === dateKey && (!selectedStaffId || !a.staff_id || a.staff_id === selectedStaffId)
@@ -1602,10 +1691,12 @@ export default function BackOfficePage() {
           isSecondPart: index === 1,
           showPauseBadge: hasBreak && index === 0,
           sizeMode: "small",
+          column: 0,
+          totalColumns: 1,
         });
       });
     }
-    return items.sort((a, b) => a.top - b.top);
+    return assignColumns(items.sort((a, b) => a.top - b.top));
   };
 
   const renderAgendaCard = (segment: VisualAppointmentSegment) => {
@@ -1614,12 +1705,15 @@ export default function BackOfficePage() {
     const clientName = `${segment.appointment.clients?.first_name ?? ""} ${segment.appointment.clients?.last_name ?? ""}`.trim() || "Sans nom";
     const clientId = segment.appointment.clients?.id ?? segment.appointment.client_id ?? null;
 
+    const colLeft = `calc(${(segment.column / segment.totalColumns) * 100}% + ${segment.column === 0 ? 16 : 4}px)`;
+    const colRight = `calc(${((segment.totalColumns - segment.column - 1) / segment.totalColumns) * 100}% + ${segment.column === segment.totalColumns - 1 ? 16 : 4}px)`;
+
     return (
       <button
         key={segment.id}
         type="button"
         onClick={() => openAppointmentModal(segment.appointment)}
-        className={`absolute left-4 right-4 overflow-hidden rounded-[22px] border text-left shadow-[0_12px_28px_rgba(70,48,22,0.08)] transition hover:z-10 hover:scale-[1.006] hover:shadow-[0_18px_38px_rgba(70,48,22,0.12)] ${getCategoryCardClasses(
+        className={`absolute overflow-hidden rounded-[22px] border text-left shadow-[0_12px_28px_rgba(70,48,22,0.08)] transition hover:z-10 hover:scale-[1.006] hover:shadow-[0_18px_38px_rgba(70,48,22,0.12)] ${getCategoryCardClasses(
           segment.appointment.services?.categories?.name
         )} ${
           isSmall ? "px-3 py-2" : isLarge ? "px-4 py-4" : "px-4 py-3"
@@ -1627,6 +1721,8 @@ export default function BackOfficePage() {
         style={{
           top: segment.top,
           height: segment.height,
+          left: colLeft,
+          right: colRight,
           ...getCategoryCardStyle(segment.appointment.services?.categories?.color),
         }}
       >
@@ -1891,24 +1987,20 @@ export default function BackOfficePage() {
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
               Résumé
             </div>
-            <h2 className="text-3xl">Vue rapide</h2>
+            <h2 className="text-3xl">RDV du jour</h2>
 
             <div className="mt-5 grid gap-3">
               <div className="flex justify-between gap-4 border-b border-[var(--card-border)] pb-3 text-[var(--nav-text)]">
-                <strong className="text-[var(--text-main)]">Total jour</strong>
+                <strong className="text-[var(--text-main)]">Total</strong>
                 <span>{stats.total}</span>
               </div>
               <div className="flex justify-between gap-4 border-b border-[var(--card-border)] pb-3 text-[var(--nav-text)]">
-                <strong className="text-[var(--text-main)]">Confirmés</strong>
-                <span>{stats.confirmed}</span>
-              </div>
-              <div className="flex justify-between gap-4 border-b border-[var(--card-border)] pb-3 text-[var(--nav-text)]">
-                <strong className="text-[var(--text-main)]">Annulés</strong>
-                <span>{stats.cancelled}</span>
+                <strong className="text-[var(--text-main)]">À venir</strong>
+                <span>{stats.upcoming}</span>
               </div>
               <div className="flex justify-between gap-4 text-[var(--nav-text)]">
-                <strong className="text-[var(--text-main)]">Terminés</strong>
-                <span>{stats.completed}</span>
+                <strong className="text-[var(--text-main)]">Passés</strong>
+                <span>{stats.past}</span>
               </div>
             </div>
         </div>
@@ -1950,8 +2042,7 @@ export default function BackOfficePage() {
                   Semaine
                 </button>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm">
-                <span className="text-[var(--nav-text)] opacity-70">SMS Brevo</span>
+              <div className="flex items-center rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm">
                 {smsCredits === null ? (
                   <span className="text-xs text-[var(--nav-text)] opacity-40">…</span>
                 ) : (
@@ -1997,10 +2088,10 @@ export default function BackOfficePage() {
                           key={dk}
                           type="button"
                           onClick={() => { setSelectedDate(dk); setAgendaView("day"); }}
-                          className={`border-l border-[#efe6db] py-3 text-center transition ${hasAllDayClosure ? "bg-[#fff5f5] hover:bg-[#fff0f0]" : "hover:bg-[#f9f3eb]"}`}
+                          className={`border-l border-[#efe6db] py-3 text-center transition ${hasAllDayClosure ? "bg-[#fff5f5] hover:bg-[#fff0f0]" : isToday ? "bg-[var(--gold)]/10 hover:bg-[var(--gold)]/15" : "hover:bg-[#f9f3eb]"}`}
                         >
-                          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--nav-text)]">{dayNames[d.getDay()]}</div>
-                          <div className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-[var(--text-main)] text-white" : isToday ? "ring-2 ring-[var(--gold)] text-[var(--gold)]" : "text-[var(--text-main)]"}`}>
+                          <div className={`text-[11px] font-bold uppercase tracking-wider ${isToday ? "text-[var(--gold)]" : "text-[var(--nav-text)]"}`}>{dayNames[d.getDay()]}</div>
+                          <div className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-[var(--text-main)] text-white" : isToday ? "bg-[var(--gold)] text-white" : "text-[var(--text-main)]"}`}>
                             {d.getDate()}
                           </div>
                           {hasAllDayClosure && (
@@ -2036,7 +2127,7 @@ export default function BackOfficePage() {
                         <div
                           key={dk}
                           className="relative border-l border-[#efe6db]"
-                          style={{ height: weekHeight, backgroundColor: "#fffdf9" }}
+                          style={{ height: weekHeight, backgroundColor: dk === getTodayKey() ? "#fdf8ef" : "#fffdf9" }}
                         >
                           {/* Créneaux cliquables */}
                           {weekHourSlots.map((slot) => {
@@ -2054,6 +2145,41 @@ export default function BackOfficePage() {
                               />
                             );
                           })}
+                          {/* Fermetures exceptionnelles */}
+                          {dayClosures
+                            .filter((closure) => !closure.is_all_day && closure.start_time && closure.end_time)
+                            .map((closure) => {
+                              const start = parseTimeToMinutes(closure.start_time!);
+                              const end = parseTimeToMinutes(closure.end_time!);
+                              const top = (start - weekGlobalStart) * pxPerMinuteWeek;
+                              const height = Math.max((end - start) * pxPerMinuteWeek, 28);
+                              return (
+                                <div
+                                  key={closure.id}
+                                  className="pointer-events-none absolute left-0.5 right-0.5 z-20 overflow-hidden rounded-xl border border-[#efc9c9] bg-[#fff1f1]/90 px-1.5 py-1 text-[10px] text-[#a33a3a]"
+                                  style={{ top, height }}
+                                >
+                                  <div className="font-semibold leading-tight truncate">Fermeture</div>
+                                  {height >= 36 && (
+                                    <div className="leading-tight truncate">{`${formatTime(closure.start_time!)} → ${formatTime(closure.end_time!)}`}</div>
+                                  )}
+                                  {height >= 52 && closure.reason && (
+                                    <div className="leading-tight truncate">{closure.reason}</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          {/* Ligne heure actuelle */}
+                          {dk === getTodayKey() && nowMinutes >= weekGlobalStart && nowMinutes <= weekGlobalEnd && (
+                            <div
+                              className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
+                              style={{ top: (nowMinutes - weekGlobalStart) * pxPerMinuteWeek - 1 }}
+                            >
+                              <div className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                              <div className="h-[2px] flex-1 bg-red-500" />
+                            </div>
+                          )}
+
                           {/* Cartes RDV */}
                           {segs.map((seg) => {
                             const clientName = `${seg.appointment.clients?.first_name ?? ""} ${seg.appointment.clients?.last_name ?? ""}`.trim() || "—";
@@ -2063,13 +2189,23 @@ export default function BackOfficePage() {
                                 key={seg.id}
                                 type="button"
                                 onClick={() => openAppointmentModal(seg.appointment)}
-                                className={`absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-xl border px-1.5 py-1 text-left text-[10px] shadow-sm transition hover:z-20 hover:scale-[1.02] ${getCategoryCardClasses(seg.appointment.services?.categories?.name)}`}
-                                style={{ top: seg.top, height: seg.height, ...cardStyle }}
+                                onMouseEnter={() => setHoveredWeekSegId(seg.id)}
+                                onMouseLeave={() => setHoveredWeekSegId(null)}
+                                className={`absolute overflow-hidden rounded-xl border px-1.5 py-1 text-left text-[11px] shadow-sm transition-shadow ${getCategoryCardClasses(seg.appointment.services?.categories?.name)} ${hoveredWeekSegId === seg.id ? "z-50 shadow-lg scale-[1.15]" : "z-10"}`}
+                                style={{
+                                  top: seg.top,
+                                  height: hoveredWeekSegId === seg.id ? "auto" : seg.height,
+                                  minHeight: seg.height,
+                                  left: `calc(${(seg.column / seg.totalColumns) * 100}% + ${seg.column === 0 ? 2 : 1}px)`,
+                                  right: `calc(${((seg.totalColumns - seg.column - 1) / seg.totalColumns) * 100}% + ${seg.column === seg.totalColumns - 1 ? 2 : 1}px)`,
+                                  ...cardStyle,
+                                }}
                               >
-                                <div className="truncate font-bold leading-tight" style={{ color: "var(--gold)" }}>{seg.label.split(" → ")[0]}</div>
-                                <div className="truncate leading-tight text-[var(--text-main)]">{clientName}</div>
-                                {seg.height >= 42 && (
-                                  <div className="truncate leading-tight text-[var(--nav-text)]">{seg.appointment.services?.name}</div>
+                                <div className="font-bold leading-tight" style={{ color: "var(--gold)" }}>
+                                  {seg.label.split(" → ")[0]}<span className="font-normal text-[var(--text-main)]"> · {clientName}</span>
+                                </div>
+                                {(seg.height >= 42 || hoveredWeekSegId === seg.id) && (
+                                  <div className={`break-words leading-tight text-[var(--nav-text)] ${hoveredWeekSegId === seg.id ? "text-[12px] font-bold" : ""}`}>{seg.appointment.services?.name}</div>
                                 )}
                               </button>
                             );
@@ -2186,6 +2322,16 @@ export default function BackOfficePage() {
                       ))}
 
                       {visualAppointmentSegments.map((segment) => renderAgendaCard(segment))}
+
+                      {selectedDate === getTodayKey() && nowMinutes >= dayStart && nowMinutes <= dayEnd && (
+                        <div
+                          className="pointer-events-none absolute left-2 right-2 z-20 flex items-center"
+                          style={{ top: (nowMinutes - dayStart) * PX_PER_MINUTE - 1 }}
+                        >
+                          <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+                          <div className="h-[2px] flex-1 bg-red-500" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2270,6 +2416,16 @@ export default function BackOfficePage() {
                   ))}
 
                   {visualAppointmentSegments.map((segment) => renderAgendaCard(segment))}
+
+                  {selectedDate === getTodayKey() && nowMinutes >= dayStart && nowMinutes <= dayEnd && (
+                    <div
+                      className="pointer-events-none absolute left-2 right-2 z-20 flex items-center"
+                      style={{ top: (nowMinutes - dayStart) * PX_PER_MINUTE - 1 }}
+                    >
+                      <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+                      <div className="h-[2px] flex-1 bg-red-500" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2303,7 +2459,7 @@ export default function BackOfficePage() {
                   </button>
                   <button
                     type="button"
-                    onClick={handleCreateAppointment}
+                    onClick={() => handleCreateAppointment()}
                     disabled={savingCreate}
                     className="rounded-2xl bg-[var(--text-main)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
                   >
@@ -2314,6 +2470,21 @@ export default function BackOfficePage() {
                 {createModalError && (
                   <div className="rounded-2xl border border-[#f5c6c6] bg-[#fff5f5] px-4 py-3 text-sm font-medium text-[#a33a3a]">
                     {createModalError}
+                  </div>
+                )}
+
+                {createOverlapWarning && (
+                  <div className="rounded-2xl border border-[#f5e4a0] bg-[#fffbea] px-4 py-3 text-sm text-[#7a5c00]">
+                    <p className="font-semibold mb-2">Ce créneau est déjà occupé.</p>
+                    <p className="mb-3">Veux-tu créer ce rendez-vous quand même et le superposer ?</p>
+                    <button
+                      type="button"
+                      onClick={() => handleCreateAppointment(true)}
+                      disabled={savingCreate}
+                      className="rounded-xl bg-[#7a5c00] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                    >
+                      {savingCreate ? "Enregistrement..." : "Confirmer quand même"}
+                    </button>
                   </div>
                 )}
               </div>

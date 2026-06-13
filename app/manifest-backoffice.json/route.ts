@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getCurrentSalon } from "@/lib/salon";
 
 export const revalidate = 3600;
 
@@ -8,6 +9,7 @@ export async function GET() {
   let bgColor = "#F5EBDD";
 
   try {
+    const salon = await getCurrentSalon();
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
@@ -15,6 +17,7 @@ export async function GET() {
     const { data } = await supabase
       .from("salon_settings")
       .select("salon_name, color_page_bg")
+      .eq("salon_id", salon.id)
       .single();
     if (data?.salon_name) salonName = data.salon_name;
     if (data?.color_page_bg) bgColor = data.color_page_bg;
