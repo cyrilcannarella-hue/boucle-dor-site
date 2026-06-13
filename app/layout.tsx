@@ -74,7 +74,16 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SalonProvider salon={salon}>{children}</SalonProvider>
+        {salon.status === "suspended" ? (
+          <main className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
+            <h1 className="text-xl font-semibold">Service temporairement indisponible</h1>
+            <p className="text-sm text-neutral-600">
+              L&apos;accès à {salon.name} est suspendu. Merci de contacter l&apos;administrateur.
+            </p>
+          </main>
+        ) : (
+          <SalonProvider salon={salon}>{children}</SalonProvider>
+        )}
       </body>
     </html>
   );
