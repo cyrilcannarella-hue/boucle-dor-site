@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 
 export type Salon = {
@@ -8,8 +8,13 @@ export type Salon = {
 };
 
 const DEFAULT_SALON_SLUG = "boucle-dor";
+export const PREVIEW_SALON_COOKIE = "preview_salon";
 
 async function resolveSalonSlug(): Promise<string> {
+  const cookieStore = await cookies();
+  const previewSlug = cookieStore.get(PREVIEW_SALON_COOKIE)?.value;
+  if (previewSlug) return previewSlug;
+
   const headersList = await headers();
   const host = headersList.get("host") ?? "";
   const hostname = host.split(":")[0];
