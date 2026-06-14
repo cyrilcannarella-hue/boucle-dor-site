@@ -496,7 +496,7 @@ export default function BackOfficeClientsPage() {
   const colorCardBorder = settings?.color_card_border || "#e7ddd0";
   const colorAccents = settings?.color_accents || "#d8a646";
   const colorNavText = settings?.color_nav_text || "#4d4034";
-  const salonDisplayName = (settings?.salon_name || "Boucle d'Or").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
+  const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
     <main
@@ -519,7 +519,7 @@ export default function BackOfficeClientsPage() {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
               <img
                 src={settings?.logo_pro_image_url || "/logo-pro.png"}
-                alt="Boucle d’Or Pro"
+                alt={`${salonDisplayName} Pro`}
                 className="h-full w-full object-cover"
               />
             </div>

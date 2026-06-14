@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  let salonName = "Boucle d'Or";
+  let salonName = "Votre salon";
   try {
     const salon = await getCurrentSalon();
     const supabase = createClient(

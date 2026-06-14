@@ -1,13 +1,9 @@
 // ============================================================
-//  Boucle d'Or — Thème central
-//  Toutes les constantes de marque sont définies ici.
+//  Thème central
+//  Toutes les constantes de couleurs sont définies ici.
 //  Importer depuis ce fichier plutôt que d'écrire les valeurs
 //  en dur dans les composants.
 // ============================================================
-
-// ── Marque ──────────────────────────────────────────────────
-export const BRAND_NAME = "Boucle d'Or";
-export const BRAND_NAME_PRO = "Boucle d'Or Pro";
 
 // ── Couleurs principales ─────────────────────────────────────
 /** Or principal — couleur signature de la marque */

@@ -3,7 +3,6 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
-import { BRAND_NAME } from "@/lib/theme";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
 
@@ -116,7 +115,7 @@ const SalonNamePremium = memo(function SalonNamePremium({
   gradientMidColor?: string;
   gradientEndColor?: string;
 }) {
-  const normalizedName = (name || "Boucle d’Or").replace(/[‘’ʼ]/g, "’");
+  const normalizedName = (name || "Votre salon").replace(/[‘’ʼ]/g, "’");
   const gradient = gradientMidColor
     ? `linear-gradient(to right, ${goldColor}, ${gradientMidColor}, ${gradientEndColor})`
     : `linear-gradient(to right, ${goldColor}, ${gradientEndColor})`;
@@ -145,9 +144,8 @@ export default function Home() {
   const heroImageY = useTransform(scrollYProgress, [0, 0.5], [0, 45]);
 
   useEffect(() => {
-    const tagline = settings?.hero_tagline || "L'élégance au naturel";
-    const name = settings?.salon_name || "Boucle d'Or";
-    const desc = settings?.hero_description || `${name}, votre salon de coiffure à taille humaine à Rognac. Écoute, conseil et savoir-faire pour sublimer vos cheveux.`;
+    const tagline = settings?.hero_tagline || "";
+    const desc = settings?.hero_description || "";
     setTypedTagline("");
     setTypedDesc("");
     let i = 0;
@@ -165,7 +163,7 @@ export default function Home() {
       }
     }, 45);
     return () => { clearInterval(taglineInterval); };
-  }, [settings?.hero_tagline, settings?.hero_description, settings?.salon_name]);
+  }, [settings?.hero_tagline, settings?.hero_description]);
 
 useEffect(() => {
   const handleScroll = () => {
@@ -220,28 +218,19 @@ useEffect(() => {
     loadSettings();
   }, [salonId]);
 
-  const salonName = settings?.salon_name || "Boucle d’Or";
+  const salonName = settings?.salon_name || "Votre salon";
   const salonPhone = settings?.phone || "09 86 67 88 30";
   const salonAddress = settings?.address || "33 Rue Gabriel Péri, 13340 Rognac";
   const openingTime = settings?.opening_time?.slice(0, 5) || "09:00";
   const closingTime = settings?.closing_time?.slice(0, 5) || "19:00";
 
-  const salonSubtitle = settings?.salon_subtitle || "Salon de coiffure";
-  const heroTagline = settings?.hero_tagline || "L'élégance au naturel";
-  const heroDescription = settings?.hero_description || `${salonName}, votre salon de coiffure à taille humaine à Rognac. Écoute, conseil et savoir-faire pour sublimer vos cheveux.`;
-  const heroFeatures = settings?.hero_features?.length
-    ? settings.hero_features
-    : ["Techniques de professionnels", "Produits de qualité", "Ambiance chaleureuse"];
-  const aproposTitle = settings?.apropos_title || "un salon à taille humaine";
-  const prestations = settings?.site_prestations?.filter((p) => p.title.trim() || p.description.trim() || p.price.trim()).length
-    ? settings.site_prestations.filter((p) => p.title.trim() || p.description.trim() || p.price.trim())
-    : [
-        { title: "Coupe & brushing", description: "Coupe sur-mesure, brushing, mise en forme", price: "À partir de 28€" },
-        { title: "Coloration", description: "Coloration, mèches, balayage, ombré hair", price: "À partir de 45€" },
-        { title: "Soins & traitements", description: "Soins profonds, lissage, botox capillaire", price: "À partir de 20€" },
-        { title: "Coiffures", description: "Attaches, chignons, coiffures événementielles", price: "À partir de 35€" },
-      ];
-  const aproposText = settings?.apropos_text || `Chez ${salonName}, chaque rendez-vous est pensé comme un vrai moment de bien-être. Virginie vous accueille dans une ambiance conviviale, avec une attention particulière portée à l'écoute, au conseil et au résultat.`;
+  const salonSubtitle = settings?.salon_subtitle || "";
+  const heroTagline = settings?.hero_tagline || "";
+  const heroDescription = settings?.hero_description || "";
+  const heroFeatures = settings?.hero_features?.length ? settings.hero_features : [];
+  const aproposTitle = settings?.apropos_title || "";
+  const prestations = settings?.site_prestations?.filter((p) => p.title.trim() || p.description.trim() || p.price.trim()) ?? [];
+  const aproposText = settings?.apropos_text || "";
   const allReviews = settings?.site_reviews ?? [];
   const reviews = allReviews.filter((r) => r.name?.trim() || r.text?.trim());
   const logoImageUrl = settings?.logo_image_url || null;
@@ -341,7 +330,7 @@ useEffect(() => {
             >
               {logoImageUrl && (
                 <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-                  <img src={logoImageUrl} alt={BRAND_NAME} className="h-full w-full object-cover" />
+                  <img src={logoImageUrl} alt={salonName} className="h-full w-full object-cover" />
                 </div>
               )}
               <div className="min-w-0">
@@ -527,31 +516,39 @@ useEffect(() => {
           className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_20%_10%,rgba(216,166,70,0.26),transparent_30%),linear-gradient(145deg,#18130f_0%,#0f0f0f_55%,#2a1d12_100%)] p-8 text-white shadow-[0_24px_70px_rgba(72,48,22,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-[#d8a646]/20 before:blur-3xl"
           style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroCard, 0.28)} 0%, ${colorHeroCard} 50%, #050505 100%)` }}
         >
-          <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorBadges }}>
-            {salonSubtitle}
-          </motion.div>
+          {salonSubtitle && (
+            <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorBadges }}>
+              {salonSubtitle}
+            </motion.div>
+          )}
           <motion.h1 variants={fadeUp} className="relative z-10 max-w-xl text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
             <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
-            <br />
-            <span className="relative mt-3 inline-block text-3xl font-light tracking-[-0.03em] md:text-5xl">
-              <span className="invisible">{heroTagline}</span>
-              <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents}, ${colorGradientEnd})` }}>
-                {typedTagline}
-                {typedTagline.length < heroTagline.length && (
-                  <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents})` }}>|</span>
+            {heroTagline && (
+              <>
+                <br />
+                <span className="relative mt-3 inline-block text-3xl font-light tracking-[-0.03em] md:text-5xl">
+                  <span className="invisible">{heroTagline}</span>
+                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents}, ${colorGradientEnd})` }}>
+                    {typedTagline}
+                    {typedTagline.length < heroTagline.length && (
+                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents})` }}>|</span>
+                    )}
+                  </span>
+                </span>
+              </>
+            )}
+          </motion.h1>
+          {heroDescription && (
+            <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl text-lg" style={{ color: `${colorPageBg}bf` }}>
+              <span className="invisible">{heroDescription}</span>
+              <span className="absolute inset-0">
+                {typedDesc}
+                {typedDesc.length < heroDescription.length && typedTagline.length >= heroTagline.length && (
+                  <span className="animate-pulse opacity-60">|</span>
                 )}
               </span>
-            </span>
-          </motion.h1>
-          <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl text-lg" style={{ color: `${colorPageBg}bf` }}>
-            <span className="invisible">{heroDescription}</span>
-            <span className="absolute inset-0">
-              {typedDesc}
-              {typedDesc.length < heroDescription.length && typedTagline.length >= heroTagline.length && (
-                <span className="animate-pulse opacity-60">|</span>
-              )}
-            </span>
-          </motion.p>
+            </motion.p>
+          )}
 
           <motion.div variants={fadeUp} className="relative z-10 mt-8 flex flex-wrap gap-3">
             <motion.a
@@ -574,6 +571,7 @@ useEffect(() => {
             </motion.a>
           </motion.div>
 
+          {heroFeatures.length > 0 && (
           <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorPageBg}cc` }}>
             {heroFeatures.map((feat, i) => (
               <div key={feat} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 p-4 text-center">
@@ -599,6 +597,7 @@ useEffect(() => {
               </div>
             ))}
           </motion.div>
+          )}
         </motion.div>
 
         <motion.div
@@ -618,6 +617,7 @@ useEffect(() => {
         </motion.div>
       </section>
 
+      {prestations.length > 0 && (
       <section
         id="prestations"
         className="mx-auto w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 py-10"
@@ -654,6 +654,7 @@ useEffect(() => {
           ))}
         </motion.div>
       </section>
+      )}
 
       <motion.section
         id="apropos"
@@ -672,8 +673,8 @@ useEffect(() => {
           <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
             À propos
           </div>
-          <h2 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-4xl text-transparent">{salonName}, {aproposTitle}</h2>
-          <p className="mt-4" style={{ color: colorTextSecondary }}>{aproposText}</p>
+          <h2 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-4xl text-transparent">{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
+          {aproposText && <p className="mt-4" style={{ color: colorTextSecondary }}>{aproposText}</p>}
         </motion.div>
 
         <motion.div

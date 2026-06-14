@@ -13,7 +13,7 @@ export const SalonNameGradient = memo(function SalonNameGradient({
   goldColor = "#d8a646",
   goldEndColor = "#b98b3d",
 }: Props) {
-  const normalized = (name || "Boucle d’Or").replace(/[‘’’‛]/g, "’");
+  const normalized = (name || "Votre salon").replace(/[‘’’‛]/g, "’");
   return (
     <span
       className="bg-clip-text text-transparent [backface-visibility:hidden]"

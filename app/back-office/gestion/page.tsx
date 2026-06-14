@@ -1313,7 +1313,7 @@ export default function BackOfficeGestionPage() {
   const colorCardBorder = settings?.color_card_border || "#e7ddd0";
   const colorAccents = settings?.color_accents || "#d8a646";
   const colorNavText = settings?.color_nav_text || "#4d4034";
-  const salonDisplayName = (settings?.salon_name || "Boucle d'Or").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
+  const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
     <main
@@ -1336,7 +1336,7 @@ export default function BackOfficeGestionPage() {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
               <img
                 src={settings?.logo_pro_image_url || "/logo-pro.png"}
-                alt="Boucle d’Or Pro"
+                alt={`${salonDisplayName} Pro`}
                 className="h-full w-full object-cover"
               />
             </div>
@@ -2655,7 +2655,7 @@ export default function BackOfficeGestionPage() {
                           type="text"
                           value={appearanceSalonName}
                           onChange={(e) => setAppearanceSalonName(e.target.value)}
-                          placeholder="Boucle d'Or"
+                          placeholder="Votre salon"
                           className={fieldClass}
                         />
                       </label>
@@ -2809,7 +2809,7 @@ export default function BackOfficeGestionPage() {
                           value={appearanceHeroDescription}
                           rows={3}
                           onChange={(e) => setAppearanceHeroDescription(e.target.value)}
-                          placeholder={`${settings?.salon_name || "Boucle d'Or"}, votre salon de coiffure à taille humaine à Rognac. Écoute, conseil et savoir-faire pour sublimer vos cheveux.`}
+                          placeholder={`${salonDisplayName}, votre salon de coiffure à taille humaine. Écoute, conseil et savoir-faire pour sublimer vos cheveux.`}
                           className={fieldClass + " resize-none"}
                         />
                       </label>

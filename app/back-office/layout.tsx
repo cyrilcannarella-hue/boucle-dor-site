@@ -22,7 +22,7 @@ async function getSettings() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getSettings();
-  const salonName = data?.salon_name || "Boucle d'Or";
+  const salonName = data?.salon_name || "Votre salon";
   return {
     title: `${salonName} Pro`,
     manifest: "/manifest-backoffice.json",

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { BRAND_NAME } from "@/lib/theme";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
 
@@ -1104,7 +1103,7 @@ export default function ReservationPage() {
   const colorAccents = settings?.color_accents || "#d8a646";
   const colorNavText = settings?.color_nav_text || "#4d4034";
   const logoUrl = settings?.logo_image_url || "/icon-192.png";
-  const salonName = (settings?.salon_name || "Boucle d'Or").replace(/['‘’‛]/g, "'");
+  const salonName = (settings?.salon_name || "Votre salon").replace(/['‘’‛]/g, "'");
 
   return (
     <main
@@ -1664,7 +1663,7 @@ export default function ReservationPage() {
               <div className="rounded-[18px] border border-[var(--card-border)] bg-white/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Salon</strong>
                 <span className="mt-2 block text-sm text-[var(--text-secondary)]">
-                  {settings?.salon_name || "Boucle d’Or"}
+                  {settings?.salon_name || "Votre salon"}
                 </span>
               </div>
             </div>

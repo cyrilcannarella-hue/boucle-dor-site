@@ -5,7 +5,7 @@ import { getCurrentSalon } from "@/lib/salon";
 export const revalidate = 3600;
 
 export async function GET() {
-  let salonName = "Boucle d'Or";
+  let salonName = "Votre salon";
   let bgColor = "#F5EBDD";
 
   try {

@@ -5,7 +5,7 @@ import { getCurrentSalon } from "@/lib/salon";
 export const revalidate = 3600;
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  let salonName = "Boucle d'Or";
+  let salonName = "Votre salon";
   let bgColor = "#F5E9DC";
 
   try {

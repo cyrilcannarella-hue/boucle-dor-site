@@ -4,7 +4,6 @@ import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { BRAND_NAME } from "@/lib/theme";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
 
@@ -721,7 +720,7 @@ export default function EspaceClientPage() {
   const colorAccents = settings?.color_accents || "#d8a646";
   const colorNavText = settings?.color_nav_text || "#4d4034";
   const logoUrl = settings?.logo_image_url || "/icon-192.png";
-  const salonName = (settings?.salon_name || "Boucle d'Or").replace(/['‘’‛]/g, "'");
+  const salonName = (settings?.salon_name || "Votre salon").replace(/['‘’‛]/g, "'");
 
   return (
     <main
@@ -832,7 +831,7 @@ export default function EspaceClientPage() {
               Information
             </div>
             <h2 className="text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-3xl">
-              {settings?.salon_name || "Boucle d’Or"}
+              {settings?.salon_name || "Votre salon"}
             </h2>
 
             <div className="mt-5 grid gap-3">
