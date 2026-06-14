@@ -386,7 +386,7 @@ useEffect(() => {
             <div className="flex justify-center">
               <nav className="flex items-center rounded-full border border-white/55 bg-white/45 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_10px_30px_rgba(80,55,25,0.06)] backdrop-blur-xl">
                 {[
-                  ["Prestations", "#prestations"],
+                  ...(prestations.length > 0 ? [["Prestations", "#prestations"]] : []),
                   ["À propos", "#apropos"],
                   ["Contact", "#contact"],
                 ].map(([label, href]) => (
@@ -457,9 +457,9 @@ useEffect(() => {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className={`grid gap-2 ${prestations.length > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
               {[
-                ["Prestations", "#prestations"],
+                ...(prestations.length > 0 ? [["Prestations", "#prestations"]] : []),
                 ["À propos", "#apropos"],
                 ["Contact", "#contact"],
               ].map(([label, href]) => (
@@ -560,15 +560,17 @@ useEffect(() => {
             >
               Réserver en ligne
             </motion.a>
-            <motion.a
-              href="#prestations"
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="rounded-full border px-6 py-4 font-semibold transition hover:bg-white/5"
-              style={{ borderColor: `${colorButtons}60`, color: colorButtons }}
-            >
-              Découvrir nos prestations
-            </motion.a>
+            {prestations.length > 0 && (
+              <motion.a
+                href="#prestations"
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="rounded-full border px-6 py-4 font-semibold transition hover:bg-white/5"
+                style={{ borderColor: `${colorButtons}60`, color: colorButtons }}
+              >
+                Découvrir nos prestations
+              </motion.a>
+            )}
           </motion.div>
 
           {heroFeatures.length > 0 && (
