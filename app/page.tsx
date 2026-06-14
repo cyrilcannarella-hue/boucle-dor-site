@@ -700,13 +700,13 @@ useEffect(() => {
             {[...reviews, ...reviews].map((review, i) => (
               <article
                 key={`${review.name}-${i}`}
-                className="w-80 shrink-0 rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm backdrop-blur"
+                className="flex w-80 shrink-0 flex-col rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm backdrop-blur"
                 style={{ background: `linear-gradient(135deg, ${colorTitles}0d 0%, #ffffff 60%)` }}
               >
                 <p style={{ color: colorTextSecondary }}>
                   <span style={{ color: colorTitles }}>"</span>{review.text}<span style={{ color: colorTitles }}>"</span>
                 </p>
-                <div className="mt-5 font-semibold" style={{ color: colorTitles }}>{review.name}</div>
+                <div className="mt-auto pt-5 font-semibold" style={{ color: colorTitles }}>{review.name}</div>
               </article>
             ))}
           </div>
