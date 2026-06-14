@@ -25,7 +25,6 @@ export async function GET(req: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const defaultBrevoKey = process.env.BREVO_API_KEY;
 
   if (!supabaseUrl || !serviceKey) {
     return NextResponse.json({ error: "Configuration manquante" }, { status: 500 });
@@ -43,7 +42,7 @@ export async function GET(req: NextRequest) {
     const { data: settingsData } = await supabase.from("salon_settings").select("sms_sender, salon_name, brevo_api_key").eq("salon_id", salon.id).single();
     const smsSender = settingsData?.sms_sender || "";
     const salonName = settingsData?.salon_name || salon.name;
-    const brevoKey = settingsData?.brevo_api_key || defaultBrevoKey;
+    const brevoKey = settingsData?.brevo_api_key;
 
     if (!brevoKey) continue;
 

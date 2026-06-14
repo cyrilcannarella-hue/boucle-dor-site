@@ -96,6 +96,7 @@ type ClientAppointmentHistory = {
 type SalonSettings = {
   id: string;
   salon_name: string;
+  brevo_api_key?: string | null;
   opening_time: string;
   closing_time: string;
   is_open_monday: boolean;
@@ -553,11 +554,12 @@ export default function BackOfficePage() {
   useEffect(() => { agendaViewRef.current = agendaView; }, [agendaView]);
 
   useEffect(() => {
+    if (!settings?.brevo_api_key) return;
     fetch("/api/brevo-credits")
       .then((r) => r.json())
       .then((d) => { if (typeof d.credits === "number") setSmsCredits(d.credits); })
       .catch(() => {});
-  }, []);
+  }, [settings?.brevo_api_key]);
 
   const dayStart = useMemo(() => {
     if (!settings) return parseTimeToMinutes("09:00");
@@ -2042,23 +2044,27 @@ export default function BackOfficePage() {
                   Semaine
                 </button>
               </div>
-              <div className="flex items-center rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm">
-                {smsCredits === null ? (
-                  <span className="text-xs text-[var(--nav-text)] opacity-40">…</span>
-                ) : (
-                  <span className={`font-bold ${Math.floor(smsCredits / 4.5) < 50 ? "text-red-500" : "text-green-600"}`}>
-                    {Math.floor(smsCredits / 4.5)} SMS
-                  </span>
-                )}
-              </div>
-              <a
-                href="https://app.brevo.com/billing/account/customize/message-credits"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white"
-              >
-                Recharger
-              </a>
+              {settings?.brevo_api_key && (
+                <>
+                  <div className="flex items-center rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm">
+                    {smsCredits === null ? (
+                      <span className="text-xs text-[var(--nav-text)] opacity-40">…</span>
+                    ) : (
+                      <span className={`font-bold ${Math.floor(smsCredits / 4.5) < 50 ? "text-red-500" : "text-green-600"}`}>
+                        {Math.floor(smsCredits / 4.5)} SMS
+                      </span>
+                    )}
+                  </div>
+                  <a
+                    href="https://app.brevo.com/billing/account/customize/message-credits"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white"
+                  >
+                    Recharger
+                  </a>
+                </>
+              )}
             </div>
           </div>
 

@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  let apiKey = process.env.BREVO_API_KEY;
+  let apiKey: string | null = null;
   let smsSender = "";
   let salonName = "Votre salon";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!apiKey) {
-    return NextResponse.json({ error: "Configuration Brevo manquante" }, { status: 500 });
+    return NextResponse.json({ skipped: true });
   }
 
   const [year, month, day] = date.split("-");

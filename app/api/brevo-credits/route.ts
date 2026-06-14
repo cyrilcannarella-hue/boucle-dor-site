@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getCurrentSalon } from "@/lib/salon";
 
 export async function GET() {
-  let apiKey = process.env.BREVO_API_KEY;
+  let apiKey: string | null = null;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -15,7 +15,7 @@ export async function GET() {
   }
 
   if (!apiKey) {
-    return NextResponse.json({ error: "BREVO_API_KEY manquant" }, { status: 500 });
+    return NextResponse.json({ error: "Clé API Brevo non configurée" }, { status: 500 });
   }
 
   const res = await fetch("https://api.brevo.com/v3/account", {
