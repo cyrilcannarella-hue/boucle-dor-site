@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
   for (const salon of salons ?? []) {
     const { data: settingsData } = await supabase.from("salon_settings").select("sms_sender, salon_name").eq("salon_id", salon.id).single();
-    const smsSender = settingsData?.sms_sender || "BoucleDor";
+    const smsSender = settingsData?.sms_sender || "";
     const salonName = settingsData?.salon_name || salon.name;
 
     const { data: appointments, error } = await supabase

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Configuration Brevo manquante" }, { status: 500 });
   }
 
-  let smsSender = "BoucleDor";
+  let smsSender = "";
   let salonName = "Votre salon";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

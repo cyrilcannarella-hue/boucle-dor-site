@@ -479,7 +479,7 @@ export default function BackOfficeGestionPage() {
         .from("salon_settings")
         .update({
           phone: settings.phone ?? null,
-          sms_sender: settings.sms_sender ?? "BoucleDor",
+          sms_sender: settings.sms_sender ?? null,
           address: settings.address ?? null,
           email: settings.email ?? null,
           instagram_url: settings.instagram_url ?? null,
@@ -1751,7 +1751,7 @@ export default function BackOfficeGestionPage() {
                           <input
                             type="text"
                             maxLength={11}
-                            value={settings.sms_sender ?? "BoucleDor"}
+                            value={settings.sms_sender ?? ""}
                             onChange={(e) => setSettings({ ...settings, sms_sender: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 11) })}
                             className={fieldClass}
                           />
