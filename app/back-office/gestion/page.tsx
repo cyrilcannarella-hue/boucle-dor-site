@@ -2659,7 +2659,7 @@ export default function BackOfficeGestionPage() {
                         disabled={savingAppearance}
                         className={primaryButtonClass}
                       >
-                        {savingAppearance ? "Enregistrement..." : "Enregistrer les couleurs"}
+                        {savingAppearance ? "Enregistrement..." : "Enregistrer"}
                       </button>
                     </div>
 
