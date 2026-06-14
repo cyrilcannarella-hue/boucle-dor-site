@@ -286,6 +286,7 @@ export default function BackOfficeGestionPage() {
   const [deletingClosureId, setDeletingClosureId] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(COLOR_OPTIONS[0]);
   const [savingCategory, setSavingCategory] = useState(false);
@@ -295,6 +296,7 @@ export default function BackOfficeGestionPage() {
 
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showAddService, setShowAddService] = useState(false);
   const [newServiceName, setNewServiceName] = useState("");
   const [newServiceBeforeBreak, setNewServiceBeforeBreak] = useState("30");
   const [newServiceBreakDuration, setNewServiceBreakDuration] = useState("0");
@@ -1831,13 +1833,74 @@ export default function BackOfficeGestionPage() {
               )}
               {activeTab === "categories" && (
               <div className={cardClass + " p-5 md:p-7"}>
-                  <div className="mb-6">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
-                      <span className="text-xl">🗂️</span>
-                      Catégories
+                  <div className="mb-6 flex items-start justify-between gap-3">
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                        <span className="text-xl">🗂️</span>
+                        Catégories
+                      </div>
+                      <h2 className="text-2xl font-black tracking-tight">Gérer les catégories</h2>
                     </div>
-                    <h2 className="text-2xl font-black tracking-tight">Gérer les catégories</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCategory((v) => !v)}
+                      className={primaryButtonClass}
+                    >
+                      {showAddCategory ? "Fermer" : "+ Ajouter"}
+                    </button>
                   </div>
+
+                  {showAddCategory && (
+                    <div className="mb-6 rounded-3xl border border-[var(--card-border)] bg-[#fffdf9] p-5">
+                      <div className="mb-4 text-lg font-black">Ajouter une catégorie</div>
+
+                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                        Nouvelle catégorie
+                        <input
+                          type="text"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="Ex : Femme"
+                          className={fieldClass}
+                        />
+                      </label>
+
+                      <div className="mt-4 grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                        <span>Couleur</span>
+                        <div className="flex flex-wrap gap-2 rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3">
+                          {COLOR_OPTIONS.map((color) => {
+                            const isSelected = newCategoryColor === color;
+                            const isUsed = categories.some((c) => c.color === color);
+
+                            return (
+                              <button
+                                key={color}
+                                type="button"
+                                disabled={isUsed}
+                                onClick={() => { if (!isUsed) setNewCategoryColor(color); }}
+                                className="h-8 w-8 rounded-full transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-30"
+                                style={{
+                                  backgroundColor: color,
+                                  border: isSelected ? "3px solid #111111" : "1px solid #d6d3d1",
+                                }}
+                                aria-label={`Choisir la couleur ${color}`}
+                                title={isUsed ? "Couleur déjà utilisée" : color}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleCreateCategory}
+                        disabled={savingCategory}
+                        className="mt-5 w-full rounded-2xl bg-[var(--text-main)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                      >
+                        {savingCategory ? "Ajout..." : "Ajouter la catégorie"}
+                      </button>
+                    </div>
+                  )}
 
                   <div className="grid gap-3">
                     {categories.length === 0 ? (
@@ -1938,56 +2001,6 @@ export default function BackOfficeGestionPage() {
                         </div>
                       ))
                     )}
-                  </div>
-
-                  <div className="mt-6 rounded-3xl border border-[var(--card-border)] bg-[#fffdf9] p-5">
-                    <div className="mb-4 text-lg font-black">Ajouter une catégorie</div>
-
-                    <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                      Nouvelle catégorie
-                      <input
-                        type="text"
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        placeholder="Ex : Femme"
-                        className={fieldClass}
-                      />
-                    </label>
-
-                    <div className="mt-4 grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                      <span>Couleur</span>
-                      <div className="flex flex-wrap gap-2 rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3">
-                        {COLOR_OPTIONS.map((color) => {
-                          const isSelected = newCategoryColor === color;
-                          const isUsed = categories.some((c) => c.color === color);
-
-                          return (
-                            <button
-                              key={color}
-                              type="button"
-                              disabled={isUsed}
-                              onClick={() => { if (!isUsed) setNewCategoryColor(color); }}
-                              className="h-8 w-8 rounded-full transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-30"
-                              style={{
-                                backgroundColor: color,
-                                border: isSelected ? "3px solid #111111" : "1px solid #d6d3d1",
-                              }}
-                              aria-label={`Choisir la couleur ${color}`}
-                              title={isUsed ? "Couleur déjà utilisée" : color}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleCreateCategory}
-                      disabled={savingCategory}
-                      className="mt-5 w-full rounded-2xl bg-[var(--text-main)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
-                    >
-                      {savingCategory ? "Ajout..." : "Ajouter la catégorie"}
-                    </button>
                   </div>
               </div>
               )}
@@ -2190,13 +2203,139 @@ export default function BackOfficeGestionPage() {
               )}
               {activeTab === "services" && (
               <div className={cardClass + " p-5 md:p-7"}>
-                  <div className="mb-6">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
-                      <span className="text-xl">⭐</span>
-                      Prestations
+                  <div className="mb-6 flex items-start justify-between gap-3">
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                        <span className="text-xl">⭐</span>
+                        Prestations
+                      </div>
+                      <h2 className="text-2xl font-black tracking-tight">Gérer les prestations</h2>
                     </div>
-                    <h2 className="text-2xl font-black tracking-tight">Gérer les prestations</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddService((v) => !v)}
+                      className={primaryButtonClass}
+                    >
+                      {showAddService ? "Fermer" : "+ Ajouter"}
+                    </button>
                   </div>
+
+                  {showAddService && (
+                    <div className="mb-6 rounded-3xl border border-[var(--card-border)] bg-[#fffdf9] p-5">
+                      <div className="mb-4 text-lg font-black">Ajouter une prestation</div>
+
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)] xl:col-span-2">
+                          Nom
+                          <input
+                            type="text"
+                            value={newServiceName}
+                            onChange={(e) => setNewServiceName(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Temps 1
+                          <input
+                            type="number"
+                            min={0}
+                            value={newServiceBeforeBreak}
+                            onChange={(e) => setNewServiceBeforeBreak(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Pause
+                          <input
+                            type="number"
+                            min={0}
+                            value={newServiceBreakDuration}
+                            onChange={(e) => setNewServiceBreakDuration(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Temps 2
+                          <input
+                            type="number"
+                            min={0}
+                            value={newServiceAfterBreak}
+                            onChange={(e) => setNewServiceAfterBreak(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Tarif €
+                          <input
+                            type="text"
+                            value={newServicePrice}
+                            onChange={(e) => setNewServicePrice(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Catégorie
+                          <select
+                            value={newServiceCategoryId}
+                            onChange={(e) => setNewServiceCategoryId(e.target.value)}
+                            className={fieldClass}
+                          >
+                            <option value="">Sans catégorie</option>
+                            {categories.map((category) => (
+                              <option key={category.id} value={category.id}>
+                                {category.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Ordre d’affichage
+                          <input
+                            type="number"
+                            value={newServiceOrder}
+                            onChange={(e) => setNewServiceOrder(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+
+                        <label className="flex items-center justify-between rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-sm font-semibold">
+                          <span>Visible sur le site</span>
+                          <input
+                            type="checkbox"
+                            checked={newServiceVisible}
+                            onChange={(e) => setNewServiceVisible(e.target.checked)}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-4 rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--nav-text)]">
+                        Durée totale :{" "}
+                        {getTotalDuration(
+                          Math.max(0, Number(newServiceBeforeBreak) || 0),
+                          Math.max(0, Number(newServiceBreakDuration) || 0),
+                          Math.max(0, Number(newServiceAfterBreak) || 0)
+                        )}{" "}
+                        min
+                      </div>
+
+                      <div className="mt-5 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleCreateService}
+                          disabled={savingService}
+                          className={primaryButtonClass}
+                        >
+                          {savingService ? "Ajout..." : "Ajouter la prestation"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mb-4">
                     <select
@@ -2346,121 +2485,6 @@ export default function BackOfficeGestionPage() {
                         );
                       })
                     )}
-                  </div>
-
-                  <div className="mt-6 rounded-3xl border border-[var(--card-border)] bg-[#fffdf9] p-5">
-                    <div className="mb-4 text-lg font-black">Ajouter une prestation</div>
-
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)] xl:col-span-2">
-                        Nom
-                        <input
-                          type="text"
-                          value={newServiceName}
-                          onChange={(e) => setNewServiceName(e.target.value)}
-                          className={fieldClass}
-                        />
-                      </label>
-
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                        Temps 1
-                        <input
-                          type="number"
-                          min={0}
-                          value={newServiceBeforeBreak}
-                          onChange={(e) => setNewServiceBeforeBreak(e.target.value)}
-                          className={fieldClass}
-                        />
-                      </label>
-
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                        Pause
-                        <input
-                          type="number"
-                          min={0}
-                          value={newServiceBreakDuration}
-                          onChange={(e) => setNewServiceBreakDuration(e.target.value)}
-                          className={fieldClass}
-                        />
-                      </label>
-
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                        Temps 2
-                        <input
-                          type="number"
-                          min={0}
-                          value={newServiceAfterBreak}
-                          onChange={(e) => setNewServiceAfterBreak(e.target.value)}
-                          className={fieldClass}
-                        />
-                      </label>
-
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                        Tarif €
-                        <input
-                          type="text"
-                          value={newServicePrice}
-                          onChange={(e) => setNewServicePrice(e.target.value)}
-                          className={fieldClass}
-                        />
-                      </label>
-
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                        Catégorie
-                        <select
-                          value={newServiceCategoryId}
-                          onChange={(e) => setNewServiceCategoryId(e.target.value)}
-                          className={fieldClass}
-                        >
-                          <option value="">Sans catégorie</option>
-                          {categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                        Ordre d’affichage
-                        <input
-                          type="number"
-                          value={newServiceOrder}
-                          onChange={(e) => setNewServiceOrder(e.target.value)}
-                          className={fieldClass}
-                        />
-                      </label>
-
-                      <label className="flex items-center justify-between rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-sm font-semibold">
-                        <span>Visible sur le site</span>
-                        <input
-                          type="checkbox"
-                          checked={newServiceVisible}
-                          onChange={(e) => setNewServiceVisible(e.target.checked)}
-                        />
-                      </label>
-                    </div>
-
-                    <div className="mt-4 rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--nav-text)]">
-                      Durée totale :{" "}
-                      {getTotalDuration(
-                        Math.max(0, Number(newServiceBeforeBreak) || 0),
-                        Math.max(0, Number(newServiceBreakDuration) || 0),
-                        Math.max(0, Number(newServiceAfterBreak) || 0)
-                      )}{" "}
-                      min
-                    </div>
-
-                    <div className="mt-5 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleCreateService}
-                        disabled={savingService}
-                        className={primaryButtonClass}
-                      >
-                        {savingService ? "Ajout..." : "Ajouter la prestation"}
-                      </button>
-                    </div>
                   </div>
               </div>
               )}
