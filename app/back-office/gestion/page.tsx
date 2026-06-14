@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
+import { FONT_OPTIONS } from "@/lib/fonts";
 
 function hexToRgb(hex: string) {
   const clean = hex.replace("#", "");
@@ -84,6 +85,7 @@ type SalonSettings = {
   color_card_border?: string | null;
   color_nav_text?: string | null;
   color_gradient_end?: string | null;
+  site_font?: string | null;
   salon_subtitle?: string | null;
   logo_image_url?: string | null;
   logo_pro_image_url?: string | null;
@@ -345,6 +347,8 @@ export default function BackOfficeGestionPage() {
   const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("#6e655c");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("Salon de coiffure");
+  const [appearanceFont, setAppearanceFont] = useState("");
+  const [savingFont, setSavingFont] = useState(false);
   const [appearanceHeroTagline, setAppearanceHeroTagline] = useState("L'élégance au naturel");
   const [appearanceHeroDescription, setAppearanceHeroDescription] = useState("");
   const [appearanceHeroFeatures, setAppearanceHeroFeatures] = useState(["Techniques de professionnels", "Produits de qualité", "Ambiance chaleureuse"]);
@@ -426,6 +430,7 @@ export default function BackOfficeGestionPage() {
       setSettings(loadedSettings);
       setAppearanceSalonName(loadedSettings?.salon_name ?? "");
       setAppearanceSalonSubtitle(loadedSettings?.salon_subtitle ?? "Salon de coiffure");
+      setAppearanceFont(loadedSettings?.site_font ?? "");
       if (loadedSettings?.promo_text_color) setPromoTextColor(loadedSettings.promo_text_color);
       if (loadedSettings?.promo_color_from) setPromoColorStars(loadedSettings.promo_color_from);
       if (loadedSettings?.promo_bg_color) setPromoBgColorState(loadedSettings.promo_bg_color);
@@ -1171,6 +1176,26 @@ export default function BackOfficeGestionPage() {
       setStatusMessage(`Erreur : ${(error as Error).message}`);
     } finally {
       setSavingAppearanceMeta(false);
+    }
+  };
+
+  const handleSaveFont = async () => {
+    if (!settings) return;
+    try {
+      setSavingFont(true);
+      setStatusMessage("");
+      const { error } = await supabase
+        .from("salon_settings")
+        .update({ site_font: appearanceFont || null })
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
+      if (error) throw new Error(error.message);
+      setSettings((prev) => prev ? { ...prev, site_font: appearanceFont || null } : prev);
+      setStatusMessage("Police enregistrée ✅");
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+    } finally {
+      setSavingFont(false);
     }
   };
 
@@ -2645,6 +2670,36 @@ export default function BackOfficeGestionPage() {
                         />
                       </label>
                     </div>
+                  </div>
+
+                  {/* Police */}
+                  <div className={panelClass + " p-5"}>
+                    <div className="mb-5 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-lg font-black">Police</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveFont}
+                        disabled={savingFont}
+                        className={primaryButtonClass}
+                      >
+                        {savingFont ? "Enregistrement..." : "Enregistrer"}
+                      </button>
+                    </div>
+                    <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                      Police du site
+                      <select
+                        value={appearanceFont}
+                        onChange={(e) => setAppearanceFont(e.target.value)}
+                        className={fieldClass}
+                      >
+                        <option value="">Par défaut</option>
+                        {FONT_OPTIONS.map((font) => (
+                          <option key={font} value={font}>{font}</option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
 
                   {/* Couleurs */}

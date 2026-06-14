@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BRAND_NAME } from "@/lib/theme";
 import { useSalon } from "@/hooks/useSalon";
+import { SiteFont } from "@/components/SiteFont";
 
 type Service = {
   id: string;
@@ -106,6 +107,7 @@ type SalonSettings = {
   color_accents?: string | null;
   color_nav_text?: string | null;
   logo_image_url?: string | null;
+  site_font?: string | null;
 };
 
 type StaffRow = {
@@ -1109,6 +1111,7 @@ export default function ReservationPage() {
       className="relative min-h-screen overflow-hidden"
       style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}` }}
     >
+      <SiteFont font={settings?.site_font} />
       <style>{`
         :root {
           --gold: ${colorTitles};

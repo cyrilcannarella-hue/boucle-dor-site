@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion"
 import { createClient } from "@/utils/supabase/client";
 import { BRAND_NAME } from "@/lib/theme";
 import { useSalon } from "@/hooks/useSalon";
+import { SiteFont } from "@/components/SiteFont";
 
 type SalonSettings = {
   id: string;
@@ -58,6 +59,7 @@ type SalonSettings = {
   color_card_border?: string | null;
   color_nav_text?: string | null;
   color_gradient_end?: string | null;
+  site_font?: string | null;
   hero_image_url?: string | null;
   apropos_image_url?: string | null;
   instagram_url?: string | null;
@@ -273,6 +275,7 @@ useEffect(() => {
         className="relative min-h-screen overflow-hidden scroll-smooth before:pointer-events-none before:absolute before:left-1/2 before:top-[-180px] before:h-[420px] before:w-[420px] before:-translate-x-1/2 before:rounded-full before:bg-[rgb(var(--accent-rgb))]/20 before:blur-3xl"
         style={{ background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}`, color: colorTextMain }}
       >
+      <SiteFont font={settings?.site_font} />
       <style>{`
         :root {
           --gold: ${colorAccents};
