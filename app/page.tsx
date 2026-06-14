@@ -131,7 +131,6 @@ const SalonNamePremium = memo(function SalonNamePremium({
 export default function Home() {
   const { id: salonId } = useSalon();
   const [settings, setSettings] = useState<SalonSettings | null>(null);
-  const [showSplash, setShowSplash] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showReservationPulse, setShowReservationPulse] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -144,15 +143,6 @@ export default function Home() {
   const heroImageY = useTransform(scrollYProgress, [0, 0.5], [0, 45]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setShowSplash(false);
-    }, 1300);
-
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (showSplash) return;
     const tagline = settings?.hero_tagline || "L'élégance au naturel";
     const name = settings?.salon_name || "Boucle d'Or";
     const desc = settings?.hero_description || `${name}, votre salon de coiffure à taille humaine à Rognac. Écoute, conseil et savoir-faire pour sublimer vos cheveux.`;
@@ -173,7 +163,7 @@ export default function Home() {
       }
     }, 45);
     return () => { clearInterval(taglineInterval); };
-  }, [showSplash, settings?.hero_tagline, settings?.hero_description, settings?.salon_name]);
+  }, [settings?.hero_tagline, settings?.hero_description, settings?.salon_name]);
 
 useEffect(() => {
   const handleScroll = () => {
@@ -319,39 +309,6 @@ useEffect(() => {
     className="pointer-events-none fixed left-[-120px] top-[520px] z-0 h-64 w-64 rounded-full blur-3xl"
   />
 
-      <AnimatePresence>
-        {showSplash && (
-          <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--header-bg)]"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-          >
-            <motion.div
-              className="flex flex-col items-center gap-4"
-              initial={{ opacity: 0, scale: 0.92, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: -8 }}
-              transition={{ duration: 0.55, ease: "easeOut" }}
-            >
-              <img
-                src={logoImageUrl}
-                alt={salonName}
-                className="h-28 w-28 rounded-[28px] shadow-[0_18px_45px_rgba(80,55,25,0.18)]"
-              />
-              <div className="text-center">
-                <p className="text-xl font-semibold tracking-wide text-[var(--gradient-start)]">
-                  {salonName}
-                </p>
-                <p className="mt-1 text-sm text-[var(--nav-text)]">
-                  Réservation en ligne
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       <motion.header
         className="sticky top-0 z-50 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
