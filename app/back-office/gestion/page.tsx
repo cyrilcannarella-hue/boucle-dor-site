@@ -47,6 +47,7 @@ type SalonSettings = {
   salon_name?: string | null;
   phone?: string | null;
   sms_sender?: string | null;
+  brevo_api_key?: string | null;
   address?: string | null;
   opening_time: string;
   closing_time: string;
@@ -277,6 +278,7 @@ export default function BackOfficeGestionPage() {
     } catch { return null; }
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [savingSms, setSavingSms] = useState(false);
 
   const [closures, setClosures] = useState<ClosureRow[]>([]);
   const [newClosureDate, setNewClosureDate] = useState("");
@@ -326,7 +328,7 @@ export default function BackOfficeGestionPage() {
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "staff" | "categories" | "services" | "questionnaire" | "apparence">("closures");
+  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "apparence">("closures");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("#ffffff");
   const [promoColorStars, setPromoColorStars] = useState("#d8a646");
@@ -479,7 +481,6 @@ export default function BackOfficeGestionPage() {
         .from("salon_settings")
         .update({
           phone: settings.phone ?? null,
-          sms_sender: settings.sms_sender ?? null,
           address: settings.address ?? null,
           email: settings.email ?? null,
           instagram_url: settings.instagram_url ?? null,
@@ -1179,6 +1180,28 @@ export default function BackOfficeGestionPage() {
     }
   };
 
+  const handleSaveSms = async () => {
+    if (!settings) return;
+    try {
+      setSavingSms(true);
+      setStatusMessage("");
+      const { error } = await supabase
+        .from("salon_settings")
+        .update({
+          sms_sender: settings.sms_sender ?? null,
+          brevo_api_key: settings.brevo_api_key ?? null,
+        })
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
+      if (error) throw new Error(error.message);
+      setStatusMessage("Réglages SMS enregistrés ✅");
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+    } finally {
+      setSavingSms(false);
+    }
+  };
+
   const handleSaveFont = async () => {
     if (!settings) return;
     try {
@@ -1402,6 +1425,7 @@ export default function BackOfficeGestionPage() {
                   { id: "closures" as const, label: "Fermetures", icon: "📆" },
                   { id: "promotions" as const, label: "Promotions", icon: "🎁" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
+                  { id: "sms" as const, label: "SMS", icon: "💬" },
                   { id: "staff" as const, label: "Équipe", icon: "👥" },
                   { id: "categories" as const, label: "Catégories", icon: "🗂️" },
                   { id: "services" as const, label: "Prestations", icon: "⭐" },
@@ -1743,20 +1767,6 @@ export default function BackOfficeGestionPage() {
                             className={fieldClass}
                           />
                         </label>
-
-                        <div className="grid gap-2">
-                          <label className="text-sm font-semibold text-[var(--nav-text)]">
-                            Expéditeur SMS
-                          </label>
-                          <input
-                            type="text"
-                            maxLength={11}
-                            value={settings.sms_sender ?? ""}
-                            onChange={(e) => setSettings({ ...settings, sms_sender: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 11) })}
-                            className={fieldClass}
-                          />
-                          <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">11 caractères maximum, sans espace ni apostrophe (limite opérateurs)</span>
-                        </div>
                       </div>
                     </div>
 
@@ -1849,6 +1859,64 @@ export default function BackOfficeGestionPage() {
                       </button>
                     </div>
                   </>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-[#D8CBBB] bg-[#fffdf9] px-6 py-8 text-center text-[var(--nav-text)]">
+                    Aucune ligne trouvée dans <strong>salon_settings</strong>.
+                  </div>
+                )}
+              </section>
+              )}
+              {activeTab === "sms" && (
+              <section className={cardClass + " p-5 md:p-7"}>
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                      <span className="text-xl">💬</span>
+                      SMS
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight">
+                      Confirmations et rappels par SMS
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveSms}
+                    disabled={savingSms || !settings}
+                    className={primaryButtonClass}
+                  >
+                    {savingSms ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+
+                {settings ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[var(--nav-text)]">
+                        Expéditeur SMS
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={11}
+                        value={settings.sms_sender ?? ""}
+                        onChange={(e) => setSettings({ ...settings, sms_sender: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 11) })}
+                        className={fieldClass}
+                      />
+                      <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">11 caractères maximum, sans espace ni apostrophe (limite opérateurs)</span>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-semibold text-[var(--nav-text)]">
+                        Clé API Brevo
+                      </label>
+                      <input
+                        type="password"
+                        value={settings.brevo_api_key ?? ""}
+                        onChange={(e) => setSettings({ ...settings, brevo_api_key: e.target.value })}
+                        className={fieldClass}
+                      />
+                      <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Clé du compte Brevo de ce salon. Laisser vide pour utiliser le compte par défaut.</span>
+                    </div>
+                  </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-[#D8CBBB] bg-[#fffdf9] px-6 py-8 text-center text-[var(--nav-text)]">
                     Aucune ligne trouvée dans <strong>salon_settings</strong>.

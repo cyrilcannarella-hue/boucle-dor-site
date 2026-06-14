@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { getCurrentSalon } from "@/lib/salon";
 
 export async function GET() {
-  const apiKey = process.env.BREVO_API_KEY;
+  let apiKey = process.env.BREVO_API_KEY;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && serviceKey) {
+    const salon = await getCurrentSalon();
+    const supabase = createClient(supabaseUrl, serviceKey);
+    const { data } = await supabase.from("salon_settings").select("brevo_api_key").eq("salon_id", salon.id).single();
+    if (data?.brevo_api_key) apiKey = data.brevo_api_key;
+  }
+
   if (!apiKey) {
     return NextResponse.json({ error: "BREVO_API_KEY manquant" }, { status: 500 });
   }
