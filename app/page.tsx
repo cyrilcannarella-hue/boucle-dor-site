@@ -242,7 +242,7 @@ useEffect(() => {
   const aproposText = settings?.apropos_text || `Chez ${salonName}, chaque rendez-vous est pensé comme un vrai moment de bien-être. Virginie vous accueille dans une ambiance conviviale, avec une attention particulière portée à l'écoute, au conseil et au résultat.`;
   const allReviews = settings?.site_reviews ?? [];
   const reviews = allReviews.filter((r) => r.name?.trim() || r.text?.trim());
-  const logoImageUrl = settings?.logo_image_url || "/icon-192.png";
+  const logoImageUrl = settings?.logo_image_url || null;
   const heroImageUrl = settings?.hero_image_url || "/images/hero-salon.jpg";
   const aproposImageUrl = settings?.apropos_image_url || "/images/apropos-salon.jpg";
   const colorTitles = settings?.color_titles || "#b98b3d";
@@ -336,9 +336,11 @@ useEffect(() => {
               className="group flex min-w-0 items-center gap-3"
               aria-label="Retour en haut de page"
             >
-              <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-                <img src={logoImageUrl} alt={BRAND_NAME} className="h-full w-full object-cover" />
-              </div>
+              {logoImageUrl && (
+                <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
+                  <img src={logoImageUrl} alt={BRAND_NAME} className="h-full w-full object-cover" />
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="text-2xl leading-none tracking-[-0.04em] md:text-4xl">
                   <SalonNamePremium name={salonName} compact goldColor={colorTextMain} gradientEndColor={colorAccents} />
