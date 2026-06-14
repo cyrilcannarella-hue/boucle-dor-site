@@ -240,13 +240,7 @@ useEffect(() => {
         { title: "Coiffures", description: "Attaches, chignons, coiffures événementielles", price: "À partir de 35€" },
       ];
   const aproposText = settings?.apropos_text || `Chez ${salonName}, chaque rendez-vous est pensé comme un vrai moment de bien-être. Virginie vous accueille dans une ambiance conviviale, avec une attention particulière portée à l'écoute, au conseil et au résultat.`;
-  const allReviews = settings?.site_reviews?.length ? settings.site_reviews : [
-    { name: "Sophie", text: "Un salon très agréable, Virginie est à l'écoute et le résultat est toujours impeccable. Je recommande sans hésiter." },
-    { name: "Camille", text: "Accueil chaleureux, très bons conseils et prestation de qualité. On se sent vraiment bien du début à la fin." },
-    { name: "Nadia", text: "Je suis ravie de ma coupe et de la couleur. Travail soigné, ambiance conviviale et vraie attention aux détails." },
-    { name: "Léa", text: `Toujours un super moment chez ${salonName}. Je repars à chaque fois ravie de ma coiffure, merci !` },
-    { name: "Marie", text: "Professionnalisme et gentillesse au rendez-vous. Une adresse que je recommande les yeux fermés." },
-  ];
+  const allReviews = settings?.site_reviews ?? [];
   const reviews = allReviews.filter((r) => r.name?.trim() || r.text?.trim());
   const logoImageUrl = settings?.logo_image_url || "/icon-192.png";
   const heroImageUrl = settings?.hero_image_url || "/images/hero-salon.jpg";
@@ -693,6 +687,7 @@ useEffect(() => {
         </motion.div>
       </motion.section>
 
+      {reviews.length > 0 && (
       <section className="mx-auto w-[min(1200px,calc(100%-32px))] py-10">
         <div className="mb-6">
           <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
@@ -717,6 +712,7 @@ useEffect(() => {
           </div>
         </div>
       </section>
+      )}
 
       <section
         id="contact"

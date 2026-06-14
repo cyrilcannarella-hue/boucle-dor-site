@@ -367,9 +367,9 @@ export default function BackOfficeGestionPage() {
   const [uploadingHero, setUploadingHero] = useState(false);
   const [uploadingApropos, setUploadingApropos] = useState(false);
   const [appearanceReviews, setAppearanceReviews] = useState([
-    { name: "Sophie", text: "Un salon très agréable, Virginie est à l'écoute et le résultat est toujours impeccable. Je recommande sans hésiter." },
-    { name: "Camille", text: "Accueil chaleureux, très bons conseils et prestation de qualité. On se sent vraiment bien du début à la fin." },
-    { name: "Nadia", text: "Je suis ravie de ma coupe et de la couleur. Travail soigné, ambiance conviviale et vraie attention aux détails." },
+    { name: "", text: "" },
+    { name: "", text: "" },
+    { name: "", text: "" },
     { name: "", text: "" },
     { name: "", text: "" },
   ]);
