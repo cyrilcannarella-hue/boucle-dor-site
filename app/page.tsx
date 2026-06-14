@@ -231,8 +231,8 @@ useEffect(() => {
     ? settings.hero_features
     : ["Techniques de professionnels", "Produits de qualité", "Ambiance chaleureuse"];
   const aproposTitle = settings?.apropos_title || "un salon à taille humaine";
-  const prestations = settings?.site_prestations?.length
-    ? settings.site_prestations
+  const prestations = settings?.site_prestations?.filter((p) => p.title.trim() || p.description.trim() || p.price.trim()).length
+    ? settings.site_prestations.filter((p) => p.title.trim() || p.description.trim() || p.price.trim())
     : [
         { title: "Coupe & brushing", description: "Coupe sur-mesure, brushing, mise en forme", price: "À partir de 28€" },
         { title: "Coloration", description: "Coloration, mèches, balayage, ombré hair", price: "À partir de 45€" },
