@@ -2213,7 +2213,13 @@ export default function BackOfficeGestionPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setShowAddService((v) => !v)}
+                      onClick={() => {
+                        if (!showAddService) {
+                          const nextOrder = Math.max(0, ...services.map((s) => s.display_order ?? 0)) + 1;
+                          setNewServiceOrder(String(nextOrder));
+                        }
+                        setShowAddService((v) => !v);
+                      }}
                       className={primaryButtonClass}
                     >
                       {showAddService ? "Fermer" : "+ Ajouter"}
