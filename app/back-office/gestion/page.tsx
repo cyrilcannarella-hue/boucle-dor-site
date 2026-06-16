@@ -1914,7 +1914,7 @@ export default function BackOfficeGestionPage() {
                         onChange={(e) => setSettings({ ...settings, brevo_api_key: e.target.value })}
                         className={fieldClass}
                       />
-                      <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Clé du compte Brevo de ce salon. Laisser vide pour utiliser le compte par défaut.</span>
+                      <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Clé API du compte Brevo de ce salon. Laisser vide pour désactiver les SMS.</span>
                     </div>
                   </div>
                 ) : (
