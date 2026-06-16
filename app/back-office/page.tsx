@@ -1209,7 +1209,11 @@ export default function BackOfficePage() {
       return;
     }
 
-    if (dayHasAllDayClosure && createDate === selectedDate) {
+    const createDateClosures = createDate === selectedDate
+      ? exceptionClosures
+      : weekExceptionClosures.filter((c) => c.closure_date === createDate);
+
+    if (createDateClosures.some((c) => c.is_all_day)) {
       setCreateModalError("Le salon est fermé exceptionnellement toute la journée.");
       return;
     }
@@ -1220,7 +1224,7 @@ export default function BackOfficePage() {
 
 
     if (startMinutes < createDayStart) {
-      setCreateModalError(`L'heure de début doit être après l'ouverture (${pad2(Math.floor(createDayStart / 60))}:${pad2(createDayStart % 60)}).`);
+      setCreateModalError(`L’heure de début doit être après l’ouverture (${pad2(Math.floor(createDayStart / 60))}:${pad2(createDayStart % 60)}).`);
       return;
     }
     if (endMinutes > createDayEnd) {
@@ -1261,13 +1265,13 @@ export default function BackOfficePage() {
       isBlockedByExceptionalClosure(
         serviceSegments.segment1Start,
         serviceSegments.segment1End,
-        exceptionClosures
+        createDateClosures
       ) ||
       (serviceSegments.after > 0 &&
         isBlockedByExceptionalClosure(
           serviceSegments.segment2Start,
           serviceSegments.segment2End,
-          exceptionClosures
+          createDateClosures
         ));
 
     if (blockedByClosures) {
