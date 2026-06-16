@@ -965,6 +965,21 @@ export default function BackOfficePage() {
     return Math.min(dayEnd, parseTimeToMinutes(createStaffSchedule.closing_time.slice(0, 5)));
   }, [createStaffSchedule, dayEnd]);
 
+  const createDateClosures = useMemo(
+    () => createDate === selectedDate
+      ? exceptionClosures
+      : weekExceptionClosures.filter((c) => c.closure_date === createDate),
+    [createDate, selectedDate, exceptionClosures, weekExceptionClosures]
+  );
+
+  const allKnownAppointmentsForCreate = useMemo(
+    () => [
+      ...appointments,
+      ...weekAppointments.filter((wa) => !appointments.some((a) => a.id === wa.id)),
+    ],
+    [appointments, weekAppointments]
+  );
+
   const selectedCreateService = useMemo(
     () => services.find((s) => s.id === createServiceId) ?? null,
     [services, createServiceId]
@@ -1209,10 +1224,6 @@ export default function BackOfficePage() {
       return;
     }
 
-    const createDateClosures = createDate === selectedDate
-      ? exceptionClosures
-      : weekExceptionClosures.filter((c) => c.closure_date === createDate);
-
     if (createDateClosures.some((c) => c.is_all_day)) {
       setCreateModalError("Le salon est fermé exceptionnellement toute la journée.");
       return;
@@ -1232,7 +1243,7 @@ export default function BackOfficePage() {
       return;
     }
 
-    const blockedByAppointments = appointments.some((appointment) => {
+    const blockedByAppointments = allKnownAppointmentsForCreate.some((appointment) => {
       if (appointment.appointment_date !== createDate) return false;
       if (createStaffId && appointment.staff_id && appointment.staff_id !== createStaffId) return false;
 
@@ -1428,7 +1439,16 @@ export default function BackOfficePage() {
       return;
     }
 
-    const blockedByAppointments = appointments.some((appointment) => {
+    const editDateClosures = editAppointmentDate === selectedDate
+      ? exceptionClosures
+      : weekExceptionClosures.filter((c) => c.closure_date === editAppointmentDate);
+
+    const allKnownAppointments = [
+      ...appointments,
+      ...weekAppointments.filter((wa) => !appointments.some((a) => a.id === wa.id)),
+    ];
+
+    const blockedByAppointments = allKnownAppointments.some((appointment) => {
       if (appointment.appointment_date !== editAppointmentDate) return false;
       if (appointment.id === selectedAppointment.id) return false;
       if (selectedAppointment.staff_id && appointment.staff_id && appointment.staff_id !== selectedAppointment.staff_id) return false;
@@ -1462,13 +1482,13 @@ export default function BackOfficePage() {
       isBlockedByExceptionalClosure(
         serviceSegments.segment1Start,
         serviceSegments.segment1End,
-        exceptionClosures
+        editDateClosures
       ) ||
       (serviceSegments.after > 0 &&
         isBlockedByExceptionalClosure(
           serviceSegments.segment2Start,
           serviceSegments.segment2End,
-          exceptionClosures
+          editDateClosures
         ));
 
     if (blockedByAppointments || blockedByClosures) {
@@ -2754,7 +2774,7 @@ export default function BackOfficePage() {
                               }
                             }
                             if (!isUnavailable) {
-                              const blockedByRdv = appointments.some((apt) => {
+                              const blockedByRdv = allKnownAppointmentsForCreate.some((apt) => {
                                 if (apt.appointment_date !== createDate) return false;
                                 if (createStaffId && apt.staff_id && apt.staff_id !== createStaffId) return false;
                                 const busy = getAppointmentBusySegments(apt);
@@ -2764,8 +2784,8 @@ export default function BackOfficePage() {
                                   overlaps(segs.segment2Start, segs.segment2End, seg.start, seg.end)
                                 ));
                               });
-                              const blockedByClosure = isBlockedByExceptionalClosure(segs.segment1Start, segs.segment1End, exceptionClosures)
-                                || (segs.after > 0 && isBlockedByExceptionalClosure(segs.segment2Start, segs.segment2End, exceptionClosures));
+                              const blockedByClosure = isBlockedByExceptionalClosure(segs.segment1Start, segs.segment1End, createDateClosures)
+                                || (segs.after > 0 && isBlockedByExceptionalClosure(segs.segment2Start, segs.segment2End, createDateClosures));
                               isUnavailable = blockedByRdv || blockedByClosure;
                             }
                           }
