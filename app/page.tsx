@@ -553,8 +553,8 @@ useEffect(() => {
               {salonSubtitle}
             </motion.div>
           )}
-          <motion.h1 variants={fadeUp} className="relative z-10 max-w-xl text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
-            <span className="block mb-1" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05 }}>
+          <motion.h1 variants={fadeUp} className="relative z-10 text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
+            <span className="block mb-1 whitespace-nowrap" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05 }}>
               <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
             </span>
             {heroTagline && (
