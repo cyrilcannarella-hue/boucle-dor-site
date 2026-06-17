@@ -1223,6 +1223,7 @@ export default function BackOfficeGestionPage() {
         .update({
           salon_name: appearanceSalonName.trim() || settings.salon_name,
           salon_subtitle: appearanceSalonSubtitle.trim() || null,
+          site_font: appearanceFont || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
@@ -1231,6 +1232,7 @@ export default function BackOfficeGestionPage() {
         ...prev,
         salon_name: appearanceSalonName.trim() || prev.salon_name,
         salon_subtitle: appearanceSalonSubtitle.trim() || null,
+        site_font: appearanceFont || null,
       } : prev);
       setStatusMessage("Nom du salon enregistré ✅");
     } catch (error: unknown) {
@@ -2997,14 +2999,75 @@ export default function BackOfficeGestionPage() {
                           className={fieldClass}
                         />
                       </label>
+                      <div className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                        Police du site
+                        <div className="relative" ref={fontDropdownRef}>
+                          {fontDropdownOpen && (
+                            <link
+                              rel="stylesheet"
+                              href={`https://fonts.googleapis.com/css2?${FONT_OPTIONS.map((f) => `family=${f.replace(/ /g, "+")}:wght@400;700`).join("&")}&display=swap`}
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => { setFontDropdownOpen((v) => !v); setFontSearch(""); }}
+                            className={`${fieldClass} flex w-full items-center justify-between`}
+                            style={appearanceFont ? { fontFamily: `'${appearanceFont}', sans-serif` } : undefined}
+                          >
+                            <span className="font-normal">{appearanceFont || "Par défaut"}</span>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`shrink-0 transition-transform ${fontDropdownOpen ? "rotate-180" : ""}`}>
+                              <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                          {fontDropdownOpen && (
+                            <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white shadow-[0_18px_45px_rgba(80,55,25,0.14)]">
+                              <div className="border-b border-[var(--card-border)] p-2">
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  placeholder="Rechercher une police..."
+                                  value={fontSearch}
+                                  onChange={(e) => setFontSearch(e.target.value)}
+                                  className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg-secondary)] px-3 py-2 text-sm font-normal text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
+                                />
+                              </div>
+                              <div className="max-h-60 overflow-y-auto py-1">
+                                {!fontSearch && (
+                                  <button
+                                    type="button"
+                                    onClick={() => { setAppearanceFont(""); setFontDropdownOpen(false); }}
+                                    className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--page-bg)] ${!appearanceFont ? "font-semibold text-[var(--gold)]" : "font-normal text-[var(--nav-text)]"}`}
+                                  >
+                                    Par défaut
+                                  </button>
+                                )}
+                                {FONT_OPTIONS.filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase())).map((font) => (
+                                  <button
+                                    key={font}
+                                    type="button"
+                                    onClick={() => { setAppearanceFont(font); setFontDropdownOpen(false); setFontSearch(""); }}
+                                    className={`w-full px-4 py-2.5 text-left hover:bg-[var(--page-bg)] ${appearanceFont === font ? "font-semibold text-[var(--gold)]" : "font-normal text-[var(--text-main)]"}`}
+                                    style={{ fontFamily: `'${font}', sans-serif`, fontSize: "15px" }}
+                                  >
+                                    {font}
+                                  </button>
+                                ))}
+                                {FONT_OPTIONS.filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase())).length === 0 && (
+                                  <div className="px-4 py-3 text-sm font-normal text-[var(--nav-text)]">Aucune police trouvée</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Police */}
+                  {/* Motif de fond */}
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-lg font-black">Motif et police</div>
+                        <div className="text-lg font-black">Motif de fond</div>
                       </div>
                       <button
                         type="button"
@@ -3048,67 +3111,6 @@ export default function BackOfficeGestionPage() {
                       </div>
                     </div>
 
-                    <div className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                      Police du site
-                      <div className="relative" ref={fontDropdownRef}>
-                        {fontDropdownOpen && (
-                          <link
-                            rel="stylesheet"
-                            href={`https://fonts.googleapis.com/css2?${FONT_OPTIONS.map((f) => `family=${f.replace(/ /g, "+")}:wght@400;700`).join("&")}&display=swap`}
-                          />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => { setFontDropdownOpen((v) => !v); setFontSearch(""); }}
-                          className={`${fieldClass} flex w-full items-center justify-between`}
-                          style={appearanceFont ? { fontFamily: `'${appearanceFont}', sans-serif` } : undefined}
-                        >
-                          <span className="font-normal">{appearanceFont || "Par défaut"}</span>
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`shrink-0 transition-transform ${fontDropdownOpen ? "rotate-180" : ""}`}>
-                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        {fontDropdownOpen && (
-                          <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white shadow-[0_18px_45px_rgba(80,55,25,0.14)]">
-                            <div className="border-b border-[var(--card-border)] p-2">
-                              <input
-                                autoFocus
-                                type="text"
-                                placeholder="Rechercher une police..."
-                                value={fontSearch}
-                                onChange={(e) => setFontSearch(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg-secondary)] px-3 py-2 text-sm font-normal text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
-                              />
-                            </div>
-                            <div className="max-h-60 overflow-y-auto py-1">
-                              {!fontSearch && (
-                                <button
-                                  type="button"
-                                  onClick={() => { setAppearanceFont(""); setFontDropdownOpen(false); }}
-                                  className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--page-bg)] ${!appearanceFont ? "font-semibold text-[var(--gold)]" : "font-normal text-[var(--nav-text)]"}`}
-                                >
-                                  Par défaut
-                                </button>
-                              )}
-                              {FONT_OPTIONS.filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase())).map((font) => (
-                                <button
-                                  key={font}
-                                  type="button"
-                                  onClick={() => { setAppearanceFont(font); setFontDropdownOpen(false); setFontSearch(""); }}
-                                  className={`w-full px-4 py-2.5 text-left hover:bg-[var(--page-bg)] ${appearanceFont === font ? "font-semibold text-[var(--gold)]" : "font-normal text-[var(--text-main)]"}`}
-                                  style={{ fontFamily: `'${font}', sans-serif`, fontSize: "15px" }}
-                                >
-                                  {font}
-                                </button>
-                              ))}
-                              {FONT_OPTIONS.filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase())).length === 0 && (
-                                <div className="px-4 py-3 text-sm font-normal text-[var(--nav-text)]">Aucune police trouvée</div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
 
                   {/* Couleurs */}
