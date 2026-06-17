@@ -59,6 +59,8 @@ type SalonSettings = {
   color_card_border?: string | null;
   color_nav_text?: string | null;
   color_gradient_end?: string | null;
+  color_badges?: string | null;
+  color_subtitles?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
   bg_pattern?: string | null;
@@ -264,7 +266,8 @@ useEffect(() => {
   const heroImageUrl = settings?.hero_image_url || null;
   const aproposImageUrl = settings?.apropos_image_url || null;
   const colorTitles = settings?.color_titles || "#1a1a2e";
-  const colorBadges = settings?.color_titles || "#1a1a2e";
+  const colorBadges = settings?.color_badges || settings?.color_titles || "#1a1a2e";
+  const colorSubtitles = settings?.color_subtitles || settings?.color_page_bg || "#ffffff";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorButtons = settings?.color_accents || "#4f46e5";
   const colorHeroCard = settings?.color_contact_bg || "#111827";
@@ -381,7 +384,7 @@ useEffect(() => {
                     <SalonNamePremium name={salonName} compact goldColor={colorTextMain} gradientEndColor={colorAccents} />
                   </span>
                 </div>
-                <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--footer-text)] sm:block">
+                <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] sm:block" style={{ color: colorSubtitles }}>
                   {salonSubtitle}
                 </div>
               </div>
@@ -573,10 +576,10 @@ useEffect(() => {
               <>
                 <span className="relative mt-3 inline-block text-3xl font-light tracking-[-0.03em] md:text-5xl">
                   <span className="invisible">{heroTagline}</span>
-                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents}, ${colorGradientEnd})` }}>
+                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitles}, ${colorAccents}, ${colorGradientEnd})` }}>
                     {typedTagline}
                     {typedTagline.length < heroTagline.length && (
-                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents})` }}>|</span>
+                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitles}, ${colorAccents})` }}>|</span>
                     )}
                   </span>
                 </span>
@@ -584,7 +587,7 @@ useEffect(() => {
             )}
           </motion.h1>
           {heroDescription && (
-            <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl text-lg" style={{ color: `${colorPageBg}bf` }}>
+            <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl text-lg" style={{ color: `${colorSubtitles}bf` }}>
               <span className="invisible">{heroDescription}</span>
               <span className="absolute inset-0">
                 {typedDesc}
@@ -619,7 +622,7 @@ useEffect(() => {
           </motion.div>
 
           {heroFeatures.length > 0 && (
-          <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorPageBg}cc` }}>
+          <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorSubtitles}cc` }}>
             {heroFeatures.map((feat, i) => (
               <div key={feat} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 p-4 text-center">
                 <span className="shrink-0" style={{ color: colorBadges }}>
@@ -672,7 +675,7 @@ useEffect(() => {
         className="mx-auto w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 py-10"
       >
         <div className="mb-6">
-          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
+          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
             Prestations
           </div>
         </div>
@@ -721,7 +724,7 @@ useEffect(() => {
           className="rounded-[28px] border border-[var(--card-border)] p-6 shadow-sm"
           style={{ backgroundColor: colorPanelBg }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
             À propos
           </div>
           <h2 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-4xl text-transparent">{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
@@ -751,7 +754,7 @@ useEffect(() => {
       {reviews.length > 0 && (
       <section className="mx-auto w-[min(1200px,calc(100%-32px))] py-10">
         <div className="mb-6">
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
             Avis clients
           </div>
         </div>
@@ -765,7 +768,7 @@ useEffect(() => {
                 style={{ background: `linear-gradient(135deg, ${colorTitles}22 0%, ${colorPanelBg} 100%), ${colorPanelBg}` }}
               >
                 <p style={{ color: colorTextSecondary }}>
-                  <span style={{ color: colorTitles }}>"</span>{review.text}<span style={{ color: colorTitles }}>"</span>
+                  <span style={{ color: colorBadges }}>"</span>{review.text}<span style={{ color: colorBadges }}>"</span>
                 </p>
                 <div className="mt-auto pt-5 font-semibold" style={{ color: colorTitles }}>{review.name}</div>
               </article>
@@ -788,7 +791,7 @@ useEffect(() => {
           className="rounded-[30px] p-8 text-white"
           style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorContactBg, 0.22)} 0%, ${colorContactBg} 50%, #050505 100%)` }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
             Contact
           </div>
 

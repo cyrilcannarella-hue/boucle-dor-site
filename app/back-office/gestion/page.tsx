@@ -122,6 +122,8 @@ type SalonSettings = {
   promo_color_to?: string | null;
   promo_text_color?: string | null;
   color_titles?: string | null;
+  color_badges?: string | null;
+  color_subtitles?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
   color_page_bg?: string | null;
@@ -385,6 +387,8 @@ export default function BackOfficeGestionPage() {
   const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState<string | null>(null);
 
   const [appearanceTitles, setAppearanceTitles] = useState("");
+  const [appearanceBadges, setAppearanceBadges] = useState("");
+  const [appearanceSubtitles, setAppearanceSubtitles] = useState("");
   const [appearanceAccents, setAppearanceAccents] = useState("");
   const [appearanceContactBg, setAppearanceContactBg] = useState("");
   const [appearancePageBg, setAppearancePageBg] = useState("");
@@ -525,6 +529,8 @@ export default function BackOfficeGestionPage() {
         setAppearanceReviews(padded);
       }
       setAppearanceTitles(loadedSettings?.color_titles ?? "");
+      setAppearanceBadges(loadedSettings?.color_badges ?? "");
+      setAppearanceSubtitles(loadedSettings?.color_subtitles ?? "");
       setAppearanceAccents(loadedSettings?.color_accents ?? "");
       setAppearanceContactBg(loadedSettings?.color_contact_bg ?? "");
       setAppearancePageBg(loadedSettings?.color_page_bg ?? "");
@@ -1332,6 +1338,8 @@ export default function BackOfficeGestionPage() {
           color_card_border: deriveBorderColor(appearancePageBg),
           color_nav_text: appearanceTextMain,
           color_gradient_end: appearanceTitles,
+          color_badges: appearanceBadges || null,
+          color_subtitles: appearanceSubtitles || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
@@ -1350,6 +1358,8 @@ export default function BackOfficeGestionPage() {
         color_header_bg: appearancePageBg,
         color_card_border: appearancePageBg,
         color_nav_text: appearanceTextMain,
+        color_badges: appearanceBadges || null,
+        color_subtitles: appearanceSubtitles || null,
         color_gradient_end: appearanceTitles,
       } : prev);
       setStatusMessage("Couleurs enregistrées ✅");
@@ -3211,12 +3221,14 @@ export default function BackOfficeGestionPage() {
                     <div className="grid gap-3">
                       {(
                         [
-                          { key: "titles", label: "Couleur principale", desc: "Titres, badges, prix et dégradé des grands titres", value: appearanceTitles, setter: setAppearanceTitles },
+                          { key: "titles", label: "Titres", desc: "h2, h3, prix des prestations, nom auteur avis", value: appearanceTitles, setter: setAppearanceTitles },
+                          { key: "badges", label: "Badges", desc: "Pills de section (Prestations, À propos, Avis, Contact) et guillemets", value: appearanceBadges, setter: setAppearanceBadges },
+                          { key: "subtitles", label: "Sous-titres", desc: "Tagline hero, description hero, sous-titre salon, features hero", value: appearanceSubtitles, setter: setAppearanceSubtitles },
                           { key: "accents", label: "Couleur secondaire", desc: "Boutons CTA et accents décoratifs", value: appearanceAccents, setter: setAppearanceAccents },
                           { key: "contact", label: "Fond fenêtre", desc: "Section contact, carte hero et début du dégradé des titres", value: appearanceContactBg, setter: setAppearanceContactBg },
                           { key: "pagebg", label: "Fond de page", desc: "Fond de page, header, footer et bordures des cartes", value: appearancePageBg, setter: setAppearancePageBg },
-                          { key: "textmain", label: "Texte principal", desc: "Titres, noms, liens de navigation", value: appearanceTextMain, setter: setAppearanceTextMain },
-                          { key: "textsecondary", label: "Texte secondaire", desc: "Descriptions, avis, adresse, texte du footer", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
+                          { key: "textmain", label: "Texte principal", desc: "Navigation, boutons, nom du salon (header)", value: appearanceTextMain, setter: setAppearanceTextMain },
+                          { key: "textsecondary", label: "Descriptions", desc: "Corps de texte, descriptions prestations, texte des avis, horaires", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
                         ] as { key: string; label: string; desc: string; value: string; setter: (v: string) => void }[]
                       ).map(({ key, label, desc, value, setter }) => (
                         <div key={key} className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white">
