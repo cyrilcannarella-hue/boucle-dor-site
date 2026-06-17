@@ -267,7 +267,8 @@ useEffect(() => {
   const aproposImageUrl = settings?.apropos_image_url || null;
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorBadges = settings?.color_badges || settings?.color_titles || "#1a1a2e";
-  const colorSubtitles = settings?.color_subtitles || settings?.color_page_bg || "#ffffff";
+  const colorSubtitlesHero = settings?.color_subtitles || settings?.color_page_bg || "#ffffff";
+  const colorSubtitlesLight = settings?.color_subtitles || settings?.color_text_secondary || "#6b7280";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorButtons = settings?.color_accents || "#4f46e5";
   const colorHeroCard = settings?.color_contact_bg || "#111827";
@@ -380,7 +381,7 @@ useEffect(() => {
                     <SalonNamePremium name={salonName} compact goldColor={colorTextMain} gradientEndColor={colorAccents} />
                   </span>
                 </div>
-                <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] sm:block" style={{ color: colorSubtitles }}>
+                <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] sm:block" style={{ color: colorSubtitlesLight }}>
                   {salonSubtitle}
                 </div>
               </div>
@@ -572,10 +573,10 @@ useEffect(() => {
               <>
                 <span className="relative mt-3 inline-block text-3xl font-light tracking-[-0.03em] md:text-5xl">
                   <span className="invisible">{heroTagline}</span>
-                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitles}, ${colorAccents}, ${colorGradientEnd})` }}>
+                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitlesHero}, ${colorAccents}, ${colorGradientEnd})` }}>
                     {typedTagline}
                     {typedTagline.length < heroTagline.length && (
-                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitles}, ${colorAccents})` }}>|</span>
+                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitlesHero}, ${colorAccents})` }}>|</span>
                     )}
                   </span>
                 </span>
@@ -583,7 +584,7 @@ useEffect(() => {
             )}
           </motion.h1>
           {heroDescription && (
-            <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl text-lg" style={{ color: `${colorSubtitles}bf` }}>
+            <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl text-lg" style={{ color: `${colorSubtitlesHero}bf` }}>
               <span className="invisible">{heroDescription}</span>
               <span className="absolute inset-0">
                 {typedDesc}
@@ -618,7 +619,7 @@ useEffect(() => {
           </motion.div>
 
           {heroFeatures.length > 0 && (
-          <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorSubtitles}cc` }}>
+          <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorSubtitlesHero}cc` }}>
             {heroFeatures.map((feat, i) => (
               <div key={feat} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 p-4 text-center">
                 <span className="shrink-0" style={{ color: colorBadges }}>
