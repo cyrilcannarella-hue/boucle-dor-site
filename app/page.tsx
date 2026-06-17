@@ -234,6 +234,7 @@ useEffect(() => {
   }, [salonId]);
 
   const salonName = settings?.salon_name || "Votre salon";
+  const heroNameFontSize = `clamp(1.25rem, ${(110 / Math.max(8, salonName.length)).toFixed(1)}vw, 4.5rem)`;
   const salonPhone = settings?.phone || null;
   const salonAddress = settings?.address || null;
   const openingTime = settings?.opening_time?.slice(0, 5) || null;
@@ -554,7 +555,7 @@ useEffect(() => {
             </motion.div>
           )}
           <motion.h1 variants={fadeUp} className="relative z-10 text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
-            <span className="block mb-1 whitespace-nowrap" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05 }}>
+            <span className="block mb-1 whitespace-nowrap" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05, fontSize: heroNameFontSize }}>
               <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
             </span>
             {heroTagline && (
