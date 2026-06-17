@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion"
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
+import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 
 type SalonSettings = {
   id: string;
@@ -59,6 +60,8 @@ type SalonSettings = {
   color_nav_text?: string | null;
   color_gradient_end?: string | null;
   site_font?: string | null;
+  font_salon_name?: string | null;
+  bg_pattern?: string | null;
   hero_image_url?: string | null;
   apropos_image_url?: string | null;
   instagram_url?: string | null;
@@ -85,6 +88,18 @@ function hexToRgb(hex: string): string {
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
   return `${r},${g},${b}`;
+}
+
+function derivePanelBg(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (luminance > 0.85) return "#ffffff";
+  const offset = luminance > 0.5 ? 15 : -15;
+  const clamp = (v: number) => Math.max(0, Math.min(255, v + offset));
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
 function blendHex(hex1: string, hex2: string, ratio: number): string {
@@ -243,6 +258,8 @@ useEffect(() => {
   const colorHeroCard = settings?.color_contact_bg || "#111827";
   const colorContactBg = settings?.color_contact_bg || "#111827";
   const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const colorPanelBg = derivePanelBg(colorPageBg);
+  const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorTextSecondary = settings?.color_text_secondary || "#6b7280";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
@@ -270,11 +287,16 @@ useEffect(() => {
 <main
         id="top"
         className="relative min-h-screen overflow-hidden scroll-smooth before:pointer-events-none before:absolute before:left-1/2 before:top-[-180px] before:h-[420px] before:w-[420px] before:-translate-x-1/2 before:rounded-full before:bg-[rgb(var(--accent-rgb))]/20 before:blur-3xl"
-        style={{ background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}`, color: colorTextMain }}
+        style={{ background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}`, color: colorTextMain }}
       >
       <SiteFont font={settings?.site_font} />
+      {settings?.font_salon_name && (
+        <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${settings.font_salon_name.replace(/ /g, "+")}:wght@400;600;700;900&display=swap`} />
+      )}
+      <SitePattern pattern={settings?.bg_pattern} />
       <style>{`
         :root {
+          --font-salon-name: ${settings?.font_salon_name ? `'${settings.font_salon_name}', sans-serif` : "inherit"};
           --gold: ${colorAccents};
           --gold-light: ${colorAccents};
           --gold-deep: ${colorAccents};
@@ -337,12 +359,12 @@ useEffect(() => {
               aria-label="Retour en haut de page"
             >
               {logoImageUrl && (
-                <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
+                <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)]" style={{ borderColor: colorCardBorder, backgroundColor: colorPanelBg }}>
                   <img src={logoImageUrl} alt={salonName} className="h-full w-full object-cover" />
                 </div>
               )}
               <div className="min-w-0">
-                <div className="text-2xl leading-none tracking-[-0.04em] md:text-4xl">
+                <div className="text-2xl leading-none tracking-[-0.04em] md:text-4xl" style={{ fontFamily: "var(--font-salon-name)" }}>
                   <SalonNamePremium name={salonName} compact goldColor={colorTextMain} gradientEndColor={colorAccents} />
                 </div>
                 <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--footer-text)] sm:block">
@@ -529,7 +551,7 @@ useEffect(() => {
               {salonSubtitle}
             </motion.div>
           )}
-          <motion.h1 variants={fadeUp} className="relative z-10 max-w-xl text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
+          <motion.h1 variants={fadeUp} className="relative z-10 max-w-xl text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl" style={{ fontFamily: "var(--font-salon-name)" }}>
             <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
             {heroTagline && (
               <>
@@ -635,7 +657,7 @@ useEffect(() => {
         className="mx-auto w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 py-10"
       >
         <div className="mb-6">
-          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
             Prestations
           </div>
         </div>
@@ -653,7 +675,8 @@ useEffect(() => {
               variants={fadeUp}
               whileHover={{ y: -6, scale: 1.02 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="group relative flex flex-col overflow-hidden rounded-[24px] border border-[var(--card-border)] bg-white/65 p-6 shadow-sm backdrop-blur transition-shadow hover:shadow-[0_16px_35px_rgba(0,0,0,0.10)]"
+              className="group relative flex flex-col overflow-hidden rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm backdrop-blur transition-shadow hover:shadow-[0_16px_35px_rgba(0,0,0,0.10)]"
+              style={{ backgroundColor: colorPanelBg }}
             >
               <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 rounded-t-[24px] bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
@@ -680,9 +703,10 @@ useEffect(() => {
           variants={fadeUp}
           whileHover={{ y: -6, scale: 1.02 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="rounded-[28px] border border-[var(--card-border)] bg-white/65 p-6 shadow-sm backdrop-blur"
+          className="rounded-[28px] border border-[var(--card-border)] p-6 shadow-sm"
+          style={{ backgroundColor: colorPanelBg }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
             À propos
           </div>
           <h2 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-4xl text-transparent">{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
@@ -691,15 +715,17 @@ useEffect(() => {
 
         {aproposImageUrl && (
           <motion.div
-            variants={fadeUp}
+            initial={{ opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
             whileHover={{ y: -6, scale: 1.02 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="rounded-[28px] border border-[var(--card-border)] bg-white/65 p-6 shadow-sm backdrop-blur"
+            className="rounded-[28px] border border-[var(--card-border)] shadow-sm overflow-hidden"
+            style={{ backgroundColor: colorPanelBg }}
           >
             <motion.img
               src={aproposImageUrl}
               alt={`Espace shampoing du salon ${salonName}`}
-              className="h-full min-h-[260px] w-full rounded-[22px] object-cover"
+              className="h-full min-h-[300px] w-full object-cover"
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             />
@@ -710,7 +736,7 @@ useEffect(() => {
       {reviews.length > 0 && (
       <section className="mx-auto w-[min(1200px,calc(100%-32px))] py-10">
         <div className="mb-6">
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
             Avis clients
           </div>
         </div>
@@ -720,8 +746,8 @@ useEffect(() => {
             {[...reviews, ...reviews].map((review, i) => (
               <article
                 key={`${review.name}-${i}`}
-                className="flex w-80 shrink-0 flex-col rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm backdrop-blur"
-                style={{ background: `linear-gradient(135deg, ${colorTitles}0d 0%, #ffffff 60%)` }}
+                className="flex w-80 shrink-0 flex-col rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm"
+                style={{ background: `linear-gradient(135deg, ${colorTitles}22 0%, ${colorPanelBg} 100%), ${colorPanelBg}` }}
               >
                 <p style={{ color: colorTextSecondary }}>
                   <span style={{ color: colorTitles }}>"</span>{review.text}<span style={{ color: colorTitles }}>"</span>
@@ -747,7 +773,7 @@ useEffect(() => {
           className="rounded-[30px] p-8 text-white"
           style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorContactBg, 0.22)} 0%, ${colorContactBg} 50%, #050505 100%)` }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: colorPanelBg }}>
             Contact
           </div>
 
