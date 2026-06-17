@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
+import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 
 type AppointmentRow = {
   id: string;
@@ -80,6 +81,8 @@ type SalonSettings = {
   color_nav_text?: string | null;
   logo_image_url?: string | null;
   site_font?: string | null;
+  font_salon_name?: string | null;
+  bg_pattern?: string | null;
 };
 
 const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -712,6 +715,7 @@ export default function EspaceClientPage() {
 
   const colorButtons = settings?.color_accents || "#4f46e5";
   const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
@@ -725,9 +729,10 @@ export default function EspaceClientPage() {
   return (
     <main
       className="relative min-h-screen overflow-hidden"
-      style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}` }}
+      style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}` }}
     >
-      <SiteFont font={settings?.site_font} />
+      <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
+      <SitePattern pattern={settings?.bg_pattern} />
       <style>{`
         :root {
           --gold: ${colorTitles};

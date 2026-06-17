@@ -1471,7 +1471,7 @@ export default function BackOfficeGestionPage() {
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
       <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; }`}</style>
-      <SiteFont font={settings?.site_font} />
+      <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <header
         className="relative md:sticky top-0 z-30 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"

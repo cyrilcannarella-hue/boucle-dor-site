@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
+import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 
 type SalonSettings = {
   id: string;
@@ -17,6 +18,8 @@ type SalonSettings = {
   color_nav_text?: string | null;
   color_contact_bg?: string | null;
   site_font?: string | null;
+  font_salon_name?: string | null;
+  bg_pattern?: string | null;
 };
 
 function hexToRgb(hex: string) {
@@ -41,7 +44,7 @@ export default function LoginPage() {
   useEffect(() => {
     supabase
       .from("salon_settings")
-      .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg,site_font")
+      .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg,site_font,font_salon_name")
       .eq("salon_id", salonId)
       .single()
       .then(({ data }) => { if (data) setSettings(data as SalonSettings); });
@@ -64,6 +67,7 @@ export default function LoginPage() {
   };
 
   const colorPageBg = settings?.color_contact_bg || settings?.color_page_bg || "#111827";
+  const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
@@ -72,9 +76,10 @@ export default function LoginPage() {
   return (
     <main
       className="min-h-screen"
-      style={{ color: "#ffffff", background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.25), transparent 40%), ${colorPageBg}` }}
+      style={{ color: "#ffffff", background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.25), transparent 40%), ${colorPageBg}` }}
     >
-      <SiteFont font={settings?.site_font} />
+      <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
+      <SitePattern pattern={settings?.bg_pattern} />
       <section className="mx-auto flex min-h-screen w-[min(520px,calc(100%-32px))] items-center justify-center py-10">
         <div
           className="w-full rounded-[32px] p-8 shadow-[0_18px_50px_rgba(0,0,0,0.3)]"

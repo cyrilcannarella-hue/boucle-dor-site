@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { SiteFont } from "@/components/SiteFont";
+import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -98,6 +99,9 @@ type SalonSettings = {
   id: string;
   salon_name: string;
   brevo_api_key?: string | null;
+  sms_provider?: string | null;
+  twilio_account_sid?: string | null;
+  ovh_app_key?: string | null;
   opening_time: string;
   closing_time: string;
   is_open_monday: boolean;
@@ -130,6 +134,8 @@ type SalonSettings = {
   color_accents?: string | null;
   color_nav_text?: string | null;
   site_font?: string | null;
+  font_salon_name?: string | null;
+  bg_pattern?: string | null;
 };
 
 type ExceptionClosure = {
@@ -323,6 +329,29 @@ function hexToRgb(hex: string) {
     g: parseInt(value.slice(2, 4), 16),
     b: parseInt(value.slice(4, 6), 16),
   };
+}
+
+function derivePanelBg(hex: string): string {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (luminance > 0.85) return "#ffffff";
+  const clamp = (v: number) => Math.min(255, v + 15);
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function derivePanelBgSecondary(hex: string): string {
+  const panel = derivePanelBg(hex);
+  const clean = panel.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const offset = luminance > 0.5 ? -8 : 8;
+  const clamp = (v: number) => Math.max(0, Math.min(255, v + offset));
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
 function getCategoryCardClasses(categoryName?: string | null) {
@@ -545,7 +574,7 @@ export default function BackOfficePage() {
   const [editAppointmentServiceId, setEditAppointmentServiceId] = useState("");
   const [editAppointmentMessage, setEditAppointmentMessage] = useState("");
   const [editAppointmentInternalNote, setEditAppointmentInternalNote] = useState("");
-  const [smsCredits, setSmsCredits] = useState<number | null>(null);
+  const [smsCredits, setSmsCredits] = useState<{ provider: string; smsCount?: number | null; balance?: string; currency?: string; creditsLeft?: number } | null>(null);
   const [agendaView, setAgendaView] = useState<"day" | "week">("day");
   const [weekAppointments, setWeekAppointments] = useState<AppointmentRow[]>([]);
   const [weekExceptionClosures, setWeekExceptionClosures] = useState<ExceptionClosure[]>([]);
@@ -555,13 +584,18 @@ export default function BackOfficePage() {
   const weekDaysRef = useRef<string[]>([]);
   useEffect(() => { agendaViewRef.current = agendaView; }, [agendaView]);
 
+  const hasSmsConfigured = settings && (
+    (settings.sms_provider === "twilio" && settings.twilio_account_sid) ||
+    (settings.sms_provider === "ovh" && settings.ovh_app_key) ||
+    ((!settings.sms_provider || settings.sms_provider === "brevo") && settings.brevo_api_key)
+  );
   useEffect(() => {
-    if (!settings?.brevo_api_key) return;
+    if (!hasSmsConfigured) return;
     fetch("/api/brevo-credits")
       .then((r) => r.json())
-      .then((d) => { if (typeof d.credits === "number") setSmsCredits(d.credits); })
+      .then((d) => { if (!d.error) setSmsCredits(d); })
       .catch(() => {});
-  }, [settings?.brevo_api_key]);
+  }, [hasSmsConfigured]);
 
   const dayStart = useMemo(() => {
     if (!settings) return parseTimeToMinutes("09:00");
@@ -1800,18 +1834,22 @@ export default function BackOfficePage() {
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorNavText = settings?.color_nav_text || "#111827";
+  const colorPanelBg = derivePanelBg(colorPageBg);
+  const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   const accentRgb = hexToRgb(colorAccents);
   const accentRgbStr = accentRgb ? `${accentRgb.r},${accentRgb.g},${accentRgb.b}` : "216,166,70";
+  const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
 
   return (
     <main
       className="min-h-screen"
-      style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${accentRgbStr},0.10), transparent 34%), ${colorPageBg}` }}
+      style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${accentRgbStr},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; }`}</style>
-      <SiteFont font={settings?.site_font} />
+      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; }`}</style>
+      <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
+      <SitePattern pattern={settings?.bg_pattern} />
       <header
         className="relative md:sticky top-0 z-30 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
@@ -1847,31 +1885,31 @@ export default function BackOfficePage() {
           <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
             <Link
               href="/back-office"
-              className="rounded-xl bg-[var(--text-main)] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Agenda
             </Link>
 
             <Link
               href="/back-office/clients"
-              className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Fiches clients
             </Link>
 
             <Link
               href="/back-office/gestion"
-              className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[#4d453d] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Admin
             </Link>
 
-            
+
 
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Déconnexion
             </button>
@@ -1882,7 +1920,7 @@ export default function BackOfficePage() {
       <section className="mx-auto w-[min(1400px,calc(100%-24px))] py-5 md:py-8">
         <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[310px_1fr] lg:items-start">
         <aside className="order-1 flex flex-col gap-4 lg:order-none md:gap-6 lg:sticky lg:top-5">
-        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
             <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
               Navigation
             </div>
@@ -1891,7 +1929,7 @@ export default function BackOfficePage() {
               <button
                 type="button"
                 onClick={handleCalPrevMonth}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-white/70 text-[var(--text-main)] transition hover:border-[var(--gold)] hover:shadow-sm active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--text-main)] transition hover:border-[var(--gold)] hover:shadow-sm active:scale-95"
               >
                 &#8249;
               </button>
@@ -1901,7 +1939,7 @@ export default function BackOfficePage() {
               <button
                 type="button"
                 onClick={handleCalNextMonth}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-white/70 text-[var(--text-main)] transition hover:border-[var(--gold)] hover:shadow-sm active:scale-95"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--text-main)] transition hover:border-[var(--gold)] hover:shadow-sm active:scale-95"
               >
                 &#8250;
               </button>
@@ -1936,7 +1974,7 @@ export default function BackOfficePage() {
                         ? "border-[var(--gold)] bg-[var(--gold)] text-white shadow-md"
                         : isClosed
                           ? "cursor-not-allowed border-transparent bg-[#f5f0ea] text-[#c5bbb2]"
-                          : "border-transparent bg-white/60 text-[var(--text-main)] hover:border-[#d8b56d] hover:bg-white"
+                          : "border-transparent bg-[var(--panel-bg)] text-[var(--text-main)] hover:border-[#d8b56d] hover:bg-[var(--panel-bg)]"
                     }`}
                   >
                     {dayNum}
@@ -1957,7 +1995,7 @@ export default function BackOfficePage() {
                 setCalYear(now.getFullYear());
                 setCalMonth(now.getMonth());
               }}
-              className="mt-4 w-full rounded-2xl border border-[var(--card-border)] bg-white/70 py-2.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+              className="mt-4 w-full rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] py-2.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]"
             >
               {"Aujourd’hui"}
             </button>
@@ -1994,7 +2032,7 @@ export default function BackOfficePage() {
             ) : null}
         </div>
 
-        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
               Action
             </div>
@@ -2014,7 +2052,7 @@ export default function BackOfficePage() {
             </div>
         </div>
 
-        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
               Résumé
             </div>
@@ -2036,7 +2074,7 @@ export default function BackOfficePage() {
             </div>
         </div>
         </aside>
-        <section className="rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <section className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
@@ -2046,59 +2084,57 @@ export default function BackOfficePage() {
                 <h2 className="text-[44px] font-semibold leading-none">{formatFrenchDate(selectedDate)}</h2>
               ) : (
                 <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-white/70 text-lg transition hover:bg-white">‹</button>
+                  <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-lg transition hover:bg-[var(--panel-bg)]">‹</button>
                   <h2 className="text-2xl font-semibold leading-none">
                     {parseDateKey(weekDays[0]).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                     {" → "}
                     {parseDateKey(weekDays[6]).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                   </h2>
-                  <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-white/70 text-lg transition hover:bg-white">›</button>
+                  <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-lg transition hover:bg-[var(--panel-bg)]">›</button>
                 </div>
               )}
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <div className="flex rounded-2xl border border-[var(--card-border)] bg-white/80 p-1">
+              <div className="flex rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] p-1">
                 <button
                   type="button"
                   onClick={() => setAgendaView("day")}
-                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "day" ? "bg-[var(--text-main)] text-white shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "day" ? "bg-[var(--accents)] text-white shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
                 >
                   Jour
                 </button>
                 <button
                   type="button"
                   onClick={() => setAgendaView("week")}
-                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "week" ? "bg-[var(--text-main)] text-white shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "week" ? "bg-[var(--accents)] text-white shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
                 >
                   Semaine
                 </button>
               </div>
-              {settings?.brevo_api_key && (
-                <>
-                  <div className="flex items-center rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm">
-                    {smsCredits === null ? (
-                      <span className="text-xs text-[var(--nav-text)] opacity-40">…</span>
-                    ) : (
-                      <span className={`font-bold ${Math.floor(smsCredits / 4.5) < 50 ? "text-red-500" : "text-green-600"}`}>
-                        {Math.floor(smsCredits / 4.5)} SMS
-                      </span>
-                    )}
-                  </div>
-                  <a
-                    href="https://app.brevo.com/billing/account/customize/message-credits"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-[var(--card-border)]/60 bg-white/60 px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white"
-                  >
-                    Recharger
-                  </a>
-                </>
+              {hasSmsConfigured && (
+                <div className="flex items-center rounded-full border border-[var(--card-border)]/60 bg-[var(--panel-bg)] px-4 py-2 text-sm">
+                  {smsCredits === null ? (
+                    <span className="text-xs text-[var(--nav-text)] opacity-40">…</span>
+                  ) : smsCredits.provider === "brevo" ? (
+                    <span className={`font-bold ${(smsCredits.smsCount ?? 0) < 50 ? "text-red-500" : "text-green-600"}`}>
+                      {smsCredits.smsCount ?? "—"} SMS
+                    </span>
+                  ) : smsCredits.provider === "twilio" ? (
+                    <span className="font-bold text-green-600">
+                      {smsCredits.balance} {smsCredits.currency}
+                    </span>
+                  ) : (
+                    <span className={`font-bold ${(smsCredits.creditsLeft ?? 0) < 50 ? "text-red-500" : "text-green-600"}`}>
+                      {smsCredits.creditsLeft ?? "—"} SMS
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
 
           {agendaView === "week" ? (
-            <div className="rounded-[28px] border border-[var(--card-border)] bg-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]" style={{ overflowX: "auto", overflowY: "clip" }}>
+            <div className="rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]" style={{ overflowX: "auto", overflowY: "clip" }}>
               {loadingWeek ? (
                 <div className="px-6 py-10 text-center text-sm text-[var(--nav-text)]">Chargement...</div>
               ) : (
@@ -2162,7 +2198,7 @@ export default function BackOfficePage() {
                         <div
                           key={dk}
                           className="relative border-l border-[#efe6db]"
-                          style={{ height: weekHeight, backgroundColor: dk === getTodayKey() ? "#fdf8ef" : "#fffdf9" }}
+                          style={{ height: weekHeight, backgroundColor: dk === getTodayKey() ? colorPanelBgSecondary : colorPanelBg }}
                         >
                           {/* Créneaux cliquables */}
                           {weekHourSlots.map((slot) => {
@@ -2274,7 +2310,7 @@ export default function BackOfficePage() {
                   Chargement de l’agenda...
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-[28px] border border-[var(--card-border)] bg-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                <div className="overflow-hidden rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
                   <div className="grid grid-cols-[80px_1fr]">
                     <div className="border-r border-[#efe6db] bg-[#fbf6ef]" />
                     <div />
@@ -2297,7 +2333,7 @@ export default function BackOfficePage() {
                       })}
                     </div>
 
-                    <div className="relative bg-[#fffdf9]" style={{ height: dayHeight }}>
+                    <div className="relative bg-[var(--panel-bg)]" style={{ height: dayHeight }}>
                       {hourSlots.map((slot) => {
                         if (slot === dayEnd) return null;
                         const slotStart = slot;
@@ -2377,7 +2413,7 @@ export default function BackOfficePage() {
               Chargement de l’agenda...
             </div>
           ) : (
-            <div className="overflow-hidden rounded-[28px] border border-[var(--card-border)] bg-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+            <div className="overflow-hidden rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
               <div className="grid grid-cols-[80px_1fr]">
                 <div className="border-r border-[#efe6db] bg-[#fbf6ef]" />
                 <div />
@@ -2400,7 +2436,7 @@ export default function BackOfficePage() {
                   })}
                 </div>
 
-                <div className="relative bg-[#fffdf9]" style={{ height: dayHeight }}>
+                <div className="relative bg-[var(--panel-bg)]" style={{ height: dayHeight }}>
                   {hourSlots.map((slot) => {
                     if (slot === dayEnd) return null;
                     const slotStart = slot;
@@ -2488,7 +2524,7 @@ export default function BackOfficePage() {
                   <button
                     type="button"
                     onClick={closeCreateModal}
-                    className="rounded-2xl border border-[var(--card-border)] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]"
                   >
                     Fermer
                   </button>
@@ -2533,7 +2569,7 @@ export default function BackOfficePage() {
                       setCreateCategoryFilter(e.target.value);
                       setCreateServiceId("");
                     }}
-                    className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                   >
                     <option value="all">Toutes les catégories</option>
                     {categoryOptions.map((category) => (
@@ -2549,7 +2585,7 @@ export default function BackOfficePage() {
                   <select
                     value={createServiceId}
                     onChange={(e) => setCreateServiceId(e.target.value)}
-                    className="w-full rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                    className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                   >
                     <option value="">Choisir une prestation</option>
                     {filteredCreateServiceOptions.map((service) => (
@@ -2561,7 +2597,7 @@ export default function BackOfficePage() {
                 </label>
               </div>
 
-              <div className="mt-6 rounded-[24px] border border-[var(--card-border)] bg-white/90 p-5 shadow-sm">
+              <div className="mt-6 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
                 <div className="mb-3 text-sm font-semibold">Client</div>
 
                 <div className="mb-4 flex flex-wrap gap-2">
@@ -2608,7 +2644,7 @@ export default function BackOfficePage() {
                           if (createExistingClientId) setCreateExistingClientId("");
                         }}
                         placeholder="Nom, prénom ou téléphone"
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       />
                     </label>
 
@@ -2670,7 +2706,7 @@ export default function BackOfficePage() {
                           type="text"
                           value={createFirstName}
                           onChange={(e) => setCreateFirstName(e.target.value)}
-                          className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                          className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                         />
                       </label>
 
@@ -2680,7 +2716,7 @@ export default function BackOfficePage() {
                           type="text"
                           value={createLastName}
                           onChange={(e) => setCreateLastName(e.target.value)}
-                          className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                          className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                         />
                       </label>
                     </div>
@@ -2693,7 +2729,7 @@ export default function BackOfficePage() {
                           value={createPhone}
                           onChange={(e) => setCreatePhone(e.target.value)}
                           placeholder="06 00 00 00 00"
-                          className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                          className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                         />
                       </label>
 
@@ -2703,7 +2739,7 @@ export default function BackOfficePage() {
                           type="email"
                           value={createEmail}
                           onChange={(e) => setCreateEmail(e.target.value)}
-                          className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                          className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                         />
                       </label>
                     </div>
@@ -2713,7 +2749,7 @@ export default function BackOfficePage() {
                       <textarea
                         value={createClientNotes}
                         onChange={(e) => setCreateClientNotes(e.target.value)}
-                        className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       />
                     </label>
                   </div>
@@ -2723,7 +2759,7 @@ export default function BackOfficePage() {
               <div className="mt-6 grid gap-6 md:grid-cols-2">
                 <div className="grid gap-2 text-sm text-[var(--nav-text)]">
                   <span className="font-medium">Date</span>
-                  <div className="rounded-2xl border border-[var(--card-border)] bg-white/90 p-4 shadow-sm">
+                  <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] p-4 shadow-sm">
                     <div className="mb-3 flex items-center justify-between">
                       <button type="button" onClick={() => { if (modalCalMonth === 0) { setModalCalYear(y => y - 1); setModalCalMonth(11); } else setModalCalMonth(m => m - 1); }} className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-white text-sm transition hover:bg-[var(--page-bg)]">‹</button>
                       <span className="font-semibold text-[var(--text-main)]">{MONTH_NAMES[modalCalMonth]} {modalCalYear}</span>
@@ -2754,7 +2790,7 @@ export default function BackOfficePage() {
 
                 <div className="grid gap-2 text-sm text-[var(--nav-text)]">
                   <span className="font-medium">Heure de début</span>
-                  <div className="rounded-2xl border border-[var(--card-border)] bg-white/90 p-4 shadow-sm">
+                  <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] p-4 shadow-sm">
                     <div className="flex flex-wrap gap-2">
                       {Array.from({ length: Math.floor((createDayEnd - createDayStart) / 15) }, (_, i) => {
                         const mins = createDayStart + i * 15;
@@ -2824,7 +2860,7 @@ export default function BackOfficePage() {
                     <select
                       value={createStaffId}
                       onChange={(e) => setCreateStaffId(e.target.value)}
-                      className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                      className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                     >
                       <option value="">Pas de préférence</option>
                       {staff.map((member) => (
@@ -2841,7 +2877,7 @@ export default function BackOfficePage() {
                   <textarea
                     value={createMessage}
                     onChange={(e) => setCreateMessage(e.target.value)}
-                    className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                    className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                   />
                 </label>
 
@@ -2850,7 +2886,7 @@ export default function BackOfficePage() {
                   <textarea
                     value={createInternalNote}
                     onChange={(e) => setCreateInternalNote(e.target.value)}
-                    className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                    className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                   />
                 </label>
               </div>
@@ -2874,7 +2910,7 @@ export default function BackOfficePage() {
                   <button
                     type="button"
                     onClick={closeAppointmentModal}
-                    className="rounded-2xl border border-[var(--card-border)] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]"
                   >
                     Fermer
                   </button>
@@ -2968,7 +3004,7 @@ export default function BackOfficePage() {
                     <button
                       type="button"
                       onClick={() => setIsEditingAppointment(true)}
-                      className="rounded-2xl border border-[var(--card-border)] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                      className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]"
                     >
                       Modifier
                     </button>
@@ -2991,7 +3027,7 @@ export default function BackOfficePage() {
                         <button
                           type="button"
                           onClick={() => setConfirmCancelAppointment(false)}
-                          className="rounded-xl border border-[var(--card-border)] bg-white px-4 py-2 text-sm font-medium hover:bg-white/70"
+                          className="rounded-xl border border-[var(--card-border)] bg-white px-4 py-2 text-sm font-medium hover:bg-[var(--panel-bg)]"
                         >
                           Non
                         </button>
@@ -3021,7 +3057,7 @@ export default function BackOfficePage() {
                       <button
                         type="button"
                         onClick={() => setIsEditingAppointment(false)}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]"
                       >
                         Retour
                       </button>
@@ -3046,7 +3082,7 @@ export default function BackOfficePage() {
                         type="date"
                         value={editAppointmentDate}
                         onChange={(e) => setEditAppointmentDate(e.target.value)}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       />
                     </label>
 
@@ -3057,7 +3093,7 @@ export default function BackOfficePage() {
                         step={900}
                         value={editAppointmentTime}
                         onChange={(e) => setEditAppointmentTime(e.target.value)}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       />
                     </label>
                   </div>
@@ -3071,7 +3107,7 @@ export default function BackOfficePage() {
                           setEditCategoryFilter(e.target.value);
                           setEditAppointmentServiceId("");
                         }}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       >
                         <option value="all">Toutes les catégories</option>
                         {categoryOptions.map((category) => (
@@ -3087,7 +3123,7 @@ export default function BackOfficePage() {
                       <select
                         value={editAppointmentServiceId}
                         onChange={(e) => setEditAppointmentServiceId(e.target.value)}
-                        className="w-full rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       >
                         <option value="">Choisir une prestation</option>
                         {filteredEditServiceOptions.map((service) => (
@@ -3105,7 +3141,7 @@ export default function BackOfficePage() {
                       <textarea
                         value={editAppointmentMessage}
                         onChange={(e) => setEditAppointmentMessage(e.target.value)}
-                        className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       />
                     </label>
 
@@ -3114,7 +3150,7 @@ export default function BackOfficePage() {
                       <textarea
                         value={editAppointmentInternalNote}
                         onChange={(e) => setEditAppointmentInternalNote(e.target.value)}
-                        className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                        className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
                       />
                     </label>
                   </div>
@@ -3140,12 +3176,12 @@ export default function BackOfficePage() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <button type="button" onClick={closeClientModal}
-                    className="rounded-2xl border border-[var(--card-border)] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]">
                     Fermer
                   </button>
                   {!isEditingClient && (
                     <button type="button" onClick={openClientEdit}
-                      className="rounded-2xl border border-[var(--card-border)] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+                      className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]">
                       Modifier
                     </button>
                   )}
@@ -3162,34 +3198,34 @@ export default function BackOfficePage() {
                     <label className="grid gap-2 text-sm text-[var(--nav-text)]">
                       Prénom
                       <input type="text" value={editClientFirstName} onChange={(e) => setEditClientFirstName(e.target.value)}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
                     </label>
                     <label className="grid gap-2 text-sm text-[var(--nav-text)]">
                       Nom
                       <input type="text" value={editClientLastName} onChange={(e) => setEditClientLastName(e.target.value)}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
                     </label>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="grid gap-2 text-sm text-[var(--nav-text)]">
                       Téléphone
                       <input type="tel" value={editClientPhone} onChange={(e) => setEditClientPhone(e.target.value)}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
                     </label>
                     <label className="grid gap-2 text-sm text-[var(--nav-text)]">
                       E-mail
                       <input type="email" value={editClientEmail} onChange={(e) => setEditClientEmail(e.target.value)}
-                        className="rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
                     </label>
                   </div>
                   <label className="grid gap-2 text-sm text-[var(--nav-text)]">
                     Notes
                     <textarea value={editClientNotes} onChange={(e) => setEditClientNotes(e.target.value)}
-                      className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-white/90 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
+                      className="min-h-[90px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10" />
                   </label>
                   <div className="flex flex-wrap gap-3">
                     <button type="button" onClick={() => setIsEditingClient(false)}
-                      className="rounded-2xl border border-[var(--card-border)] bg-white/70 px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-white">
+                      className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]">
                       Annuler
                     </button>
                     <button type="button" onClick={handleSaveClient} disabled={savingClient}

@@ -304,14 +304,10 @@ useEffect(() => {
         className="relative min-h-screen overflow-hidden scroll-smooth before:pointer-events-none before:absolute before:left-1/2 before:top-[-180px] before:h-[420px] before:w-[420px] before:-translate-x-1/2 before:rounded-full before:bg-[rgb(var(--accent-rgb))]/20 before:blur-3xl"
         style={{ background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}`, color: colorTextMain }}
       >
-      <SiteFont font={settings?.site_font} />
-      {settings?.font_salon_name && (
-        <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${settings.font_salon_name.replace(/ /g, "+")}:wght@400;600;700;900&display=swap`} />
-      )}
+      <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <style>{`
         :root {
-          --font-salon-name: ${settings?.font_salon_name ? `'${settings.font_salon_name}', sans-serif` : "inherit"};
           --gold: ${colorAccents};
           --gold-light: ${colorAccents};
           --gold-deep: ${colorAccents};

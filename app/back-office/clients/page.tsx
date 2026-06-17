@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { SiteFont } from "@/components/SiteFont";
+import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -94,6 +95,8 @@ type SalonSettings = {
   color_accents?: string | null;
   color_nav_text?: string | null;
   site_font?: string | null;
+  font_salon_name?: string | null;
+  bg_pattern?: string | null;
 };
 
 function hexToRgb(hex: string): string {
@@ -102,6 +105,29 @@ function hexToRgb(hex: string): string {
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
   return `${r},${g},${b}`;
+}
+
+function derivePanelBg(hex: string): string {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (luminance > 0.85) return "#ffffff";
+  const clamp = (v: number) => Math.min(255, v + 15);
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function derivePanelBgSecondary(hex: string): string {
+  const panel = derivePanelBg(hex);
+  const clean = panel.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const offset = luminance > 0.5 ? -8 : 8;
+  const clamp = (v: number) => Math.max(0, Math.min(255, v + offset));
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
 export default function BackOfficeClientsPage() {
@@ -172,7 +198,7 @@ export default function BackOfficeClientsPage() {
     loadClients();
     supabase
       .from("salon_settings")
-      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text, site_font")
+      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text, site_font, bg_pattern")
       .eq("salon_id", salonId)
       .limit(1)
       .maybeSingle()
@@ -492,21 +518,25 @@ export default function BackOfficeClientsPage() {
   const clientsWithNotes = useMemo(() => clients.filter((client) => client.notes).length, [clients]);
 
   const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorNavText = settings?.color_nav_text || "#111827";
+  const colorPanelBg = derivePanelBg(colorPageBg);
+  const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
     <main
       className="min-h-screen"
-      style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
+      style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; }`}</style>
-      <SiteFont font={settings?.site_font} />
+      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; }`}</style>
+      <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
+      <SitePattern pattern={settings?.bg_pattern} />
       <header
         className="relative md:sticky top-0 z-30 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
@@ -540,10 +570,10 @@ export default function BackOfficeClientsPage() {
           </Link>
 
           <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
-            <Link href="/back-office" className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Agenda</Link>
-            <Link href="/back-office/clients" className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm">Fiches clients</Link>
-            <Link href="/back-office/gestion" className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Admin</Link>
-            <button type="button" onClick={handleLogout} className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Déconnexion</button>
+            <Link href="/back-office" className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm">Agenda</Link>
+            <Link href="/back-office/clients" className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm">Fiches clients</Link>
+            <Link href="/back-office/gestion" className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm">Admin</Link>
+            <button type="button" onClick={handleLogout} className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm">Déconnexion</button>
           </div>
         </div>
       </header>
@@ -588,11 +618,11 @@ export default function BackOfficeClientsPage() {
           </div>
 
           <div className="hidden sm:grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-[26px] border border-[var(--card-border)] bg-white p-5 shadow-sm">
+            <div className="rounded-[26px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
               <div className="text-sm text-[var(--nav-text)]">Avec email</div>
               <div className="mt-2 text-3xl font-semibold">{clientsWithEmail}</div>
             </div>
-            <div className="rounded-[26px] border border-[var(--card-border)] bg-white p-5 shadow-sm">
+            <div className="rounded-[26px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
               <div className="text-sm text-[var(--nav-text)]">Avec notes</div>
               <div className="mt-2 text-3xl font-semibold">{clientsWithNotes}</div>
             </div>
@@ -600,11 +630,11 @@ export default function BackOfficeClientsPage() {
               type="button"
               onClick={handleExport}
               disabled={clients.length === 0}
-              className="rounded-[26px] border border-[var(--card-border)] bg-white px-5 py-4 text-sm font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#fffdf9] disabled:opacity-40 text-left"
+              className="rounded-[26px] border border-[var(--card-border)] bg-white px-5 py-4 text-sm font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white disabled:opacity-40 text-left"
             >
               ↓ Exporter CSV
             </button>
-            <label className={`cursor-pointer rounded-[26px] border border-[var(--card-border)] bg-white px-5 py-4 text-sm font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#fffdf9] text-left ${importing ? "opacity-50 pointer-events-none" : ""}`}>
+            <label className={`cursor-pointer rounded-[26px] border border-[var(--card-border)] bg-white px-5 py-4 text-sm font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white text-left ${importing ? "opacity-50 pointer-events-none" : ""}`}>
               {importing ? "Importation..." : "↑ Importer CSV"}
               <input type="file" accept=".csv" className="hidden" onChange={handleImport} disabled={importing} />
             </label>
@@ -647,7 +677,7 @@ export default function BackOfficeClientsPage() {
                   key={client.id}
                   type="button"
                   onClick={() => loadClientDetails(client)}
-                  className="group w-full min-w-0 rounded-[28px] border border-[var(--card-border)] bg-[#fffdf9] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-[0_18px_40px_rgba(83,58,31,0.10)]"
+                  className="group w-full min-w-0 rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-[0_18px_40px_rgba(83,58,31,0.10)]"
                 >
                   <div className="flex items-start gap-4">
                     <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[var(--accents)] to-[var(--gold)] text-sm font-bold text-white shadow-sm">
@@ -749,7 +779,7 @@ export default function BackOfficeClientsPage() {
 
               <div className="space-y-4 p-4 md:space-y-6 md:p-6">
                 {isEditingClient ? (
-                  <div className="rounded-[28px] border border-[var(--card-border)] bg-[#fffdf9] p-5 shadow-sm">
+                  <div className="rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
                         <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Modification</div>
@@ -791,7 +821,7 @@ export default function BackOfficeClientsPage() {
                   </div>
                 ) : null}
 
-                <div className="rounded-[28px] border border-[var(--card-border)] bg-[#fffdf9] p-5 shadow-sm">
+                <div className="rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
                   <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Coordonnées</div>
                   <div className="mt-3 grid grid-cols-3 gap-3 md:mt-4">
                     <div className="rounded-2xl bg-white p-3 md:p-4">
@@ -821,7 +851,7 @@ export default function BackOfficeClientsPage() {
                   );
                   if (apptWithAnswers.length === 0) return null;
                   return (
-                    <div className="rounded-[28px] border border-[var(--card-border)] bg-[#fffdf9] p-5 shadow-sm">
+                    <div className="rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
                       <div className="mb-5">
                         <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Questionnaire</div>
                         <h3 className="mt-1 text-xl font-semibold">Réponses</h3>
@@ -847,7 +877,7 @@ export default function BackOfficeClientsPage() {
                   );
                 })()}
 
-                <div className="rounded-[28px] border border-[var(--card-border)] bg-[#fffdf9] p-5 shadow-sm">
+                <div className="rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
                   <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Historique</div>
