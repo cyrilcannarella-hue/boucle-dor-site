@@ -17,7 +17,7 @@ export const SalonNameGradient = memo(function SalonNameGradient({
   return (
     <span
       className="bg-clip-text text-transparent [backface-visibility:hidden]"
-      style={{ backgroundImage: `linear-gradient(to right, ${goldColor}, ${goldEndColor})` }}
+      style={{ backgroundImage: `linear-gradient(to right, ${goldColor}, ${goldEndColor})`, fontFamily: "var(--font-salon-name)" }}
     >
       {normalized}
     </span>
