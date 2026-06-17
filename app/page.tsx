@@ -234,7 +234,18 @@ useEffect(() => {
   }, [salonId]);
 
   const salonName = settings?.salon_name || "Votre salon";
-  const heroNameFontSize = `clamp(1.25rem, ${(110 / Math.max(8, salonName.length)).toFixed(1)}vw, 4.5rem)`;
+  const heroNameRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = heroNameRef.current;
+    if (!el) return;
+    const parent = el.parentElement;
+    if (!parent) return;
+    const MAX = 72;
+    const MIN = 18;
+    el.style.fontSize = MAX + "px";
+    const scale = parent.offsetWidth / el.scrollWidth;
+    if (scale < 1) el.style.fontSize = Math.max(MIN, Math.floor(MAX * scale)) + "px";
+  }, [salonName, settings?.font_salon_name]);
   const salonPhone = settings?.phone || null;
   const salonAddress = settings?.address || null;
   const openingTime = settings?.opening_time?.slice(0, 5) || null;
@@ -555,7 +566,7 @@ useEffect(() => {
             </motion.div>
           )}
           <motion.h1 variants={fadeUp} className="relative z-10 text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
-            <span className="block mb-1 whitespace-nowrap" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05, fontSize: heroNameFontSize }}>
+            <span ref={heroNameRef} className="block mb-1 whitespace-nowrap" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05 }}>
               <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
             </span>
             {heroTagline && (
