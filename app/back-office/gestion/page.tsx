@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
-import { useEffect, useMemo, useState } from "react";
+import { SiteFont } from "@/components/SiteFont";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
@@ -14,6 +15,17 @@ function hexToRgb(hex: string) {
   const g = parseInt(clean.substring(2, 4), 16);
   const b = parseInt(clean.substring(4, 6), 16);
   return `${r},${g},${b}`;
+}
+
+function deriveBorderColor(hex: string): string {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const offset = luminance > 0.5 ? -20 : 20;
+  const clamp = (v: number) => Math.max(0, Math.min(255, v));
+  return `#${[r, g, b].map((c) => clamp(c + offset).toString(16).padStart(2, "0")).join("")}`;
 }
 
 type ClientRow = {
@@ -271,12 +283,7 @@ export default function BackOfficeGestionPage() {
   const [editEmail, setEditEmail] = useState("");
   const [editNotes, setEditNotes] = useState("");
 
-  const [settings, setSettings] = useState<SalonSettings | null>(() => {
-    try {
-      const c = typeof window !== "undefined" && localStorage.getItem("bo_settings_cache");
-      return c ? (JSON.parse(c) as SalonSettings) : null;
-    } catch { return null; }
-  });
+  const [settings, setSettings] = useState<SalonSettings | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
   const [savingSms, setSavingSms] = useState(false);
 
@@ -331,8 +338,8 @@ export default function BackOfficeGestionPage() {
   const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "apparence">("closures");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("#ffffff");
-  const [promoColorStars, setPromoColorStars] = useState("#d8a646");
-  const [promoBgColorState, setPromoBgColorState] = useState("#111111");
+  const [promoColorStars, setPromoColorStars] = useState("#4f46e5");
+  const [promoBgColorState, setPromoBgColorState] = useState("#111827");
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
@@ -341,16 +348,19 @@ export default function BackOfficeGestionPage() {
   const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
   const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState<string | null>(null);
 
-  const [appearanceTitles, setAppearanceTitles] = useState("#b98b3d");
-  const [appearanceAccents, setAppearanceAccents] = useState("#d8a646");
-  const [appearanceContactBg, setAppearanceContactBg] = useState("#111111");
-  const [appearancePageBg, setAppearancePageBg] = useState("#f5e9dc");
-  const [appearanceTextMain, setAppearanceTextMain] = useState("#1f1b17");
-  const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("#6e655c");
+  const [appearanceTitles, setAppearanceTitles] = useState("#1a1a2e");
+  const [appearanceAccents, setAppearanceAccents] = useState("#4f46e5");
+  const [appearanceContactBg, setAppearanceContactBg] = useState("#111827");
+  const [appearancePageBg, setAppearancePageBg] = useState("#ffffff");
+  const [appearanceTextMain, setAppearanceTextMain] = useState("#111827");
+  const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("#6b7280");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("Salon de coiffure");
   const [appearanceFont, setAppearanceFont] = useState("");
   const [savingFont, setSavingFont] = useState(false);
+  const [fontSearch, setFontSearch] = useState("");
+  const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
+  const fontDropdownRef = useRef<HTMLDivElement>(null);
   const [appearanceHeroTagline, setAppearanceHeroTagline] = useState("L'élégance au naturel");
   const [appearanceHeroDescription, setAppearanceHeroDescription] = useState("");
   const [appearanceHeroFeatures, setAppearanceHeroFeatures] = useState(["Techniques de professionnels", "Produits de qualité", "Ambiance chaleureuse"]);
@@ -387,6 +397,18 @@ export default function BackOfficeGestionPage() {
       document.body.style.overflow = "";
     };
   }, [selectedClient]);
+
+  useEffect(() => {
+    if (!fontDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (fontDropdownRef.current && !fontDropdownRef.current.contains(e.target as Node)) {
+        setFontDropdownOpen(false);
+        setFontSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [fontDropdownOpen]);
 
   useEffect(() => {
     loadGestionData();
@@ -428,7 +450,6 @@ export default function BackOfficeGestionPage() {
       if (questionsRes.error) throw new Error(questionsRes.error.message);
 
       const loadedSettings = (settingsRes.data ?? null) as SalonSettings | null;
-      if (loadedSettings) { try { localStorage.setItem("bo_settings_cache", JSON.stringify(loadedSettings)); } catch {} }
       setSettings(loadedSettings);
       setAppearanceSalonName(loadedSettings?.salon_name ?? "");
       setAppearanceSalonSubtitle(loadedSettings?.salon_subtitle ?? "Salon de coiffure");
@@ -736,7 +757,9 @@ export default function BackOfficeGestionPage() {
       delete cleanValues.categories;
       if ("duration_before_break" in cleanValues || "break_duration" in cleanValues || "duration_after_break" in cleanValues) {
         const current = services.find((service) => service.id === id);
-        const before = Number(cleanValues.duration_before_break ?? current?.duration_before_break ?? current?.duration_minutes ?? 0);
+        const pause_ = Number(cleanValues.break_duration ?? current?.break_duration ?? 0);
+        const after_ = Number(cleanValues.duration_after_break ?? current?.duration_after_break ?? 0);
+        const before = Number(cleanValues.duration_before_break ?? current?.duration_before_break ?? Math.max(0, (current?.duration_minutes ?? 0) - pause_ - after_));
         const pause = Number(cleanValues.break_duration ?? current?.break_duration ?? 0);
         const after = Number(cleanValues.duration_after_break ?? current?.duration_after_break ?? 0);
         cleanValues.duration_minutes = getTotalDuration(before, pause, after);
@@ -1240,7 +1263,7 @@ export default function BackOfficeGestionPage() {
           color_text_main: appearanceTextMain,
           color_text_secondary: appearanceTextSecondary,
           color_header_bg: appearancePageBg,
-          color_card_border: appearancePageBg,
+          color_card_border: deriveBorderColor(appearancePageBg),
           color_nav_text: appearanceTextMain,
           color_gradient_end: appearanceTitles,
         })
@@ -1329,13 +1352,13 @@ export default function BackOfficeGestionPage() {
     });
   }, [clients, search]);
 
-  const colorPageBg = settings?.color_page_bg || "#f5e9dc";
-  const colorTitles = settings?.color_titles || "#b98b3d";
-  const colorHeaderBg = settings?.color_header_bg || "#F2E8D9";
-  const colorTextMain = settings?.color_text_main || "#1f1b17";
-  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
-  const colorAccents = settings?.color_accents || "#d8a646";
-  const colorNavText = settings?.color_nav_text || "#4d4034";
+  const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const colorTitles = settings?.color_titles || "#1a1a2e";
+  const colorHeaderBg = settings?.color_header_bg || "#ffffff";
+  const colorTextMain = settings?.color_text_main || "#111827";
+  const colorCardBorder = settings?.color_card_border || "#e5e7eb";
+  const colorAccents = settings?.color_accents || "#4f46e5";
+  const colorNavText = settings?.color_nav_text || "#111827";
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
@@ -1344,6 +1367,7 @@ export default function BackOfficeGestionPage() {
       style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
       <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; }`}</style>
+      <SiteFont font={settings?.site_font} />
       <header
         className="relative md:sticky top-0 z-30 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
@@ -1356,13 +1380,15 @@ export default function BackOfficeGestionPage() {
         </div>
         <div className="mx-auto flex w-[min(1400px,calc(100%-24px))] items-center justify-between gap-3 py-3 md:py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-              <img
-                src={settings?.logo_pro_image_url || "/logo-pro.png"}
-                alt={`${salonDisplayName} Pro`}
-                className="h-full w-full object-cover"
-              />
-            </div>
+            {settings?.logo_pro_image_url && (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
+                <img
+                  src={settings.logo_pro_image_url}
+                  alt={`${salonDisplayName} Pro`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
 
             <div>
               <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
@@ -1643,7 +1669,7 @@ export default function BackOfficeGestionPage() {
                               <div className="flex gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoBgColorState(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-[#1f1b17] ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 w-4 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -1678,7 +1704,7 @@ export default function BackOfficeGestionPage() {
                               <div className="flex gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoColorStars(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-[#1f1b17] ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 w-4 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -1713,7 +1739,7 @@ export default function BackOfficeGestionPage() {
                               <div className="flex gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoTextColor(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-[#1f1b17] ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 w-4 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -1910,6 +1936,7 @@ export default function BackOfficeGestionPage() {
                       </label>
                       <input
                         type="password"
+                        autoComplete="new-password"
                         value={settings.brevo_api_key ?? ""}
                         onChange={(e) => setSettings({ ...settings, brevo_api_key: e.target.value })}
                         className={fieldClass}
@@ -1974,7 +2001,7 @@ export default function BackOfficeGestionPage() {
                                 className="h-8 w-8 rounded-full transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-30"
                                 style={{
                                   backgroundColor: color,
-                                  border: isSelected ? "3px solid #111111" : "1px solid #d6d3d1",
+                                  border: isSelected ? "3px solid #000000" : "1px solid #d6d3d1",
                                 }}
                                 aria-label={`Choisir la couleur ${color}`}
                                 title={isUsed ? "Couleur déjà utilisée" : color}
@@ -2009,14 +2036,14 @@ export default function BackOfficeGestionPage() {
                                 type="button"
                                 disabled={index === 0}
                                 onClick={() => handleMoveCategory(index, -1)}
-                                className="flex h-6 w-6 items-center justify-center rounded-lg border border-[var(--card-border)] bg-white text-xs text-[var(--nav-text)] transition hover:border-[#b98b3d] disabled:cursor-not-allowed disabled:opacity-30"
+                                className="flex h-6 w-6 items-center justify-center rounded-lg border border-[var(--card-border)] bg-white text-xs text-[var(--nav-text)] transition hover:border-[var(--accents)] disabled:cursor-not-allowed disabled:opacity-30"
                                 title="Monter"
                               >▲</button>
                               <button
                                 type="button"
                                 disabled={index === categories.length - 1}
                                 onClick={() => handleMoveCategory(index, 1)}
-                                className="flex h-6 w-6 items-center justify-center rounded-lg border border-[var(--card-border)] bg-white text-xs text-[var(--nav-text)] transition hover:border-[#b98b3d] disabled:cursor-not-allowed disabled:opacity-30"
+                                className="flex h-6 w-6 items-center justify-center rounded-lg border border-[var(--card-border)] bg-white text-xs text-[var(--nav-text)] transition hover:border-[var(--accents)] disabled:cursor-not-allowed disabled:opacity-30"
                                 title="Descendre"
                               >▼</button>
                             </div>
@@ -2050,7 +2077,7 @@ export default function BackOfficeGestionPage() {
                                   className="h-8 w-8 rounded-full transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-30"
                                   style={{
                                     backgroundColor: color,
-                                    border: isSelected ? "3px solid #111111" : "1px solid #d6d3d1",
+                                    border: isSelected ? "3px solid #000000" : "1px solid #d6d3d1",
                                   }}
                                   aria-label={`Couleur ${color}`}
                                   title={isUsed ? "Couleur déjà utilisée" : color}
@@ -2245,7 +2272,7 @@ export default function BackOfficeGestionPage() {
                                   <button key={c} type="button" disabled={takenByOther && !isSelected}
                                     onClick={() => { if (!takenByOther || isSelected) handleUpdateStaff(member.id, { color: c }); }}
                                     title={takenByOther && !isSelected ? "Déjà utilisée" : undefined}
-                                    className={`h-7 w-7 rounded-lg border-2 transition ${isSelected ? "border-[#1f1b17] scale-110" : takenByOther ? "cursor-not-allowed opacity-30" : "border-transparent hover:scale-105"}`}
+                                    className={`h-7 w-7 rounded-lg border-2 transition ${isSelected ? "border-neutral-900 scale-110" : takenByOther ? "cursor-not-allowed opacity-30" : "border-transparent hover:scale-105"}`}
                                     style={{ backgroundColor: c }} />
                                 );
                               })}
@@ -2279,7 +2306,7 @@ export default function BackOfficeGestionPage() {
                             <button key={c} type="button" disabled={taken}
                               onClick={() => { if (!taken) setNewStaffColor(c); }}
                               title={taken ? "Déjà utilisée" : undefined}
-                              className={`h-7 w-7 rounded-lg border-2 transition ${newStaffColor === c ? "border-[#1f1b17] scale-110" : taken ? "cursor-not-allowed opacity-30" : "border-transparent hover:scale-105"}`}
+                              className={`h-7 w-7 rounded-lg border-2 transition ${newStaffColor === c ? "border-neutral-900 scale-110" : taken ? "cursor-not-allowed opacity-30" : "border-transparent hover:scale-105"}`}
                               style={{ backgroundColor: c }} />
                           );
                         })}
@@ -2755,19 +2782,67 @@ export default function BackOfficeGestionPage() {
                         {savingFont ? "Enregistrement..." : "Enregistrer"}
                       </button>
                     </div>
-                    <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                    <div className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
                       Police du site
-                      <select
-                        value={appearanceFont}
-                        onChange={(e) => setAppearanceFont(e.target.value)}
-                        className={fieldClass}
-                      >
-                        <option value="">Par défaut</option>
-                        {FONT_OPTIONS.map((font) => (
-                          <option key={font} value={font}>{font}</option>
-                        ))}
-                      </select>
-                    </label>
+                      <div className="relative" ref={fontDropdownRef}>
+                        {fontDropdownOpen && (
+                          <link
+                            rel="stylesheet"
+                            href={`https://fonts.googleapis.com/css2?${FONT_OPTIONS.map((f) => `family=${f.replace(/ /g, "+")}:wght@400;700`).join("&")}&display=swap`}
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => { setFontDropdownOpen((v) => !v); setFontSearch(""); }}
+                          className={`${fieldClass} flex w-full items-center justify-between`}
+                          style={appearanceFont ? { fontFamily: `'${appearanceFont}', sans-serif` } : undefined}
+                        >
+                          <span className="font-normal">{appearanceFont || "Par défaut"}</span>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`shrink-0 transition-transform ${fontDropdownOpen ? "rotate-180" : ""}`}>
+                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                        {fontDropdownOpen && (
+                          <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white shadow-[0_18px_45px_rgba(80,55,25,0.14)]">
+                            <div className="border-b border-[var(--card-border)] p-2">
+                              <input
+                                autoFocus
+                                type="text"
+                                placeholder="Rechercher une police..."
+                                value={fontSearch}
+                                onChange={(e) => setFontSearch(e.target.value)}
+                                className="w-full rounded-xl border border-[var(--card-border)] bg-[#fafaf8] px-3 py-2 text-sm font-normal text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
+                              />
+                            </div>
+                            <div className="max-h-60 overflow-y-auto py-1">
+                              {!fontSearch && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setAppearanceFont(""); setFontDropdownOpen(false); }}
+                                  className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--page-bg)] ${!appearanceFont ? "font-semibold text-[var(--gold)]" : "font-normal text-[var(--nav-text)]"}`}
+                                >
+                                  Par défaut
+                                </button>
+                              )}
+                              {FONT_OPTIONS.filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase())).map((font) => (
+                                <button
+                                  key={font}
+                                  type="button"
+                                  onClick={() => { setAppearanceFont(font); setFontDropdownOpen(false); setFontSearch(""); }}
+                                  className={`w-full px-4 py-2.5 text-left hover:bg-[var(--page-bg)] ${appearanceFont === font ? "font-semibold text-[var(--gold)]" : "font-normal text-[var(--text-main)]"}`}
+                                  style={{ fontFamily: `'${font}', sans-serif`, fontSize: "15px" }}
+                                >
+                                  {font}
+                                </button>
+                              ))}
+                              {FONT_OPTIONS.filter((f) => f.toLowerCase().includes(fontSearch.toLowerCase())).length === 0 && (
+                                <div className="px-4 py-3 text-sm font-normal text-[var(--nav-text)]">Aucune police trouvée</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Couleurs */}
@@ -2830,7 +2905,7 @@ export default function BackOfficeGestionPage() {
                                           type="button"
                                           onClick={() => setter(c)}
                                           title={c}
-                                          className={`h-5 w-5 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-[#1f1b17] ring-offset-1" : "hover:scale-110"}`}
+                                          className={`h-5 w-5 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                           style={{ backgroundColor: c }}
                                         />
                                       ))}
@@ -2934,12 +3009,16 @@ export default function BackOfficeGestionPage() {
                       <div className="text-lg font-black">Logo Pro</div>
                     </div>
                     <div className="flex items-center gap-5">
-                      <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-                        <img
-                          src={settings?.logo_pro_image_url || "/logo-pro.png"}
-                          alt="Logo Pro actuel"
-                          className="h-24 w-24 object-cover"
-                        />
+                      <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0 flex items-center justify-center" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg, width: 96, height: 96 }}>
+                        {settings?.logo_pro_image_url ? (
+                          <img
+                            src={settings.logo_pro_image_url}
+                            alt="Logo Pro actuel"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs text-center px-2" style={{ color: colorNavText, opacity: 0.4 }}>Aucun logo</span>
+                        )}
                       </div>
                       <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogoPro ? "opacity-50 pointer-events-none" : ""}`}>
                         {uploadingLogoPro ? "Importation..." : "Choisir un logo pro"}

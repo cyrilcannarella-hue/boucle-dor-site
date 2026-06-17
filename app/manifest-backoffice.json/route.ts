@@ -6,7 +6,7 @@ export const revalidate = 3600;
 
 export async function GET() {
   let salonName = "Votre salon";
-  let bgColor = "#F5EBDD";
+  let bgColor = "#ffffff";
 
   try {
     const salon = await getCurrentSalon();

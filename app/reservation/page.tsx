@@ -242,9 +242,9 @@ function isOpenDayFromSettings(date: Date, settings: SalonSettings | null) {
 }
 
 function getServiceDurations(service: Service | null) {
-  const before = service?.durationBeforeBreak ?? service?.duration ?? 0;
   const pause = service?.breakDuration ?? 0;
   const after = service?.durationAfterBreak ?? 0;
+  const before = service?.durationBeforeBreak ?? Math.max(0, (service?.duration ?? 0) - pause - after);
   const total = before + pause + after;
 
   return {
@@ -1093,16 +1093,16 @@ export default function ReservationPage() {
     }
   };
 
-  const colorButtons = settings?.color_accents || "#111111";
-  const colorPageBg = settings?.color_page_bg || "#f5e9dc";
-  const colorTitles = settings?.color_titles || "#b98b3d";
-  const colorHeaderBg = settings?.color_header_bg || "#F2E8D9";
-  const colorTextMain = settings?.color_text_main || "#1f1b17";
-  const colorTextSecondary = settings?.color_text_secondary || "#6e655c";
-  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
-  const colorAccents = settings?.color_accents || "#d8a646";
-  const colorNavText = settings?.color_nav_text || "#4d4034";
-  const logoUrl = settings?.logo_image_url || "/icon-192.png";
+  const colorButtons = settings?.color_accents || "#4f46e5";
+  const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const colorTitles = settings?.color_titles || "#1a1a2e";
+  const colorHeaderBg = settings?.color_header_bg || "#ffffff";
+  const colorTextMain = settings?.color_text_main || "#111827";
+  const colorTextSecondary = settings?.color_text_secondary || "#6b7280";
+  const colorCardBorder = settings?.color_card_border || "#e5e7eb";
+  const colorAccents = settings?.color_accents || "#4f46e5";
+  const colorNavText = settings?.color_nav_text || "#111827";
+  const logoUrl = settings?.logo_image_url || null;
   const salonName = (settings?.salon_name || "Votre salon").replace(/['‘’‛]/g, "'");
 
   return (
@@ -1136,9 +1136,11 @@ export default function ReservationPage() {
         </div>
         <div className="mx-auto flex w-[min(1200px,calc(100%-28px))] items-center justify-between gap-4 py-3">
           <Link href="/" className="group flex items-center gap-3">
-            <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border border-[var(--card-border)] bg-[var(--page-bg)] shadow-[0_12px_26px_rgba(185,139,61,0.18)]">
-              <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />
-            </div>
+            {logoUrl && (
+              <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border border-[var(--card-border)] bg-[var(--page-bg)] shadow-[0_12px_26px_rgba(185,139,61,0.18)]">
+                <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />
+              </div>
+            )}
             <span>
               <span className="block text-2xl leading-none tracking-tight sm:text-3xl">
                 <SalonNameGradient name={salonName} goldColor={colorTextMain} goldEndColor={colorAccents} />

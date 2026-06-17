@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   let salonName = "Votre salon";
+  let iconUrl = "/icon.png";
   try {
     const salon = await getCurrentSalon();
     const supabase = createClient(
@@ -27,24 +28,20 @@ export async function generateMetadata(): Promise<Metadata> {
     );
     const { data } = await supabase
       .from("salon_settings")
-      .select("salon_name")
+      .select("salon_name, logo_image_url")
       .eq("salon_id", salon.id)
       .single();
     if (data?.salon_name) salonName = data.salon_name;
+    if (data?.logo_image_url) iconUrl = data.logo_image_url;
   } catch {}
 
   return {
     title: salonName,
     description: `Réservation en ligne — ${salonName}`,
     icons: {
-      icon: [
-        { url: "/icon.png", sizes: "192x192", type: "image/png" },
-        { url: "/icon.png", sizes: "512x512", type: "image/png" },
-      ],
-      apple: [
-        { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
-      ],
-      shortcut: "/icon.png",
+      icon: [{ url: iconUrl, type: "image/png" }],
+      apple: [{ url: iconUrl, type: "image/png" }],
+      shortcut: iconUrl,
     },
     appleWebApp: {
       capable: true,
@@ -57,9 +54,22 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = {
-  themeColor: "#F5E9DC",
-};
+export async function generateViewport(): Promise<Viewport> {
+  try {
+    const salon = await getCurrentSalon();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    );
+    const { data } = await supabase
+      .from("salon_settings")
+      .select("color_page_bg")
+      .eq("salon_id", salon.id)
+      .single();
+    if (data?.color_page_bg) return { themeColor: data.color_page_bg };
+  } catch {}
+  return { themeColor: "#ffffff" };
+}
 
 export default async function RootLayout({
   children,

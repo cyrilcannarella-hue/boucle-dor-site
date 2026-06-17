@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
+import { SiteFont } from "@/components/SiteFont";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -92,6 +93,7 @@ type SalonSettings = {
   color_card_border?: string | null;
   color_accents?: string | null;
   color_nav_text?: string | null;
+  site_font?: string | null;
 };
 
 function hexToRgb(hex: string): string {
@@ -170,7 +172,7 @@ export default function BackOfficeClientsPage() {
     loadClients();
     supabase
       .from("salon_settings")
-      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text")
+      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text, site_font")
       .eq("salon_id", salonId)
       .limit(1)
       .maybeSingle()
@@ -489,13 +491,13 @@ export default function BackOfficeClientsPage() {
   const clientsWithEmail = useMemo(() => clients.filter((client) => client.email).length, [clients]);
   const clientsWithNotes = useMemo(() => clients.filter((client) => client.notes).length, [clients]);
 
-  const colorPageBg = settings?.color_page_bg || "#f5e9dc";
-  const colorTitles = settings?.color_titles || "#b98b3d";
-  const colorHeaderBg = settings?.color_header_bg || "#F2E8D9";
-  const colorTextMain = settings?.color_text_main || "#1f1b17";
-  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
-  const colorAccents = settings?.color_accents || "#d8a646";
-  const colorNavText = settings?.color_nav_text || "#4d4034";
+  const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const colorTitles = settings?.color_titles || "#1a1a2e";
+  const colorHeaderBg = settings?.color_header_bg || "#ffffff";
+  const colorTextMain = settings?.color_text_main || "#111827";
+  const colorCardBorder = settings?.color_card_border || "#e5e7eb";
+  const colorAccents = settings?.color_accents || "#4f46e5";
+  const colorNavText = settings?.color_nav_text || "#111827";
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
@@ -504,6 +506,7 @@ export default function BackOfficeClientsPage() {
       style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
       <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; }`}</style>
+      <SiteFont font={settings?.site_font} />
       <header
         className="relative md:sticky top-0 z-30 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
@@ -516,13 +519,15 @@ export default function BackOfficeClientsPage() {
         </div>
         <div className="mx-auto flex w-[min(1400px,calc(100%-24px))] items-center justify-between gap-3 py-3 md:py-4">
           <Link href="/back-office" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-              <img
-                src={settings?.logo_pro_image_url || "/logo-pro.png"}
-                alt={`${salonDisplayName} Pro`}
-                className="h-full w-full object-cover"
-              />
-            </div>
+            {settings?.logo_pro_image_url && (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
+                <img
+                  src={settings.logo_pro_image_url}
+                  alt={`${salonDisplayName} Pro`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
 
             <div>
               <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
@@ -536,7 +541,7 @@ export default function BackOfficeClientsPage() {
 
           <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
             <Link href="/back-office" className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Agenda</Link>
-            <Link href="/back-office/clients" className="rounded-xl bg-[#1f1b17] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm">Fiches clients</Link>
+            <Link href="/back-office/clients" className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm">Fiches clients</Link>
             <Link href="/back-office/gestion" className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Admin</Link>
             <button type="button" onClick={handleLogout} className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm">Déconnexion</button>
           </div>
@@ -645,7 +650,7 @@ export default function BackOfficeClientsPage() {
                   className="group w-full min-w-0 rounded-[28px] border border-[var(--card-border)] bg-[#fffdf9] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-[0_18px_40px_rgba(83,58,31,0.10)]"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#1f1b17] to-[var(--gold)] text-sm font-bold text-white shadow-sm">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[var(--accents)] to-[var(--gold)] text-sm font-bold text-white shadow-sm">
                       {getInitials(client)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -671,7 +676,7 @@ export default function BackOfficeClientsPage() {
               <div className="sticky top-0 z-10 border-b border-[var(--card-border)] bg-white/90 p-4 backdrop-blur-xl md:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#1f1b17] to-[var(--gold)] font-bold text-white shadow-sm">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[var(--accents)] to-[var(--gold)] font-bold text-white shadow-sm">
                       {getInitials(selectedClient)}
                     </div>
                     <div>
@@ -734,7 +739,7 @@ export default function BackOfficeClientsPage() {
                     )}
                     <a
                       href={`tel:${selectedClient.phone}`}
-                      className="rounded-2xl bg-[#1f1b17] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-90"
+                      className="rounded-2xl bg-[var(--accents)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-90"
                     >
                       Appeler
                     </a>
@@ -754,7 +759,7 @@ export default function BackOfficeClientsPage() {
                         type="button"
                         onClick={handleSaveClient}
                         disabled={savingClient}
-                        className="rounded-2xl bg-[#1f1b17] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                        className="rounded-2xl bg-[var(--accents)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
                       >
                         {savingClient ? "Enregistrement..." : "Enregistrer"}
                       </button>

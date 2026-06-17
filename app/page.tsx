@@ -97,7 +97,7 @@ function blendHex(hex1: string, hex2: string, ratio: number): string {
 }
 
 function formatPhoneHref(phone: string | null | undefined) {
-  if (!phone) return "tel:0986678830";
+  if (!phone) return "#";
   return `tel:${phone.replace(/\s+/g, "")}`;
 }
 
@@ -105,7 +105,7 @@ function formatPhoneHref(phone: string | null | undefined) {
 const SalonNamePremium = memo(function SalonNamePremium({
   name,
   compact = false,
-  goldColor = "#d8a646",
+  goldColor = "#4f46e5",
   gradientMidColor,
   gradientEndColor = "#9f742f",
 }: {
@@ -219,10 +219,10 @@ useEffect(() => {
   }, [salonId]);
 
   const salonName = settings?.salon_name || "Votre salon";
-  const salonPhone = settings?.phone || "09 86 67 88 30";
-  const salonAddress = settings?.address || "33 Rue Gabriel Péri, 13340 Rognac";
-  const openingTime = settings?.opening_time?.slice(0, 5) || "09:00";
-  const closingTime = settings?.closing_time?.slice(0, 5) || "19:00";
+  const salonPhone = settings?.phone || null;
+  const salonAddress = settings?.address || null;
+  const openingTime = settings?.opening_time?.slice(0, 5) || null;
+  const closingTime = settings?.closing_time?.slice(0, 5) || null;
 
   const salonSubtitle = settings?.salon_subtitle || "";
   const heroTagline = settings?.hero_tagline || "";
@@ -234,29 +234,37 @@ useEffect(() => {
   const allReviews = settings?.site_reviews ?? [];
   const reviews = allReviews.filter((r) => r.name?.trim() || r.text?.trim());
   const logoImageUrl = settings?.logo_image_url || null;
-  const heroImageUrl = settings?.hero_image_url || "/images/hero-salon.jpg";
-  const aproposImageUrl = settings?.apropos_image_url || "/images/apropos-salon.jpg";
-  const colorTitles = settings?.color_titles || "#b98b3d";
-  const colorBadges = settings?.color_titles || "#b98b3d";
-  const colorAccents = settings?.color_accents || "#d8a646";
-  const colorButtons = settings?.color_accents || "#d8a646";
-  const colorHeroCard = settings?.color_contact_bg || "#111111";
-  const colorContactBg = settings?.color_contact_bg || "#111111";
-  const colorPageBg = settings?.color_page_bg || "#f5e9dc";
-  const colorTextMain = settings?.color_text_main || "#1f1b17";
-  const colorTextSecondary = settings?.color_text_secondary || "#6e655c";
-  const colorHeaderBg = settings?.color_header_bg || "#F2E8D9";
-  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
-  const colorNavText = settings?.color_nav_text || "#4d4034";
-  const colorFooterText = settings?.color_text_secondary || "#8a7a67";
-  const colorGradientStart = settings?.color_contact_bg || "#2e2118";
-  const colorGradientEnd = settings?.color_gradient_end || "#9f742f";
-  const promoGradientFrom = settings?.promo_color_from || "#d8a646";
-  const promoGradientTo = settings?.promo_color_to || "#b98b3d";
+  const heroImageUrl = settings?.hero_image_url || null;
+  const aproposImageUrl = settings?.apropos_image_url || null;
+  const colorTitles = settings?.color_titles || "#1a1a2e";
+  const colorBadges = settings?.color_titles || "#1a1a2e";
+  const colorAccents = settings?.color_accents || "#4f46e5";
+  const colorButtons = settings?.color_accents || "#4f46e5";
+  const colorHeroCard = settings?.color_contact_bg || "#111827";
+  const colorContactBg = settings?.color_contact_bg || "#111827";
+  const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const colorTextMain = settings?.color_text_main || "#111827";
+  const colorTextSecondary = settings?.color_text_secondary || "#6b7280";
+  const colorHeaderBg = settings?.color_header_bg || "#ffffff";
+  const colorCardBorder = settings?.color_card_border || "#e5e7eb";
+  const colorNavText = settings?.color_nav_text || "#111827";
+  const colorFooterText = settings?.color_text_secondary || "#6b7280";
+  const colorGradientStart = settings?.color_contact_bg || "#111827";
+  const colorGradientEnd = settings?.color_gradient_end || "#4f46e5";
+  const promoGradientFrom = settings?.promo_color_from || "#4f46e5";
+  const promoGradientTo = settings?.promo_color_to || "#1a1a2e";
   const promoTextColor = settings?.promo_text_color || "#ffffff";
   const promoBgColor = settings?.promo_bg_color || colorContactBg;
   const instagramUrl = settings?.instagram_url || null;
   const salonEmail = settings?.email || null;
+
+  const hasAnyOpenDay = !!(settings && (
+    settings.is_open_monday || settings.is_open_tuesday || settings.is_open_wednesday ||
+    settings.is_open_thursday || settings.is_open_friday || settings.is_open_saturday ||
+    settings.is_open_sunday
+  ));
+  const contactItemCount = [salonAddress, salonPhone, salonEmail].filter(Boolean).length + (hasAnyOpenDay ? 1 : 0);
+  const contactGridClass = contactItemCount >= 4 ? "sm:grid-cols-2 xl:grid-cols-4" : contactItemCount === 3 ? "md:grid-cols-3" : contactItemCount === 2 ? "sm:grid-cols-2" : "";
 
   return (
 <main
@@ -508,12 +516,12 @@ useEffect(() => {
         </div>
       ) : null}
 
-      <section className="relative z-10 mx-auto grid w-[min(1200px,calc(100%-32px))] gap-6 py-8 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className={`relative z-10 mx-auto w-[min(1200px,calc(100%-32px))] gap-6 py-8 ${heroImageUrl ? "grid lg:grid-cols-[1.05fr_0.95fr]" : ""}`}>
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_20%_10%,rgba(216,166,70,0.26),transparent_30%),linear-gradient(145deg,#18130f_0%,#0f0f0f_55%,#2a1d12_100%)] p-8 text-white shadow-[0_24px_70px_rgba(72,48,22,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-[#d8a646]/20 before:blur-3xl"
+          className="relative overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-white/10 before:blur-3xl"
           style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroCard, 0.28)} 0%, ${colorHeroCard} 50%, #050505 100%)` }}
         >
           {salonSubtitle && (
@@ -602,21 +610,23 @@ useEffect(() => {
           )}
         </motion.div>
 
-        <motion.div
-          initial={{ clipPath: "inset(0 100% 0 0 round 32px)" }}
-          animate={{ clipPath: "inset(0 0% 0 0 round 32px)" }}
-          transition={{ duration: 1.0, ease: [0.76, 0, 0.24, 1], delay: 0.3 }}
-          className="relative min-h-[520px] overflow-hidden rounded-[32px] border border-[var(--card-border)] shadow-[0_18px_50px_rgba(0,0,0,0.05)]"
-        >
-          <motion.img
-            src={heroImageUrl}
-            alt={`Salon ${salonName}`}
-            className="absolute -top-[45px] left-0 h-[calc(100%+90px)] w-full object-cover"
-            style={{ y: heroImageY }}
-            whileHover={{ scale: 1.03 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          />
-        </motion.div>
+        {heroImageUrl && (
+          <motion.div
+            initial={{ clipPath: "inset(0 100% 0 0 round 32px)" }}
+            animate={{ clipPath: "inset(0 0% 0 0 round 32px)" }}
+            transition={{ duration: 1.0, ease: [0.76, 0, 0.24, 1], delay: 0.3 }}
+            className="relative min-h-[520px] overflow-hidden rounded-[32px] border border-[var(--card-border)] shadow-[0_18px_50px_rgba(0,0,0,0.05)]"
+          >
+            <motion.img
+              src={heroImageUrl}
+              alt={`Salon ${salonName}`}
+              className="absolute -top-[45px] left-0 h-[calc(100%+90px)] w-full object-cover"
+              style={{ y: heroImageY }}
+              whileHover={{ scale: 1.03 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
+          </motion.div>
+        )}
       </section>
 
       {prestations.length > 0 && (
@@ -664,7 +674,7 @@ useEffect(() => {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
-        className="mx-auto grid w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 gap-6 py-6 lg:grid-cols-[0.9fr_1.1fr]"
+        className={`mx-auto w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 gap-6 py-6 ${aproposImageUrl ? "grid lg:grid-cols-[0.9fr_1.1fr]" : ""}`}
       >
         <motion.div
           variants={fadeUp}
@@ -679,20 +689,22 @@ useEffect(() => {
           {aproposText && <p className="mt-4" style={{ color: colorTextSecondary }}>{aproposText}</p>}
         </motion.div>
 
-        <motion.div
-          variants={fadeUp}
-          whileHover={{ y: -6, scale: 1.02 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="rounded-[28px] border border-[var(--card-border)] bg-white/65 p-6 shadow-sm backdrop-blur"
-        >
-          <motion.img
-            src={aproposImageUrl}
-            alt={`Espace shampoing du salon ${salonName}`}
-            className="h-full min-h-[260px] w-full rounded-[22px] object-cover"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          />
-        </motion.div>
+        {aproposImageUrl && (
+          <motion.div
+            variants={fadeUp}
+            whileHover={{ y: -6, scale: 1.02 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="rounded-[28px] border border-[var(--card-border)] bg-white/65 p-6 shadow-sm backdrop-blur"
+          >
+            <motion.img
+              src={aproposImageUrl}
+              alt={`Espace shampoing du salon ${salonName}`}
+              className="h-full min-h-[260px] w-full rounded-[22px] object-cover"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </motion.div>
+        )}
       </motion.section>
 
       {reviews.length > 0 && (
@@ -739,37 +751,41 @@ useEffect(() => {
             Contact
           </div>
 
-          <div className={`mt-6 grid gap-4 ${salonEmail ? "sm:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
-            <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(salonAddress)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group rounded-[20px] border border-white/10 p-5 transition hover:border-white/25 hover:bg-white/5"
-            >
-              <strong className="flex items-center gap-2">
-                Adresse
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 opacity-50 transition group-hover:opacity-100">
-                  <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" clipRule="evenodd" />
-                  <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z" clipRule="evenodd" />
-                </svg>
-              </strong>
-              <p className="mt-2 whitespace-pre-line text-white/75 group-hover:text-white/90 transition">
-                {salonAddress}
-              </p>
-            </a>
+          <div className={`mt-6 grid gap-4 ${contactGridClass}`}>
+            {salonAddress && (
+              <a
+                href={`https://maps.google.com/?q=${encodeURIComponent(salonAddress)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-[20px] border border-white/10 p-5 transition hover:border-white/25 hover:bg-white/5"
+              >
+                <strong className="flex items-center gap-2">
+                  Adresse
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 opacity-50 transition group-hover:opacity-100">
+                    <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z" clipRule="evenodd" />
+                  </svg>
+                </strong>
+                <p className="mt-2 whitespace-pre-line text-white/75 group-hover:text-white/90 transition">
+                  {salonAddress}
+                </p>
+              </a>
+            )}
 
-            <a
-              href={formatPhoneHref(salonPhone)}
-              className="group rounded-[20px] border border-white/10 p-5 transition hover:border-white/25 hover:bg-white/5"
-            >
-              <strong className="flex items-center gap-2">
-                Téléphone
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 opacity-50 transition group-hover:opacity-100">
-                  <path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 16.352V17.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" />
-                </svg>
-              </strong>
-              <p className="mt-2 text-white/75 group-hover:text-white/90 transition">{salonPhone}</p>
-            </a>
+            {salonPhone && (
+              <a
+                href={formatPhoneHref(salonPhone)}
+                className="group rounded-[20px] border border-white/10 p-5 transition hover:border-white/25 hover:bg-white/5"
+              >
+                <strong className="flex items-center gap-2">
+                  Téléphone
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 opacity-50 transition group-hover:opacity-100">
+                    <path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 16.352V17.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" />
+                  </svg>
+                </strong>
+                <p className="mt-2 text-white/75 group-hover:text-white/90 transition">{salonPhone}</p>
+              </a>
+            )}
 
             {salonEmail && (
               <a
@@ -787,41 +803,45 @@ useEffect(() => {
               </a>
             )}
 
-            <div className="rounded-[20px] border border-white/10 p-5">
-              <strong>Horaires</strong>
+            {hasAnyOpenDay && (
+              <div className="rounded-[20px] border border-white/10 p-5">
+                <strong>Horaires</strong>
 
-              <div className="mt-3 grid gap-2 text-white/75">
-                {([
-                  ["Lundi",    "is_open_monday",    "opening_time_monday",    "closing_time_monday"],
-                  ["Mardi",    "is_open_tuesday",   "opening_time_tuesday",   "closing_time_tuesday"],
-                  ["Mercredi", "is_open_wednesday", "opening_time_wednesday", "closing_time_wednesday"],
-                  ["Jeudi",    "is_open_thursday",  "opening_time_thursday",  "closing_time_thursday"],
-                  ["Vendredi", "is_open_friday",    "opening_time_friday",    "closing_time_friday"],
-                  ["Samedi",   "is_open_saturday",  "opening_time_saturday",  "closing_time_saturday"],
-                  ["Dimanche", "is_open_sunday",    "opening_time_sunday",    "closing_time_sunday"],
-                ] as [string, keyof SalonSettings, keyof SalonSettings, keyof SalonSettings][]).map(([label, openKey, openTimeKey, closeTimeKey]) => {
-                  const isOpen = settings?.[openKey];
-                  const open = (settings?.[openTimeKey] as string | null)?.slice(0, 5) ?? openingTime;
-                  const close = (settings?.[closeTimeKey] as string | null)?.slice(0, 5) ?? closingTime;
-                  return (
-                    <div key={label} className="flex justify-between gap-4">
-                      <span>{label}</span>
-                      <span>{isOpen ? `${open} à ${close}` : "Fermé"}</span>
-                    </div>
-                  );
-                })}
+                <div className="mt-3 grid gap-2 text-white/75">
+                  {([
+                    ["Lundi",    "is_open_monday",    "opening_time_monday",    "closing_time_monday"],
+                    ["Mardi",    "is_open_tuesday",   "opening_time_tuesday",   "closing_time_tuesday"],
+                    ["Mercredi", "is_open_wednesday", "opening_time_wednesday", "closing_time_wednesday"],
+                    ["Jeudi",    "is_open_thursday",  "opening_time_thursday",  "closing_time_thursday"],
+                    ["Vendredi", "is_open_friday",    "opening_time_friday",    "closing_time_friday"],
+                    ["Samedi",   "is_open_saturday",  "opening_time_saturday",  "closing_time_saturday"],
+                    ["Dimanche", "is_open_sunday",    "opening_time_sunday",    "closing_time_sunday"],
+                  ] as [string, keyof SalonSettings, keyof SalonSettings, keyof SalonSettings][]).map(([label, openKey, openTimeKey, closeTimeKey]) => {
+                    const isOpen = settings?.[openKey];
+                    const open = (settings?.[openTimeKey] as string | null)?.slice(0, 5) ?? openingTime ?? "--:--";
+                    const close = (settings?.[closeTimeKey] as string | null)?.slice(0, 5) ?? closingTime ?? "--:--";
+                    return (
+                      <div key={label} className="flex justify-between gap-4">
+                        <span>{label}</span>
+                        <span>{isOpen ? `${open} à ${close}` : "Fermé"}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href={formatPhoneHref(salonPhone)}
-              className="rounded-full px-6 py-4 font-semibold"
-              style={{ backgroundColor: colorButtons, color: colorTextMain }}
-            >
-              Appeler le salon
-            </a>
+            {salonPhone && (
+              <a
+                href={formatPhoneHref(salonPhone)}
+                className="rounded-full px-6 py-4 font-semibold"
+                style={{ backgroundColor: colorButtons, color: colorTextMain }}
+              >
+                Appeler le salon
+              </a>
+            )}
             <a
               href="/reservation"
               className="btn-shimmer rounded-full px-6 py-4 font-semibold shadow-lg shadow-black/20 transition hover:shadow-xl"
@@ -836,7 +856,7 @@ useEffect(() => {
       <footer className="relative z-10 backdrop-blur" style={{ borderTop: `1px solid ${colorCardBorder}99`, backgroundColor: `${colorHeaderBg}cc` }}>
         <div className="mx-auto w-[min(1200px,calc(100%-32px))] py-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-[var(--footer-text)]">
-            © {new Date().getFullYear()} {salonName} — {salonAddress}
+            © {new Date().getFullYear()} {salonName}{salonAddress ? ` — ${salonAddress}` : ""}
           </p>
           {instagramUrl && (
             <a
@@ -865,7 +885,7 @@ useEffect(() => {
             whileHover={{ y: -3, scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/45 bg-[#111111] text-xl text-white shadow-[0_18px_40px_rgba(17,17,17,0.22)] backdrop-blur-xl"
+            className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/45 bg-neutral-900 text-xl text-white shadow-[0_18px_40px_rgba(0,0,0,0.22)] backdrop-blur-xl"
             aria-label="Retour en haut"
           >
             ↑

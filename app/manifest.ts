@@ -6,7 +6,7 @@ export const revalidate = 3600;
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   let salonName = "Votre salon";
-  let bgColor = "#F5E9DC";
+  let bgColor = "#ffffff";
 
   try {
     const salon = await getCurrentSalon();

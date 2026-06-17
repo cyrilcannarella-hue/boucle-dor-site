@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
+import { SiteFont } from "@/components/SiteFont";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -128,6 +129,7 @@ type SalonSettings = {
   color_card_border?: string | null;
   color_accents?: string | null;
   color_nav_text?: string | null;
+  site_font?: string | null;
 };
 
 type ExceptionClosure = {
@@ -399,9 +401,9 @@ function getServiceSegmentsFromService(
   service: ServiceRow | null,
   startMinutes: number
 ) {
-  const before = service?.duration_before_break ?? service?.duration_minutes ?? 0;
   const pause = service?.break_duration ?? 0;
   const after = service?.duration_after_break ?? 0;
+  const before = service?.duration_before_break ?? Math.max(0, (service?.duration_minutes ?? 0) - pause - after);
 
   const segment1Start = startMinutes;
   const segment1End = segment1Start + before;
@@ -1791,13 +1793,13 @@ export default function BackOfficePage() {
     );
   };
 
-  const colorPageBg = settings?.color_page_bg || "#f5e9dc";
-  const colorTitles = settings?.color_titles || "#b98b3d";
-  const colorHeaderBg = settings?.color_header_bg || "#F2E8D9";
-  const colorTextMain = settings?.color_text_main || "#1f1b17";
-  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
-  const colorAccents = settings?.color_accents || "#d8a646";
-  const colorNavText = settings?.color_nav_text || "#4d4034";
+  const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const colorTitles = settings?.color_titles || "#1a1a2e";
+  const colorHeaderBg = settings?.color_header_bg || "#ffffff";
+  const colorTextMain = settings?.color_text_main || "#111827";
+  const colorCardBorder = settings?.color_card_border || "#e5e7eb";
+  const colorAccents = settings?.color_accents || "#4f46e5";
+  const colorNavText = settings?.color_nav_text || "#111827";
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   const accentRgb = hexToRgb(colorAccents);
@@ -1809,6 +1811,7 @@ export default function BackOfficePage() {
       style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${accentRgbStr},0.10), transparent 34%), ${colorPageBg}` }}
     >
       <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; }`}</style>
+      <SiteFont font={settings?.site_font} />
       <header
         className="relative md:sticky top-0 z-30 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
@@ -1821,13 +1824,15 @@ export default function BackOfficePage() {
         </div>
         <div className="mx-auto flex w-[min(1400px,calc(100%-24px))] items-center justify-between gap-3 py-3 md:py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-              <img
-                src={settings?.logo_pro_image_url || "/logo-pro.png"}
-                alt={`${salonDisplayName} Pro`}
-                className="h-full w-full object-cover"
-              />
-            </div>
+            {settings?.logo_pro_image_url && (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] md:h-14 md:w-14 md:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
+                <img
+                  src={settings.logo_pro_image_url}
+                  alt={`${salonDisplayName} Pro`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
 
             <div>
               <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
@@ -1972,7 +1977,7 @@ export default function BackOfficePage() {
                       key={member.id}
                       type="button"
                       onClick={() => setSelectedStaffId(member.id)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedStaffId === member.id ? "text-[var(--text-main)] ring-2 ring-[#1f1b17]" : "border border-[var(--card-border)] bg-white text-[#6f6254] hover:bg-[var(--page-bg)]"}`}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedStaffId === member.id ? "text-[var(--text-main)] ring-2 ring-[var(--accents)]" : "border border-[var(--card-border)] bg-white text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
                       style={selectedStaffId === member.id ? { backgroundColor: member.color } : {}}
                     >
                       {member.first_name}
@@ -2568,7 +2573,7 @@ export default function BackOfficePage() {
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-medium ${
                       createClientMode === "existing"
-                        ? "bg-[#111111] text-white"
+                        ? "bg-[var(--accents)] text-white"
                         : "border border-black/10 bg-white"
                     }`}
                   >
@@ -2583,7 +2588,7 @@ export default function BackOfficePage() {
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-medium ${
                       createClientMode === "new"
-                        ? "bg-[#111111] text-white"
+                        ? "bg-[var(--accents)] text-white"
                         : "border border-black/10 bg-white"
                     }`}
                   >

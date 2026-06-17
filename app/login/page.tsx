@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
+import { SiteFont } from "@/components/SiteFont";
 
 type SalonSettings = {
   id: string;
@@ -15,6 +16,7 @@ type SalonSettings = {
   color_accents?: string | null;
   color_nav_text?: string | null;
   color_contact_bg?: string | null;
+  site_font?: string | null;
 };
 
 function hexToRgb(hex: string) {
@@ -39,7 +41,7 @@ export default function LoginPage() {
   useEffect(() => {
     supabase
       .from("salon_settings")
-      .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg")
+      .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg,site_font")
       .eq("salon_id", salonId)
       .single()
       .then(({ data }) => { if (data) setSettings(data as SalonSettings); });
@@ -61,21 +63,22 @@ export default function LoginPage() {
     }
   };
 
-  const colorPageBg = settings?.color_contact_bg || settings?.color_page_bg || "#111111";
-  const colorTitles = settings?.color_titles || "#b98b3d";
-  const colorTextMain = settings?.color_text_main || "#1f1b17";
-  const colorCardBorder = settings?.color_card_border || "#e7ddd0";
-  const colorAccents = settings?.color_accents || "#d8a646";
+  const colorPageBg = settings?.color_contact_bg || settings?.color_page_bg || "#111827";
+  const colorTitles = settings?.color_titles || "#1a1a2e";
+  const colorTextMain = settings?.color_text_main || "#111827";
+  const colorCardBorder = settings?.color_card_border || "#e5e7eb";
+  const colorAccents = settings?.color_accents || "#4f46e5";
 
   return (
     <main
       className="min-h-screen"
       style={{ color: "#ffffff", background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.25), transparent 40%), ${colorPageBg}` }}
     >
+      <SiteFont font={settings?.site_font} />
       <section className="mx-auto flex min-h-screen w-[min(520px,calc(100%-32px))] items-center justify-center py-10">
         <div
           className="w-full rounded-[32px] p-8 shadow-[0_18px_50px_rgba(0,0,0,0.3)]"
-          style={{ border: `1px solid ${colorCardBorder}`, backgroundColor: settings?.color_page_bg || "#f5e9dc" }}
+          style={{ border: `1px solid ${colorCardBorder}`, backgroundColor: settings?.color_page_bg || "#ffffff" }}
         >
           <div
             className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]"

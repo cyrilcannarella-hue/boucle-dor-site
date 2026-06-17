@@ -11,7 +11,7 @@ async function getSettings() {
     );
     const { data } = await supabase
       .from("salon_settings")
-      .select("salon_name, color_page_bg")
+      .select("salon_name, color_page_bg, logo_pro_image_url")
       .eq("salon_id", salon.id)
       .single();
     return data;
@@ -23,19 +23,20 @@ async function getSettings() {
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getSettings();
   const salonName = data?.salon_name || "Votre salon";
+  const iconUrl = data?.logo_pro_image_url || "/icon-pro-192.png";
   return {
     title: `${salonName} Pro`,
     manifest: "/manifest-backoffice.json",
     icons: {
-      icon: "/icon-pro-192.png?v=2",
-      apple: "/icon-pro-192.png?v=2",
+      icon: iconUrl,
+      apple: iconUrl,
     },
   };
 }
 
 export async function generateViewport(): Promise<Viewport> {
   const data = await getSettings();
-  return { themeColor: data?.color_page_bg || "#F5EBDD" };
+  return { themeColor: data?.color_page_bg || "#ffffff" };
 }
 
 export default function BackOfficeLayout({
