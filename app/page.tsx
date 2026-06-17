@@ -364,8 +364,10 @@ useEffect(() => {
                 </div>
               )}
               <div className="min-w-0">
-                <div className="text-2xl leading-none tracking-[-0.04em] md:text-4xl" style={{ fontFamily: "var(--font-salon-name)" }}>
-                  <SalonNamePremium name={salonName} compact goldColor={colorTextMain} gradientEndColor={colorAccents} />
+                <div className="text-2xl leading-none tracking-[-0.04em] md:text-4xl">
+                  <span style={{ fontFamily: "var(--font-salon-name)" }}>
+                    <SalonNamePremium name={salonName} compact goldColor={colorTextMain} gradientEndColor={colorAccents} />
+                  </span>
                 </div>
                 <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--footer-text)] sm:block">
                   {salonSubtitle}
@@ -551,11 +553,12 @@ useEffect(() => {
               {salonSubtitle}
             </motion.div>
           )}
-          <motion.h1 variants={fadeUp} className="relative z-10 max-w-xl text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl" style={{ fontFamily: "var(--font-salon-name)" }}>
-            <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
+          <motion.h1 variants={fadeUp} className="relative z-10 max-w-xl text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
+            <span className="block mb-1" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05 }}>
+              <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
+            </span>
             {heroTagline && (
               <>
-                <br />
                 <span className="relative mt-3 inline-block text-3xl font-light tracking-[-0.03em] md:text-5xl">
                   <span className="invisible">{heroTagline}</span>
                   <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents}, ${colorGradientEnd})` }}>
