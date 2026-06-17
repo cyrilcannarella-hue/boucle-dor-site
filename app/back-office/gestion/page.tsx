@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { SiteFont } from "@/components/SiteFont";
+import { SitePattern, PATTERN_OPTIONS, getPatternBgLayer } from "@/components/SitePattern";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -26,6 +27,29 @@ function deriveBorderColor(hex: string): string {
   const offset = luminance > 0.5 ? -20 : 20;
   const clamp = (v: number) => Math.max(0, Math.min(255, v));
   return `#${[r, g, b].map((c) => clamp(c + offset).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function derivePanelBg(hex: string): string {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (luminance > 0.85) return "#ffffff";
+  const clamp = (v: number) => Math.min(255, v + 15);
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function derivePanelBgSecondary(hex: string): string {
+  const panel = derivePanelBg(hex);
+  const clean = panel.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const offset = luminance > 0.5 ? -8 : 8;
+  const clamp = (v: number) => Math.max(0, Math.min(255, v + offset));
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
 type ClientRow = {
@@ -59,7 +83,16 @@ type SalonSettings = {
   salon_name?: string | null;
   phone?: string | null;
   sms_sender?: string | null;
+  sms_provider?: string | null;
   brevo_api_key?: string | null;
+  twilio_account_sid?: string | null;
+  twilio_auth_token?: string | null;
+  twilio_from_number?: string | null;
+  twilio_sender_id?: string | null;
+  ovh_app_key?: string | null;
+  ovh_app_secret?: string | null;
+  ovh_consumer_key?: string | null;
+  ovh_service_name?: string | null;
   address?: string | null;
   opening_time: string;
   closing_time: string;
@@ -99,6 +132,7 @@ type SalonSettings = {
   color_nav_text?: string | null;
   color_gradient_end?: string | null;
   site_font?: string | null;
+  bg_pattern?: string | null;
   salon_subtitle?: string | null;
   logo_image_url?: string | null;
   logo_pro_image_url?: string | null;
@@ -190,6 +224,7 @@ const COLOR_OPTIONS = [
 ];
 
 const APPEARANCE_PALETTE: { label: string; colors: string[] }[] = [
+  { label: "Sélection", colors: ["#a9b8a7", "#fefff1"] },
   { label: "Neutres",  colors: ["#ffffff","#fafafa","#f5f5f5","#ebebeb","#e0e0e0","#d4d4d4","#c4c4c4","#b5b5b5","#9c9c9c","#878787","#737373","#636363","#595959","#484848","#404040","#333333","#2c2c2c","#262626","#1f1f1f","#1a1a1a","#111111","#0d0d0d","#0a0a0a","#000000"] },
   { label: "Taupes",  colors: ["#fffdf9","#faf5ef","#f5e9dc","#ede0cf","#e8d5be","#ddc9ad","#d4c0a4","#cbb498","#c2a98c","#b99c7a","#ae8d68","#9e7b56","#8a6a45","#7b5b37","#736058","#6e655c","#5c3d2e","#4a2f22","#3d2b1a","#2a1d12","#221610","#1f1b17","#140e09","#0f0b07"] },
   { label: "Ors",     colors: ["#fffbe6","#fff8d6","#fef3c7","#feeaa8","#fde68a","#f8da70","#f3d27a","#f0c855","#f0c040","#eabb30","#e8b830","#ddb030","#d8b56d","#d4af37","#d8a646","#cea030","#c49030","#b98b3d","#ae8030","#a07530","#8b6914","#6b4f0c","#4a3608","#2a1e04"] },
@@ -205,7 +240,7 @@ const APPEARANCE_PALETTE: { label: string; colors: string[] }[] = [
 ];
 
 const cardClass = "rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur";
-const panelClass = "rounded-[26px] border border-[var(--card-border)] bg-[#fffdf9] shadow-sm";
+const panelClass = "rounded-[26px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-sm";
 const fieldClass = "rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-[var(--text-main)] outline-none transition focus:border-[var(--gold)]";
 const primaryButtonClass = "rounded-2xl bg-[var(--text-main)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50";
 const dangerButtonClass = "rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-4 py-2 text-sm font-bold text-[#a33a3a] transition hover:bg-white disabled:opacity-50";
@@ -348,15 +383,16 @@ export default function BackOfficeGestionPage() {
   const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
   const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState<string | null>(null);
 
-  const [appearanceTitles, setAppearanceTitles] = useState("#1a1a2e");
-  const [appearanceAccents, setAppearanceAccents] = useState("#4f46e5");
-  const [appearanceContactBg, setAppearanceContactBg] = useState("#111827");
-  const [appearancePageBg, setAppearancePageBg] = useState("#ffffff");
-  const [appearanceTextMain, setAppearanceTextMain] = useState("#111827");
-  const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("#6b7280");
+  const [appearanceTitles, setAppearanceTitles] = useState("");
+  const [appearanceAccents, setAppearanceAccents] = useState("");
+  const [appearanceContactBg, setAppearanceContactBg] = useState("");
+  const [appearancePageBg, setAppearancePageBg] = useState("");
+  const [appearanceTextMain, setAppearanceTextMain] = useState("");
+  const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("Salon de coiffure");
   const [appearanceFont, setAppearanceFont] = useState("");
+  const [appearancePattern, setAppearancePattern] = useState("none");
   const [savingFont, setSavingFont] = useState(false);
   const [fontSearch, setFontSearch] = useState("");
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
@@ -454,6 +490,7 @@ export default function BackOfficeGestionPage() {
       setAppearanceSalonName(loadedSettings?.salon_name ?? "");
       setAppearanceSalonSubtitle(loadedSettings?.salon_subtitle ?? "Salon de coiffure");
       setAppearanceFont(loadedSettings?.site_font ?? "");
+      setAppearancePattern(loadedSettings?.bg_pattern ?? "none");
       if (loadedSettings?.promo_text_color) setPromoTextColor(loadedSettings.promo_text_color);
       if (loadedSettings?.promo_color_from) setPromoColorStars(loadedSettings.promo_color_from);
       if (loadedSettings?.promo_bg_color) setPromoBgColorState(loadedSettings.promo_bg_color);
@@ -469,12 +506,12 @@ export default function BackOfficeGestionPage() {
         while (padded.length < 5) padded.push({ name: "", text: "" });
         setAppearanceReviews(padded);
       }
-      if (loadedSettings?.color_titles) setAppearanceTitles(loadedSettings.color_titles);
-      if (loadedSettings?.color_accents) setAppearanceAccents(loadedSettings.color_accents);
-      if (loadedSettings?.color_contact_bg) setAppearanceContactBg(loadedSettings.color_contact_bg);
-      if (loadedSettings?.color_page_bg) setAppearancePageBg(loadedSettings.color_page_bg);
-      if (loadedSettings?.color_text_main) setAppearanceTextMain(loadedSettings.color_text_main);
-      if (loadedSettings?.color_text_secondary) setAppearanceTextSecondary(loadedSettings.color_text_secondary);
+      setAppearanceTitles(loadedSettings?.color_titles ?? "");
+      setAppearanceAccents(loadedSettings?.color_accents ?? "");
+      setAppearanceContactBg(loadedSettings?.color_contact_bg ?? "");
+      setAppearancePageBg(loadedSettings?.color_page_bg ?? "");
+      setAppearanceTextMain(loadedSettings?.color_text_main ?? "");
+      setAppearanceTextSecondary(loadedSettings?.color_text_secondary ?? "");
       setClosures((closuresRes.data ?? []) as ClosureRow[]);
       setCategories((categoriesRes.data ?? []) as CategoryRow[]);
       setServices((servicesRes.data ?? []) as unknown as ServiceRow[]);
@@ -1212,7 +1249,16 @@ export default function BackOfficeGestionPage() {
         .from("salon_settings")
         .update({
           sms_sender: settings.sms_sender ?? null,
+          sms_provider: settings.sms_provider ?? "brevo",
           brevo_api_key: settings.brevo_api_key ?? null,
+          twilio_account_sid: settings.twilio_account_sid ?? null,
+          twilio_auth_token: settings.twilio_auth_token ?? null,
+          twilio_from_number: settings.twilio_from_number ?? null,
+          twilio_sender_id: settings.twilio_sender_id ?? null,
+          ovh_app_key: settings.ovh_app_key ?? null,
+          ovh_app_secret: settings.ovh_app_secret ?? null,
+          ovh_consumer_key: settings.ovh_consumer_key ?? null,
+          ovh_service_name: settings.ovh_service_name ?? null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
@@ -1232,12 +1278,12 @@ export default function BackOfficeGestionPage() {
       setStatusMessage("");
       const { error } = await supabase
         .from("salon_settings")
-        .update({ site_font: appearanceFont || null })
+        .update({ site_font: appearanceFont || null, bg_pattern: appearancePattern || "none" })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
-      setSettings((prev) => prev ? { ...prev, site_font: appearanceFont || null } : prev);
-      setStatusMessage("Police enregistrée ✅");
+      setSettings((prev) => prev ? { ...prev, site_font: appearanceFont || null, bg_pattern: appearancePattern || "none" } : prev);
+      setStatusMessage("Police et motif enregistrés ✅");
     } catch (error: unknown) {
       setStatusMessage(`Erreur : ${(error as Error).message}`);
     } finally {
@@ -1317,12 +1363,15 @@ export default function BackOfficeGestionPage() {
         type === "apropos" ? "apropos_image_url" :
         type === "logo-pro" ? "logo_pro_image_url" :
         "logo_image_url";
-      const { error: updateError } = await supabase
+      const { data: saved, error: updateError } = await supabase
         .from("salon_settings")
         .update({ [column]: publicUrl })
         .eq("id", settings.id)
-        .eq("salon_id", salonId);
+        .eq("salon_id", salonId)
+        .select(column)
+        .single();
       if (updateError) throw new Error(updateError.message);
+      if (!saved) throw new Error("Sauvegarde échouée : aucune ligne mise à jour (vérifiez les permissions Supabase).");
       setSettings((prev) => prev ? { ...prev, [column]: publicUrl } : prev);
       const label = type === "hero" ? "hero" : type === "apropos" ? "à propos" : type === "logo-pro" ? "logo pro" : "logo";
       setStatusMessage(`Photo ${label} mise à jour ✅`);
@@ -1330,6 +1379,28 @@ export default function BackOfficeGestionPage() {
       setStatusMessage(`Erreur : ${(error as Error).message}`);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (type: "hero" | "apropos" | "logo" | "logo-pro") => {
+    if (!settings) return;
+    const column =
+      type === "hero" ? "hero_image_url" :
+      type === "apropos" ? "apropos_image_url" :
+      type === "logo-pro" ? "logo_pro_image_url" :
+      "logo_image_url";
+    try {
+      const { error } = await supabase
+        .from("salon_settings")
+        .update({ [column]: null })
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
+      if (error) throw new Error(error.message);
+      setSettings((prev) => prev ? { ...prev, [column]: null } : prev);
+      const label = type === "hero" ? "hero" : type === "apropos" ? "à propos" : type === "logo-pro" ? "logo pro" : "logo";
+      setStatusMessage(`Photo ${label} supprimée ✅`);
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
     }
   };
 
@@ -1353,21 +1424,25 @@ export default function BackOfficeGestionPage() {
   }, [clients, search]);
 
   const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorNavText = settings?.color_nav_text || "#111827";
+  const colorPanelBg = derivePanelBg(colorPageBg);
+  const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
     <main
       className="min-h-screen"
-      style={{ color: colorTextMain, background: `radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
+      style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; }`}</style>
+      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; }`}</style>
       <SiteFont font={settings?.site_font} />
+      <SitePattern pattern={settings?.bg_pattern} />
       <header
         className="relative md:sticky top-0 z-30 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
@@ -1403,21 +1478,21 @@ export default function BackOfficeGestionPage() {
           <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
             <Link
               href="/back-office"
-              className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Agenda
             </Link>
 
             <Link
               href="/back-office/clients"
-              className="rounded-xl border border-[var(--card-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Fiches clients
             </Link>
 
             <Link
               href="/back-office/gestion"
-              className="rounded-xl bg-[var(--text-main)] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Admin
             </Link>
@@ -1465,7 +1540,7 @@ export default function BackOfficeGestionPage() {
                     className={`flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-semibold text-left transition ${
                       activeTab === tab.id
                         ? "bg-[var(--text-main)] text-white shadow-[0_8px_20px_rgba(31,27,23,0.2)]"
-                        : "border border-[var(--card-border)] bg-white/80 text-[var(--nav-text)] hover:-translate-y-0.5 hover:bg-white"
+                        : "border border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--nav-text)] hover:-translate-y-1 hover:scale-[1.05] hover:bg-[var(--panel-bg)]"
                     }`}
                   >
                     <span className="text-base">{tab.icon}</span>
@@ -1809,7 +1884,7 @@ export default function BackOfficeGestionPage() {
                       ] as [string, string, string, string][]).map(([label, openKey, openTimeKey, closeTimeKey]) => {
                         const isOpen = Boolean(settings[openKey as keyof SalonSettings]);
                         return (
-                          <div key={openKey} className={`flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 transition ${isOpen ? "border-[#E8C9AD] bg-[#FFF6EE]" : "border-[var(--card-border)] bg-[#fffdf9]"}`}>
+                          <div key={openKey} className={`flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 transition ${isOpen ? "border-[var(--accents)]/30 bg-[var(--accents)]/5" : "border-[var(--card-border)] bg-white"}`}>
                             <label className="flex w-28 shrink-0 cursor-pointer items-center gap-2">
                               <input
                                 type="checkbox"
@@ -1886,7 +1961,7 @@ export default function BackOfficeGestionPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-[#D8CBBB] bg-[#fffdf9] px-6 py-8 text-center text-[var(--nav-text)]">
+                  <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-8 text-center text-[var(--nav-text)]">
                     Aucune ligne trouvée dans <strong>salon_settings</strong>.
                   </div>
                 )}
@@ -1904,48 +1979,206 @@ export default function BackOfficeGestionPage() {
                       Confirmations et rappels par SMS
                     </h2>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleSaveSms}
-                    disabled={savingSms || !settings}
-                    className={primaryButtonClass}
-                  >
-                    {savingSms ? "Enregistrement..." : "Enregistrer"}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={
+                        settings?.sms_provider === "twilio"
+                          ? "https://console.twilio.com/us1/billing/manage-billing/billing-summary"
+                          : settings?.sms_provider === "ovh"
+                          ? "https://www.ovhtelecom.fr/sms/"
+                          : "https://app.brevo.com/billing/account/customize/message-credits"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full border border-[var(--card-border)] px-5 py-2.5 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-[var(--panel-bg-secondary)]"
+                    >
+                      Recharger →
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleSaveSms}
+                      disabled={savingSms || !settings}
+                      className={primaryButtonClass}
+                    >
+                      {savingSms ? "Enregistrement..." : "Enregistrer"}
+                    </button>
+                  </div>
                 </div>
 
                 {settings ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="grid gap-2">
+                  <div className="grid gap-6">
+                    <div className="grid gap-2 md:w-64">
                       <label className="text-sm font-semibold text-[var(--nav-text)]">
-                        Expéditeur SMS
+                        Fournisseur SMS
                       </label>
-                      <input
-                        type="text"
-                        maxLength={11}
-                        value={settings.sms_sender ?? ""}
-                        onChange={(e) => setSettings({ ...settings, sms_sender: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 11) })}
+                      <select
+                        value={settings.sms_provider ?? "brevo"}
+                        onChange={(e) => setSettings({ ...settings, sms_provider: e.target.value })}
                         className={fieldClass}
-                      />
-                      <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">11 caractères maximum, sans espace ni apostrophe (limite opérateurs)</span>
+                      >
+                        <option value="brevo">Brevo</option>
+                        <option value="twilio">Twilio</option>
+                        <option value="ovh">OVH SMS</option>
+                      </select>
                     </div>
 
-                    <div className="grid gap-2">
-                      <label className="text-sm font-semibold text-[var(--nav-text)]">
-                        Clé API Brevo
-                      </label>
-                      <input
-                        type="password"
-                        autoComplete="new-password"
-                        value={settings.brevo_api_key ?? ""}
-                        onChange={(e) => setSettings({ ...settings, brevo_api_key: e.target.value })}
-                        className={fieldClass}
-                      />
-                      <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Clé API du compte Brevo de ce salon. Laisser vide pour désactiver les SMS.</span>
-                    </div>
+                    {(settings.sms_provider ?? "brevo") === "brevo" && (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Expéditeur SMS
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={11}
+                            value={settings.sms_sender ?? ""}
+                            onChange={(e) => setSettings({ ...settings, sms_sender: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 11) })}
+                            className={fieldClass}
+                          />
+                          <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">11 caractères max, sans espace (limite opérateurs)</span>
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Clé API Brevo
+                          </label>
+                          <input
+                            type="password"
+                            autoComplete="new-password"
+                            value={settings.brevo_api_key ?? ""}
+                            onChange={(e) => setSettings({ ...settings, brevo_api_key: e.target.value })}
+                            className={fieldClass}
+                          />
+                          <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Laisser vide pour désactiver les SMS.</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {settings.sms_provider === "ovh" && (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            App Key
+                          </label>
+                          <input
+                            type="password"
+                            autoComplete="new-password"
+                            value={settings.ovh_app_key ?? ""}
+                            onChange={(e) => setSettings({ ...settings, ovh_app_key: e.target.value })}
+                            className={fieldClass}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            App Secret
+                          </label>
+                          <input
+                            type="password"
+                            autoComplete="new-password"
+                            value={settings.ovh_app_secret ?? ""}
+                            onChange={(e) => setSettings({ ...settings, ovh_app_secret: e.target.value })}
+                            className={fieldClass}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Consumer Key
+                          </label>
+                          <input
+                            type="password"
+                            autoComplete="new-password"
+                            value={settings.ovh_consumer_key ?? ""}
+                            onChange={(e) => setSettings({ ...settings, ovh_consumer_key: e.target.value })}
+                            className={fieldClass}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Nom du service SMS
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="sms-xxxxx"
+                            value={settings.ovh_service_name ?? ""}
+                            onChange={(e) => setSettings({ ...settings, ovh_service_name: e.target.value })}
+                            className={fieldClass}
+                          />
+                          <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Visible dans votre espace OVH : ex. sms-ab12345-1</span>
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Expéditeur SMS
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={11}
+                            value={settings.sms_sender ?? ""}
+                            onChange={(e) => setSettings({ ...settings, sms_sender: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 11) })}
+                            className={fieldClass}
+                          />
+                          <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">11 caractères max, sans espace</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {settings.sms_provider === "twilio" && (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Account SID
+                          </label>
+                          <input
+                            type="password"
+                            autoComplete="new-password"
+                            value={settings.twilio_account_sid ?? ""}
+                            onChange={(e) => setSettings({ ...settings, twilio_account_sid: e.target.value })}
+                            className={fieldClass}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Auth Token
+                          </label>
+                          <input
+                            type="password"
+                            autoComplete="new-password"
+                            value={settings.twilio_auth_token ?? ""}
+                            onChange={(e) => setSettings({ ...settings, twilio_auth_token: e.target.value })}
+                            className={fieldClass}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Numéro expéditeur Twilio
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="+33XXXXXXXXX"
+                            value={settings.twilio_from_number ?? ""}
+                            onChange={(e) => setSettings({ ...settings, twilio_from_number: e.target.value })}
+                            className={fieldClass}
+                          />
+                          <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Format international : +33612345678</span>
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-semibold text-[var(--nav-text)]">
+                            Expéditeur alphanumérique <span className="font-normal opacity-60">(optionnel)</span>
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={11}
+                            placeholder="MonSalon"
+                            value={settings.twilio_sender_id ?? ""}
+                            onChange={(e) => setSettings({ ...settings, twilio_sender_id: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 11) })}
+                            className={fieldClass}
+                          />
+                          <span className="text-xs font-normal text-[var(--nav-text)] opacity-60">Si renseigné, remplace le numéro — nécessite l'activation Alphanumeric Sender ID sur votre compte Twilio.</span>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-[#D8CBBB] bg-[#fffdf9] px-6 py-8 text-center text-[var(--nav-text)]">
+                  <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-8 text-center text-[var(--nav-text)]">
                     Aucune ligne trouvée dans <strong>salon_settings</strong>.
                   </div>
                 )}
@@ -1971,7 +2204,7 @@ export default function BackOfficeGestionPage() {
                   </div>
 
                   {showAddCategory && (
-                    <div className="mb-6 rounded-3xl border border-[var(--card-border)] bg-[#fffdf9] p-5">
+                    <div className="mb-6 rounded-3xl border border-[var(--card-border)] bg-white p-5">
                       <div className="mb-4 text-lg font-black">Ajouter une catégorie</div>
 
                       <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
@@ -2029,7 +2262,7 @@ export default function BackOfficeGestionPage() {
                       </div>
                     ) : (
                       categories.map((category, index) => (
-                        <div key={category.id} className="rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] p-4">
+                        <div key={category.id} className="rounded-2xl border border-[var(--card-border)] bg-white p-4">
                           <div className="mb-3 flex items-center gap-2">
                             <div className="flex flex-col gap-0.5">
                               <button
@@ -2181,7 +2414,7 @@ export default function BackOfficeGestionPage() {
                               const salonOpen = (settings?.[`opening_time_${SALON_DAY_SLUGS[dow]}` as keyof SalonSettings] as string | null)?.slice(0,5) ?? settings?.opening_time?.slice(0,5) ?? "09:00";
                               const salonClose = (settings?.[`closing_time_${SALON_DAY_SLUGS[dow]}` as keyof SalonSettings] as string | null)?.slice(0,5) ?? settings?.closing_time?.slice(0,5) ?? "19:00";
                               return (
-                                <div key={dow} className={`rounded-2xl border px-3 py-2 transition ${!salonDayOpen ? "border-dashed border-[#e0d8cf] bg-[#f8f5f1] opacity-60" : sched.is_open ? "border-[var(--card-border)] bg-white" : "border-[var(--card-border)] bg-[#faf8f5]"}`}>
+                                <div key={dow} className={`rounded-2xl border px-3 py-2 transition ${!salonDayOpen ? "border-dashed border-[#e0d8cf] bg-gray-100/60 opacity-60" : sched.is_open ? "border-[var(--card-border)] bg-white" : "border-[var(--card-border)] bg-[var(--panel-bg-secondary)]"}`}>
                                   <div className="flex flex-wrap items-center gap-3">
                                     {/* Jour + toggle */}
                                     <div className="flex items-center gap-2 w-24 shrink-0">
@@ -2208,7 +2441,7 @@ export default function BackOfficeGestionPage() {
                                               const clamped = v < salonOpen ? salonOpen : v > salonClose ? salonClose : v;
                                               handleUpdateSchedule(sched.id, { opening_time: clamped });
                                             }}
-                                            className="rounded-xl border border-[var(--card-border)] bg-[#faf8f5] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
+                                            className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg-secondary)] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
                                           <span className="text-xs text-[#a09890]">→</span>
                                           <input type="time"
                                             suppressHydrationWarning
@@ -2220,7 +2453,7 @@ export default function BackOfficeGestionPage() {
                                               const clamped = v < salonOpen ? salonOpen : v > salonClose ? salonClose : v;
                                               handleUpdateSchedule(sched.id, { closing_time: clamped });
                                             }}
-                                            className="rounded-xl border border-[var(--card-border)] bg-[#faf8f5] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
+                                            className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg-secondary)] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
                                         </div>
 
                                         {/* Pause toggle */}
@@ -2239,14 +2472,14 @@ export default function BackOfficeGestionPage() {
                                               defaultValue={(sched.break_start ?? "12:00").slice(0,5)}
                                               min={sched.opening_time.slice(0,5)} max={sched.closing_time.slice(0,5)}
                                               onBlur={(e) => { if (e.target.value) handleUpdateSchedule(sched.id, { break_start: e.target.value }); }}
-                                              className="rounded-xl border border-[var(--card-border)] bg-[#fff8ee] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
+                                              className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg-secondary)] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
                                             <span className="text-xs text-[#a09890]">à</span>
                                             <input type="time"
                                               suppressHydrationWarning
                                               defaultValue={(sched.break_end ?? "14:00").slice(0,5)}
                                               min={sched.opening_time.slice(0,5)} max={sched.closing_time.slice(0,5)}
                                               onBlur={(e) => { if (e.target.value) handleUpdateSchedule(sched.id, { break_end: e.target.value }); }}
-                                              className="rounded-xl border border-[var(--card-border)] bg-[#fff8ee] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
+                                              className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg-secondary)] px-2 py-1 text-xs text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
                                           </div>
                                         )}
                                       </>
@@ -2285,7 +2518,7 @@ export default function BackOfficeGestionPage() {
                   </div>
 
                   {/* Ajouter */}
-                  <div className="mt-4 rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] p-4">
+                  <div className="mt-4 rounded-2xl border border-[var(--card-border)] bg-white p-4">
                     <div className="mb-3 text-sm font-black">Ajouter une prestataire</div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="grid gap-1 text-xs font-semibold text-[var(--nav-text)]">
@@ -2347,7 +2580,7 @@ export default function BackOfficeGestionPage() {
                   </div>
 
                   {showAddService && (
-                    <div className="mb-6 rounded-3xl border border-[var(--card-border)] bg-[#fffdf9] p-5">
+                    <div className="mb-6 rounded-3xl border border-[var(--card-border)] bg-white p-5">
                       <div className="mb-4 text-lg font-black">Ajouter une prestation</div>
 
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -2530,7 +2763,7 @@ export default function BackOfficeGestionPage() {
                         return (
                           <div
                             key={service.id}
-                            className="rounded-2xl border bg-[#fffdf9] p-4 shadow-sm transition-colors"
+                            className="rounded-2xl border bg-white p-4 shadow-sm transition-colors"
                             style={{ borderColor: isDirty ? "var(--gold)" : categoryColor }}
                           >
                             <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -2632,7 +2865,7 @@ export default function BackOfficeGestionPage() {
                     </div>
                   ) : (
                     questions.map((q) => (
-                      <div key={q.id} className="rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] p-4">
+                      <div key={q.id} className="rounded-2xl border border-[var(--card-border)] bg-white p-4">
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
@@ -2693,7 +2926,7 @@ export default function BackOfficeGestionPage() {
                   )}
                 </div>
 
-                <div className="mt-6 rounded-3xl border border-[var(--card-border)] bg-[#fffdf9] p-5">
+                <div className="mt-6 rounded-3xl border border-[var(--card-border)] bg-white p-5">
                   <div className="mb-4 text-lg font-black">Ajouter une question</div>
                   <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
                     Question
@@ -2771,7 +3004,7 @@ export default function BackOfficeGestionPage() {
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-lg font-black">Police</div>
+                        <div className="text-lg font-black">Motif et police</div>
                       </div>
                       <button
                         type="button"
@@ -2782,6 +3015,39 @@ export default function BackOfficeGestionPage() {
                         {savingFont ? "Enregistrement..." : "Enregistrer"}
                       </button>
                     </div>
+                    <div className="mb-5 grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                      Motif de fond
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        {PATTERN_OPTIONS.map((opt) => {
+                          const previewStyles: Record<string, React.CSSProperties> = {
+                            none: {},
+                            grid: { backgroundImage: "linear-gradient(rgba(0,0,0,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.07) 1px,transparent 1px)", backgroundSize: "10px 10px" },
+                            dots: { backgroundImage: "radial-gradient(circle,rgba(0,0,0,0.15) 1px,transparent 1px)", backgroundSize: "8px 8px" },
+                            circles: { backgroundImage: "radial-gradient(circle at center,rgba(0,0,0,0.09) 5px,transparent 5px)", backgroundSize: "16px 16px" },
+                            bubbles: { backgroundImage: "radial-gradient(circle at center,transparent 3px,rgba(0,0,0,0.09) 4px,rgba(0,0,0,0.09) 5px,transparent 6px)", backgroundSize: "16px 16px" },
+                            diagonal: { backgroundImage: "repeating-linear-gradient(45deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 6px)" },
+                            grain: { backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`, backgroundSize: "64px 64px" },
+                            hexagons: { backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='25'%3E%3Cpath d='M7 1l6 3.5v7L7 15 1 11.5v-7z' fill='none' stroke='rgba(0%2C0%2C0%2C0.1)' stroke-width='1'/%3E%3C/svg%3E")`, backgroundSize: "14px 25px" },
+                          };
+                          const isSelected = appearancePattern === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setAppearancePattern(opt.value)}
+                              className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-1.5 transition ${isSelected ? "border-[var(--accents)]" : "border-[var(--card-border)] hover:border-[var(--accents)]/40"}`}
+                            >
+                              <div
+                                className="h-10 w-full rounded-lg border border-[var(--card-border)] bg-white"
+                                style={previewStyles[opt.value] ?? {}}
+                              />
+                              <span className={`text-[10px] font-semibold ${isSelected ? "text-[var(--accents)]" : "text-[var(--nav-text)]"}`}>{opt.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <div className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
                       Police du site
                       <div className="relative" ref={fontDropdownRef}>
@@ -2811,7 +3077,7 @@ export default function BackOfficeGestionPage() {
                                 placeholder="Rechercher une police..."
                                 value={fontSearch}
                                 onChange={(e) => setFontSearch(e.target.value)}
-                                className="w-full rounded-xl border border-[var(--card-border)] bg-[#fafaf8] px-3 py-2 text-sm font-normal text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
+                                className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg-secondary)] px-3 py-2 text-sm font-normal text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
                               />
                             </div>
                             <div className="max-h-60 overflow-y-auto py-1">
@@ -2878,7 +3144,10 @@ export default function BackOfficeGestionPage() {
                             className="flex w-full items-center gap-3 p-4 text-left"
                             onClick={() => setOpenColorPicker(openColorPicker === key ? null : key)}
                           >
-                            <div className="h-9 w-9 shrink-0 rounded-xl border border-[var(--card-border)] shadow-sm" style={{ backgroundColor: value }} />
+                            <div
+                              className="h-9 w-9 shrink-0 rounded-xl border border-[var(--card-border)] shadow-sm"
+                              style={value ? { backgroundColor: value } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "12px 12px" }}
+                            />
                             <div className="min-w-0 flex-1">
                               <div className="text-sm font-semibold text-[var(--nav-text)]">{label}</div>
                               <div className="text-xs text-[var(--nav-text)]">{desc}</div>
@@ -2979,27 +3248,40 @@ export default function BackOfficeGestionPage() {
                       <div className="text-lg font-black">Logo</div>
                     </div>
                     <div className="flex items-center gap-5">
-                      <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-                        <img
-                          src={settings?.logo_image_url || "/icon-192.png"}
-                          alt="Logo actuel"
-                          className="h-24 w-24 object-cover"
-                        />
+                      {settings?.logo_image_url && (
+                        <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
+                          <img
+                            src={settings.logo_image_url}
+                            alt="Logo actuel"
+                            className="h-24 w-24 object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-2">
+                        <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                          {uploadingLogo ? "Importation..." : "Choisir un logo"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingLogo}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              e.target.value = "";
+                              if (file) void handleUploadPhoto("logo", file);
+                            }}
+                          />
+                        </label>
+                        {settings?.logo_image_url && (
+                          <button
+                            type="button"
+                            onClick={() => void handleDeletePhoto("logo")}
+                            className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                          >
+                            Supprimer
+                          </button>
+                        )}
                       </div>
-                      <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
-                        {uploadingLogo ? "Importation..." : "Choisir un logo"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingLogo}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            e.target.value = "";
-                            if (file) void handleUploadPhoto("logo", file);
-                          }}
-                        />
-                      </label>
                     </div>
                   </div>
 
@@ -3009,31 +3291,40 @@ export default function BackOfficeGestionPage() {
                       <div className="text-lg font-black">Logo Pro</div>
                     </div>
                     <div className="flex items-center gap-5">
-                      <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0 flex items-center justify-center" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg, width: 96, height: 96 }}>
-                        {settings?.logo_pro_image_url ? (
+                      {settings?.logo_pro_image_url && (
+                        <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg, width: 96, height: 96 }}>
                           <img
                             src={settings.logo_pro_image_url}
                             alt="Logo Pro actuel"
                             className="h-full w-full object-cover"
                           />
-                        ) : (
-                          <span className="text-xs text-center px-2" style={{ color: colorNavText, opacity: 0.4 }}>Aucun logo</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-2">
+                        <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogoPro ? "opacity-50 pointer-events-none" : ""}`}>
+                          {uploadingLogoPro ? "Importation..." : "Choisir un logo pro"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingLogoPro}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              e.target.value = "";
+                              if (file) void handleUploadPhoto("logo-pro", file);
+                            }}
+                          />
+                        </label>
+                        {settings?.logo_pro_image_url && (
+                          <button
+                            type="button"
+                            onClick={() => void handleDeletePhoto("logo-pro")}
+                            className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                          >
+                            Supprimer
+                          </button>
                         )}
                       </div>
-                      <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogoPro ? "opacity-50 pointer-events-none" : ""}`}>
-                        {uploadingLogoPro ? "Importation..." : "Choisir un logo pro"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingLogoPro}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            e.target.value = "";
-                            if (file) void handleUploadPhoto("logo-pro", file);
-                          }}
-                        />
-                      </label>
                     </div>
                   </div>
 
@@ -3047,53 +3338,79 @@ export default function BackOfficeGestionPage() {
                       {/* Photo hero */}
                       <div className="rounded-2xl border border-[var(--card-border)] bg-white p-4">
                         <div className="mb-3 text-sm font-semibold text-[var(--nav-text)]">Photo principale (hero)</div>
-                        <div className="mb-3 overflow-hidden rounded-xl border" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-                          <img
-                            src={settings?.hero_image_url || "/images/hero-salon.jpg"}
-                            alt="Photo hero actuelle"
-                            className="h-40 w-full object-cover"
-                          />
+                        {settings?.hero_image_url && (
+                          <div className="mb-3 overflow-hidden rounded-xl border" style={{ borderColor: colorCardBorder }}>
+                            <img
+                              src={settings.hero_image_url}
+                              alt="Photo hero actuelle"
+                              className="h-40 w-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <label className={`flex-1 block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-center text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingHero ? "opacity-50 pointer-events-none" : ""}`}>
+                            {uploadingHero ? "Importation..." : "Choisir une photo"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingHero}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = "";
+                                if (file) void handleUploadPhoto("hero", file);
+                              }}
+                            />
+                          </label>
+                          {settings?.hero_image_url && (
+                            <button
+                              type="button"
+                              onClick={() => void handleDeletePhoto("hero")}
+                              className="rounded-2xl border border-red-200 bg-red-50 px-3 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100 shrink-0"
+                            >
+                              Supprimer
+                            </button>
+                          )}
                         </div>
-                        <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] px-4 py-3 text-center text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingHero ? "opacity-50 pointer-events-none" : ""}`}>
-                          {uploadingHero ? "Importation..." : "Choisir une photo"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingHero}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              e.target.value = "";
-                              if (file) void handleUploadPhoto("hero", file);
-                            }}
-                          />
-                        </label>
                       </div>
 
                       {/* Photo à propos */}
                       <div className="rounded-2xl border border-[var(--card-border)] bg-white p-4">
                         <div className="mb-3 text-sm font-semibold text-[var(--nav-text)]">Photo "À propos"</div>
-                        <div className="mb-3 overflow-hidden rounded-xl border" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-                          <img
-                            src={settings?.apropos_image_url || "/images/apropos-salon.jpg"}
-                            alt="Photo à propos actuelle"
-                            className="h-40 w-full object-cover"
-                          />
+                        {settings?.apropos_image_url && (
+                          <div className="mb-3 overflow-hidden rounded-xl border" style={{ borderColor: colorCardBorder }}>
+                            <img
+                              src={settings.apropos_image_url}
+                              alt="Photo à propos actuelle"
+                              className="h-40 w-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <label className={`flex-1 block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-center text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingApropos ? "opacity-50 pointer-events-none" : ""}`}>
+                            {uploadingApropos ? "Importation..." : "Choisir une photo"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingApropos}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = "";
+                                if (file) void handleUploadPhoto("apropos", file);
+                              }}
+                            />
+                          </label>
+                          {settings?.apropos_image_url && (
+                            <button
+                              type="button"
+                              onClick={() => void handleDeletePhoto("apropos")}
+                              className="rounded-2xl border border-red-200 bg-red-50 px-3 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100 shrink-0"
+                            >
+                              Supprimer
+                            </button>
+                          )}
                         </div>
-                        <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-[#fffdf9] px-4 py-3 text-center text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingApropos ? "opacity-50 pointer-events-none" : ""}`}>
-                          {uploadingApropos ? "Importation..." : "Choisir une photo"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingApropos}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              e.target.value = "";
-                              if (file) void handleUploadPhoto("apropos", file);
-                            }}
-                          />
-                        </label>
                       </div>
                     </div>
                   </div>
