@@ -143,12 +143,14 @@ export default function BackOfficeClientsPage() {
   const router = useRouter();
   const { id: salonId } = useSalon();
 
-  const [settings, setSettings] = useState<SalonSettings | null>(() => {
+  const [settings, setSettings] = useState<SalonSettings | null>(null);
+
+  useEffect(() => {
     try {
-      const c = typeof window !== "undefined" && localStorage.getItem("bo_settings_cache");
-      return c ? (JSON.parse(c) as SalonSettings) : null;
-    } catch { return null; }
-  });
+      const c = localStorage.getItem("bo_settings_cache");
+      if (c) setSettings(JSON.parse(c) as SalonSettings);
+    } catch {}
+  }, []);
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");

@@ -333,7 +333,14 @@ export default function ReservationPage() {
   const [loadingServices, setLoadingServices] = useState(true);
   const [servicesError, setServicesError] = useState("");
 
-  const [settings, setSettings] = useState<SalonSettings | null>(() => { try { const c = localStorage.getItem("bo_settings_cache"); return c ? JSON.parse(c) : null; } catch { return null; } });
+  const [settings, setSettings] = useState<SalonSettings | null>(null);
+
+  useEffect(() => {
+    try {
+      const c = localStorage.getItem("bo_settings_cache");
+      if (c) setSettings(JSON.parse(c));
+    } catch {}
+  }, []);
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");

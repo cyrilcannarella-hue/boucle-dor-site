@@ -292,7 +292,14 @@ export default function EspaceClientPage() {
   const [exceptionClosures, setExceptionClosures] = useState<
     ExceptionClosure[]
   >([]);
-  const [settings, setSettings] = useState<SalonSettings | null>(() => { try { const c = localStorage.getItem("bo_settings_cache"); return c ? JSON.parse(c) : null; } catch { return null; } });
+  const [settings, setSettings] = useState<SalonSettings | null>(null);
+
+  useEffect(() => {
+    try {
+      const c = localStorage.getItem("bo_settings_cache");
+      if (c) setSettings(JSON.parse(c));
+    } catch {}
+  }, []);
 
   const next30Days = useMemo(() => getNext30Days(), []);
   const openingMinutes = useMemo(

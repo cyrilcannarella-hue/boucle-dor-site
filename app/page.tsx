@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
@@ -275,7 +275,10 @@ useEffect(() => {
   const heroDescription = settings?.hero_description || "";
   const heroFeatures = settings?.hero_features?.length ? settings.hero_features : [];
   const aproposTitle = settings?.apropos_title || "";
-  const prestations = settings?.site_prestations?.filter((p) => p.title.trim() || p.description.trim() || p.price.trim()) ?? [];
+  const prestations = useMemo(
+    () => settings?.site_prestations?.filter((p) => p.title.trim() || p.description.trim() || p.price.trim()) ?? [],
+    [settings?.site_prestations]
+  );
   useEffect(() => {
     const map: Record<number, boolean> = {};
     descRefs.current.forEach((el, i) => {
@@ -978,7 +981,7 @@ useEffect(() => {
       </section>
 
       <footer className="relative z-10 backdrop-blur" style={{ borderTop: `1px solid ${colorCardBorder}99`, backgroundColor: `${colorHeaderBg}cc` }}>
-        <div className="mx-auto w-[min(1200px,calc(100%-32px))] py-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto w-[min(1200px,calc(100%-32px))] pt-5 pb-20 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:pb-5">
           <p className="text-xs text-[var(--footer-text)]">
             © {new Date().getFullYear()} {salonName}{salonAddress ? ` — ${salonAddress}` : ""}
           </p>

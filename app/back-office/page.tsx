@@ -518,12 +518,14 @@ export default function BackOfficePage() {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [services, setServices] = useState<ServiceRow[]>([]);
-  const [settings, setSettings] = useState<SalonSettings | null>(() => {
+  const [settings, setSettings] = useState<SalonSettings | null>(null);
+
+  useEffect(() => {
     try {
-      const c = typeof window !== "undefined" && localStorage.getItem("bo_settings_cache");
-      return c ? (JSON.parse(c) as SalonSettings) : null;
-    } catch { return null; }
-  });
+      const c = localStorage.getItem("bo_settings_cache");
+      if (c) setSettings(JSON.parse(c) as SalonSettings);
+    } catch {}
+  }, []);
   const [exceptionClosures, setExceptionClosures] = useState<ExceptionClosure[]>([]);
 
   const [loading, setLoading] = useState(true);
