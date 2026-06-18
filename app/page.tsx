@@ -47,8 +47,10 @@ type SalonSettings = {
   hero_features?: string[] | null;
   apropos_title?: string | null;
   apropos_text?: string | null;
-  site_prestations?: Array<{ title: string; description: string; price: string }> | null;
+  site_prestations?: Array<{ title: string; description: string; price: string; link?: string }> | null;
   site_reviews?: Array<{ name: string; text: string }> | null;
+  gallery_enabled?: boolean | null;
+  site_gallery?: { title: string; text: string; photos: Array<{ url: string; caption: string }> } | null;
   color_titles?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
@@ -236,6 +238,9 @@ useEffect(() => {
   }, [salonId]);
 
   const salonName = settings?.salon_name || "Votre salon";
+  const [expandedPrestation, setExpandedPrestation] = useState<number | null>(null);
+  const descRefs = useRef<(HTMLParagraphElement | null)[]>([]);
+  const [clampedMap, setClampedMap] = useState<Record<number, boolean>>({});
   const heroNameRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const el = heroNameRef.current;
@@ -244,10 +249,17 @@ useEffect(() => {
     if (!parent) return;
     const MAX = 72;
     const MIN = 18;
-    el.style.fontSize = MAX + "px";
-    const scale = parent.offsetWidth / el.scrollWidth;
-    if (scale < 1) el.style.fontSize = Math.max(MIN, Math.floor(MAX * scale)) + "px";
-  }, [salonName, settings?.font_salon_name]);
+    const measure = () => {
+      el.style.fontSize = MAX + "px";
+      const scale = parent.offsetWidth / el.scrollWidth;
+      if (scale < 1) el.style.fontSize = Math.max(MIN, Math.floor(MAX * scale)) + "px";
+    };
+    measure();
+    document.fonts.ready.then(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [salonName, settings?.font_salon_name, settings?.hero_tagline]);
   const salonPhone = settings?.phone || null;
   const salonAddress = settings?.address || null;
   const openingTime = settings?.opening_time?.slice(0, 5) || null;
@@ -259,6 +271,14 @@ useEffect(() => {
   const heroFeatures = settings?.hero_features?.length ? settings.hero_features : [];
   const aproposTitle = settings?.apropos_title || "";
   const prestations = settings?.site_prestations?.filter((p) => p.title.trim() || p.description.trim() || p.price.trim()) ?? [];
+  useEffect(() => {
+    const map: Record<number, boolean> = {};
+    descRefs.current.forEach((el, i) => {
+      if (!el) return;
+      map[i] = el.scrollHeight > el.clientHeight + 2;
+    });
+    setClampedMap(map);
+  }, [prestations]);
   const aproposText = settings?.apropos_text || "";
   const allReviews = settings?.site_reviews ?? [];
   const reviews = allReviews.filter((r) => r.name?.trim() || r.text?.trim());
@@ -290,6 +310,7 @@ useEffect(() => {
   const promoBgColor = settings?.promo_bg_color || colorContactBg;
   const instagramUrl = settings?.instagram_url || null;
   const salonEmail = settings?.email || null;
+  const galleryEnabled = settings?.gallery_enabled ?? false;
 
   const hasAnyOpenDay = !!(settings && (
     settings.is_open_monday || settings.is_open_tuesday || settings.is_open_wednesday ||
@@ -430,19 +451,29 @@ useEffect(() => {
             <div className="flex justify-center">
               <nav className="flex items-center rounded-full border border-white/55 bg-white/45 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_10px_30px_rgba(80,55,25,0.06)] backdrop-blur-xl">
                 {[
-                  ...(prestations.length > 0 ? [["Prestations", "#prestations"]] : []),
-                  ["À propos", "#apropos"],
-                  ["Contact", "#contact"],
-                ].map(([label, href]) => (
-                  <a
+                  ...(prestations.length > 0 ? [["Prestations", "prestations"]] : []),
+                  ["À propos", "apropos"],
+                  ["Contact", "contact"],
+                ].map(([label, id]) => (
+                  <button
                     key={label}
-                    href={href}
+                    onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
                     className="group relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gradient-end)]"
                   >
                     {label}
-                    <span className="absolute inset-x-4 -bottom-0.5 h-px scale-x-0 rounded-full bg-gradient-to-r from-[var(--gold)] via-[#f3d27a] to-[var(--gradient-end)] transition-transform duration-300 group-hover:scale-x-100" />
-                  </a>
+                    <span className="absolute inset-x-4 -bottom-0.5 h-px scale-x-0 rounded-full bg-gradient-to-r from-[var(--gold)] via-[var(--gold-light)] to-[var(--gradient-end)] transition-transform duration-300 group-hover:scale-x-100" />
+                  </button>
                 ))}
+
+                {galleryEnabled && (
+                  <a
+                    href="/galerie"
+                    className="group relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gradient-end)]"
+                  >
+                    Galerie
+                    <span className="absolute inset-x-4 -bottom-0.5 h-px scale-x-0 rounded-full bg-gradient-to-r from-[var(--gold)] via-[var(--gold-light)] to-[var(--gradient-end)] transition-transform duration-300 group-hover:scale-x-100" />
+                  </a>
+                )}
 
                 {instagramUrl && (
                   <a
@@ -501,20 +532,28 @@ useEffect(() => {
               )}
             </div>
 
-            <div className={`grid gap-2 ${prestations.length > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
+            <div className={`grid gap-2 ${[prestations.length > 0, galleryEnabled].filter(Boolean).length === 2 ? "grid-cols-4" : prestations.length > 0 || galleryEnabled ? "grid-cols-3" : "grid-cols-2"}`}>
               {[
-                ...(prestations.length > 0 ? [["Prestations", "#prestations"]] : []),
-                ["À propos", "#apropos"],
-                ["Contact", "#contact"],
-              ].map(([label, href]) => (
-                <a
+                ...(prestations.length > 0 ? [["Prestations", "prestations"]] : []),
+                ["À propos", "apropos"],
+                ["Contact", "contact"],
+              ].map(([label, id]) => (
+                <button
                   key={label}
-                  href={href}
+                  onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
                   className="rounded-full border border-white/45 bg-white/40 px-2 py-2 text-center text-[13px] font-medium text-[var(--nav-text)] transition active:scale-95"
                 >
                   {label}
-                </a>
+                </button>
               ))}
+              {galleryEnabled && (
+                <a
+                  href="/galerie"
+                  className="rounded-full border border-white/45 bg-white/40 px-2 py-2 text-center text-[13px] font-medium text-[var(--nav-text)] transition active:scale-95"
+                >
+                  Galerie
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -684,11 +723,11 @@ useEffect(() => {
           viewport={{ once: true, amount: 0.2 }}
           className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
         >
-          {prestations.map((p) => (
+          {prestations.map((p, i) => (
             <motion.article
-              key={p.title}
+              key={i}
               variants={fadeUp}
-              whileHover={{ y: -6, scale: 1.02 }}
+              whileHover={expandedPrestation !== i ? { y: -6, scale: 1.02 } : {}}
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="group relative flex flex-col overflow-hidden rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm backdrop-blur transition-shadow hover:shadow-[0_16px_35px_rgba(0,0,0,0.10)]"
               style={{ backgroundColor: colorPanelBg }}
@@ -698,8 +737,44 @@ useEffect(() => {
               <div className="mb-4 h-px w-10 rounded-full opacity-50" style={{ background: `linear-gradient(to right, ${colorAccents}, transparent)` }} />
 
               <h3 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-xl font-semibold leading-snug text-transparent">{p.title}</h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed" style={{ color: colorTextSecondary }}>{p.description}</p>
-              <p className="mt-5 text-base font-bold" style={{ color: colorTitles }}>{p.price}</p>
+              <p
+                ref={(el) => { descRefs.current[i] = el; }}
+                className="mt-2 text-sm leading-relaxed transition-all duration-300"
+                style={{
+                  color: colorTextSecondary,
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: expandedPrestation === i ? "unset" : 3,
+                  overflow: expandedPrestation === i ? "visible" : "hidden",
+                }}
+              >
+                {p.description}
+              </p>
+              {clampedMap[i] && (
+                <button
+                  type="button"
+                  onClick={() => setExpandedPrestation(expandedPrestation === i ? null : i)}
+                  className="mt-2 self-start text-xs font-semibold transition-opacity hover:opacity-70"
+                  style={{ color: colorAccents }}
+                >
+                  {expandedPrestation === i ? "Lire moins ↑" : "Lire plus ↓"}
+                </button>
+              )}
+              <div className="mt-5 flex items-center justify-between gap-3">
+                <p className="text-base font-bold" style={{ color: colorTitles }}>{p.price}</p>
+                {p.link && (
+                  <a
+                    href={p.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-xs font-semibold transition-opacity hover:opacity-70"
+                    style={{ color: colorAccents }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    En savoir plus →
+                  </a>
+                )}
+              </div>
             </motion.article>
           ))}
         </motion.div>

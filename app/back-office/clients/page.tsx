@@ -107,6 +107,14 @@ function hexToRgb(hex: string): string {
   return `${r},${g},${b}`;
 }
 
+function contrastText(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.40 ? "#111827" : "#ffffff";
+}
+
 function derivePanelBg(hex: string): string {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
@@ -198,7 +206,7 @@ export default function BackOfficeClientsPage() {
     loadClients();
     supabase
       .from("salon_settings")
-      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text, site_font, bg_pattern")
+      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text, site_font, font_salon_name, bg_pattern")
       .eq("salon_id", salonId)
       .limit(1)
       .maybeSingle()
@@ -527,6 +535,11 @@ export default function BackOfficeClientsPage() {
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
+  const titlesLumC = (() => { const h = colorTitles.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
+  const accentsLumC = (() => { const h = colorAccents.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
+  const colorSelectedBg = titlesLumC <= 0.7 ? colorTitles : accentsLumC <= 0.7 ? colorAccents : "#1a1a2e";
+  const colorSelectedText = contrastText(colorSelectedBg);
+  const colorAvatarText = contrastText(titlesLumC >= accentsLumC ? colorTitles : colorAccents);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
@@ -534,7 +547,7 @@ export default function BackOfficeClientsPage() {
       className="min-h-screen"
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; }`}</style>
+      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
       <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <header
@@ -571,7 +584,7 @@ export default function BackOfficeClientsPage() {
 
           <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
             <Link href="/back-office" className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm">Agenda</Link>
-            <Link href="/back-office/clients" className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm">Fiches clients</Link>
+            <Link href="/back-office/clients" className="rounded-xl bg-[var(--selected-bg)] px-3 py-2 text-xs font-semibold text-[var(--selected-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm">Fiches clients</Link>
             <Link href="/back-office/gestion" className="rounded-xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-3 py-2 text-xs font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm">Admin</Link>
             <button type="button" onClick={handleLogout} className="rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-3 py-2 text-xs font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:bg-[var(--panel-bg)] md:rounded-2xl md:px-4 md:py-3 md:text-sm">Déconnexion</button>
           </div>
@@ -680,7 +693,7 @@ export default function BackOfficeClientsPage() {
                   className="group w-full min-w-0 rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-[0_18px_40px_rgba(83,58,31,0.10)]"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[var(--accents)] to-[var(--gold)] text-sm font-bold text-white shadow-sm">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[var(--accents)] to-[var(--gold)] text-sm font-bold shadow-sm" style={{ color: colorAvatarText }}>
                       {getInitials(client)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -706,7 +719,7 @@ export default function BackOfficeClientsPage() {
               <div className="sticky top-0 z-10 border-b border-[var(--card-border)] bg-white/90 p-4 backdrop-blur-xl md:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[var(--accents)] to-[var(--gold)] font-bold text-white shadow-sm">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[var(--accents)] to-[var(--gold)] font-bold shadow-sm" style={{ color: colorAvatarText }}>
                       {getInitials(selectedClient)}
                     </div>
                     <div>
@@ -769,7 +782,7 @@ export default function BackOfficeClientsPage() {
                     )}
                     <a
                       href={`tel:${selectedClient.phone}`}
-                      className="rounded-2xl bg-[var(--accents)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-90"
+                      className="rounded-2xl bg-[var(--selected-bg)] px-4 py-2 text-sm font-semibold text-[var(--selected-text)] shadow-sm transition hover:-translate-y-0.5 hover:opacity-90"
                     >
                       Appeler
                     </a>
@@ -789,7 +802,7 @@ export default function BackOfficeClientsPage() {
                         type="button"
                         onClick={handleSaveClient}
                         disabled={savingClient}
-                        className="rounded-2xl bg-[var(--accents)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                        className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 text-sm font-semibold text-[var(--selected-text)] shadow-sm transition hover:opacity-90 disabled:opacity-50"
                       >
                         {savingClient ? "Enregistrement..." : "Enregistrer"}
                       </button>

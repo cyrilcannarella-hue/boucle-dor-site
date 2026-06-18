@@ -331,6 +331,13 @@ function hexToRgb(hex: string) {
   };
 }
 
+function contrastText(hex: string): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return "#ffffff";
+  const lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return lum > 0.40 ? "#111827" : "#ffffff";
+}
+
 function derivePanelBg(hex: string): string {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
@@ -1840,6 +1847,10 @@ export default function BackOfficePage() {
 
   const accentRgb = hexToRgb(colorAccents);
   const accentRgbStr = accentRgb ? `${accentRgb.r},${accentRgb.g},${accentRgb.b}` : "216,166,70";
+  const titlesRgb = hexToRgb(colorTitles);
+  const titlesLum = titlesRgb ? (0.299 * titlesRgb.r + 0.587 * titlesRgb.g + 0.114 * titlesRgb.b) / 255 : 0;
+  const colorSelectedBg = titlesLum > 0.7 ? (accentRgb && (0.299 * accentRgb.r + 0.587 * accentRgb.g + 0.114 * accentRgb.b) / 255 < 0.7 ? colorAccents : "#1a1a2e") : colorTitles;
+  const colorSelectedText = contrastText(colorSelectedBg);
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
 
   return (
@@ -1847,7 +1858,7 @@ export default function BackOfficePage() {
       className="min-h-screen"
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${accentRgbStr},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; }`}</style>
+      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
       <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <header
@@ -1885,7 +1896,7 @@ export default function BackOfficePage() {
           <div className="grid grid-cols-2 gap-1.5 md:flex md:items-center md:justify-end md:gap-2">
             <Link
               href="/back-office"
-              className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl bg-[var(--selected-bg)] px-3 py-2 text-xs font-semibold text-[var(--selected-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Agenda
             </Link>
@@ -1971,7 +1982,7 @@ export default function BackOfficePage() {
                     disabled={isClosed}
                     className={`relative aspect-square rounded-xl border text-xs font-semibold transition duration-150 active:scale-95 ${
                       isSelected
-                        ? "border-[var(--gold)] bg-[var(--gold)] text-white shadow-md"
+                        ? "border-[var(--selected-bg)] bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-md"
                         : isClosed
                           ? "cursor-not-allowed border-transparent bg-[#f5f0ea] text-[#c5bbb2]"
                           : "border-transparent bg-[var(--panel-bg)] text-[var(--text-main)] hover:border-[#d8b56d] hover:bg-[var(--panel-bg)]"
@@ -2015,8 +2026,8 @@ export default function BackOfficePage() {
                       key={member.id}
                       type="button"
                       onClick={() => setSelectedStaffId(member.id)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedStaffId === member.id ? "text-[var(--text-main)] ring-2 ring-[var(--accents)]" : "border border-[var(--card-border)] bg-white text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
-                      style={selectedStaffId === member.id ? { backgroundColor: member.color } : {}}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${selectedStaffId === member.id ? "ring-2 ring-[var(--accents)]" : "border border-[var(--card-border)] bg-white text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
+                      style={selectedStaffId === member.id ? { backgroundColor: member.color, color: contrastText(member.color) } : {}}
                     >
                       {member.first_name}
                     </button>
@@ -2045,7 +2056,7 @@ export default function BackOfficePage() {
                 onClick={() =>
                   openCreateModal(selectedDate, "")
                 }
-                className="rounded-2xl bg-[var(--text-main)] px-4 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-2xl bg-[var(--selected-bg)] px-4 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Ajouter un rendez-vous
               </button>
@@ -2099,14 +2110,14 @@ export default function BackOfficePage() {
                 <button
                   type="button"
                   onClick={() => setAgendaView("day")}
-                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "day" ? "bg-[var(--accents)] text-white shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "day" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
                 >
                   Jour
                 </button>
                 <button
                   type="button"
                   onClick={() => setAgendaView("week")}
-                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "week" ? "bg-[var(--accents)] text-white shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${agendaView === "week" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
                 >
                   Semaine
                 </button>
@@ -2162,7 +2173,7 @@ export default function BackOfficePage() {
                           className={`border-l border-[#efe6db] py-3 text-center transition ${hasAllDayClosure ? "bg-[#fff5f5] hover:bg-[#fff0f0]" : isToday ? "bg-[var(--gold)]/10 hover:bg-[var(--gold)]/15" : "hover:bg-[#f9f3eb]"}`}
                         >
                           <div className={`text-[11px] font-bold uppercase tracking-wider ${isToday ? "text-[var(--gold)]" : "text-[var(--nav-text)]"}`}>{dayNames[d.getDay()]}</div>
-                          <div className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-[var(--text-main)] text-white" : isToday ? "bg-[var(--gold)] text-white" : "text-[var(--text-main)]"}`}>
+                          <div className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : isToday ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : "text-[var(--text-main)]"}`}>
                             {d.getDate()}
                           </div>
                           {hasAllDayClosure && (
@@ -2532,7 +2543,7 @@ export default function BackOfficePage() {
                     type="button"
                     onClick={() => handleCreateAppointment()}
                     disabled={savingCreate}
-                    className="rounded-2xl bg-[var(--text-main)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
+                    className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
                   >
                     {savingCreate ? "Enregistrement..." : "Créer le rendez-vous"}
                   </button>
@@ -2609,7 +2620,7 @@ export default function BackOfficePage() {
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-medium ${
                       createClientMode === "existing"
-                        ? "bg-[var(--accents)] text-white"
+                        ? "bg-[var(--selected-bg)] text-[var(--selected-text)]"
                         : "border border-black/10 bg-white"
                     }`}
                   >
@@ -2624,7 +2635,7 @@ export default function BackOfficePage() {
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-medium ${
                       createClientMode === "new"
-                        ? "bg-[var(--accents)] text-white"
+                        ? "bg-[var(--selected-bg)] text-[var(--selected-text)]"
                         : "border border-black/10 bg-white"
                     }`}
                   >
@@ -2779,7 +2790,7 @@ export default function BackOfficePage() {
                         const isClosed = !isOpenDayFromSettings(dk, settings);
                         return (
                           <button key={dk} type="button" onClick={() => setCreateDate(dk)}
-                            className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition ${isSelected ? "bg-[var(--text-main)] text-white" : isClosed ? "text-[#c4b8a8] line-through" : isToday ? "border border-[var(--gold)] text-[var(--gold)]" : "hover:bg-[var(--page-bg)] text-[var(--text-main)]"}`}>
+                            className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition ${isSelected ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : isClosed ? "text-[#c4b8a8] line-through" : isToday ? "border border-[var(--gold)] text-[var(--gold)]" : "hover:bg-[var(--page-bg)] text-[var(--text-main)]"}`}>
                             {d + 1}
                           </button>
                         );
@@ -2839,7 +2850,7 @@ export default function BackOfficePage() {
                             title={isUnavailable ? "Créneau indisponible" : label}
                             className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                               isSelected
-                                ? "bg-[var(--text-main)] text-white"
+                                ? "bg-[var(--selected-bg)] text-[var(--selected-text)]"
                                 : isUnavailable
                                   ? "border border-[#e8e0d8] bg-[#f5f2ee] text-[#c4b8a8] line-through cursor-not-allowed opacity-60"
                                   : "border border-[var(--card-border)] bg-white text-[var(--text-main)] hover:bg-[var(--page-bg)]"
@@ -3036,7 +3047,7 @@ export default function BackOfficePage() {
                       <button
                         type="button"
                         onClick={() => setConfirmCancelAppointment(true)}
-                        className="rounded-2xl bg-[var(--text-main)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90"
+                        className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90"
                       >
                         Annuler le RDV
                       </button>
@@ -3066,7 +3077,7 @@ export default function BackOfficePage() {
                         type="button"
                         onClick={handleSaveAppointmentEdit}
                         disabled={savingEditAppointment}
-                        className="rounded-2xl bg-[var(--text-main)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
+                        className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
                       >
                         {savingEditAppointment
                           ? "Enregistrement..."
@@ -3186,7 +3197,7 @@ export default function BackOfficePage() {
                     </button>
                   )}
                   <a href={`tel:${selectedClient.phone}`}
-                    className="rounded-2xl bg-[var(--text-main)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90">
+                    className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90">
                     Appeler le client
                   </a>
                 </div>
@@ -3229,7 +3240,7 @@ export default function BackOfficePage() {
                       Annuler
                     </button>
                     <button type="button" onClick={handleSaveClient} disabled={savingClient}
-                      className="rounded-2xl bg-[var(--text-main)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50">
+                      className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50">
                       {savingClient ? "Enregistrement..." : "Enregistrer"}
                     </button>
                   </div>

@@ -171,6 +171,14 @@ function hexToRgb(hex: string): string {
   return `${r},${g},${b}`;
 }
 
+function contrastText(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.40 ? "#111827" : "#ffffff";
+}
+
 function makeLocalDate(year: number, monthIndex: number, day: number) {
   return new Date(year, monthIndex, day, 12, 0, 0, 0);
 }
@@ -1097,6 +1105,7 @@ export default function ReservationPage() {
   };
 
   const colorButtons = settings?.color_accents || "#4f46e5";
+  const colorButtonsText = contrastText(colorButtons);
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTitles = settings?.color_titles || "#1a1a2e";
@@ -1166,7 +1175,7 @@ export default function ReservationPage() {
             <Link
               href="/espace-client"
               className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)] sm:inline-flex"
-              style={{ backgroundColor: colorButtons, color: colorTextMain }}
+              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
             >
               Mes réservations
             </Link>
@@ -1603,8 +1612,8 @@ export default function ReservationPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-full px-6 py-4 font-semibold text-white shadow-[0_14px_30px_rgba(30,20,10,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(30,20,10,0.22)] disabled:opacity-50"
-                  style={{ backgroundColor: colorButtons }}
+                  className="rounded-full px-6 py-4 font-semibold shadow-[0_14px_30px_rgba(30,20,10,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(30,20,10,0.22)] disabled:opacity-50"
+                  style={{ backgroundColor: colorButtons, color: colorButtonsText }}
                 >
                   {saving ? "Enregistrement..." : "Confirmer le rendez-vous"}
                 </button>
@@ -1684,8 +1693,8 @@ export default function ReservationPage() {
               </a>
               <a
                 href="/"
-                className="rounded-full px-5 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5"
-                style={{ backgroundColor: colorButtons }}
+                className="rounded-full px-5 py-3 font-semibold shadow-md transition hover:-translate-y-0.5"
+                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
               >
                 Retour à l’accueil
               </a>

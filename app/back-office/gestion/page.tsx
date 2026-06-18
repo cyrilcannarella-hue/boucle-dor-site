@@ -10,6 +10,14 @@ import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
 import { FONT_OPTIONS } from "@/lib/fonts";
 
+function contrastText(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.40 ? "#111827" : "#ffffff";
+}
+
 function hexToRgb(hex: string) {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
@@ -146,8 +154,10 @@ type SalonSettings = {
   hero_features?: string[] | null;
   apropos_title?: string | null;
   apropos_text?: string | null;
-  site_prestations?: Array<{ title: string; description: string; price: string }> | null;
+  site_prestations?: Array<{ title: string; description: string; price: string; link?: string }> | null;
   site_reviews?: Array<{ name: string; text: string }> | null;
+  gallery_enabled?: boolean | null;
+  site_gallery?: { title: string; text: string; photos: Array<{ url: string; caption: string }> } | null;
   email?: string | null;
   instagram_url?: string | null;
   promo_bg_color?: string | null;
@@ -245,7 +255,7 @@ const APPEARANCE_PALETTE: { label: string; colors: string[] }[] = [
 const cardClass = "rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur";
 const panelClass = "rounded-[26px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-sm";
 const fieldClass = "rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-[var(--text-main)] outline-none transition focus:border-[var(--gold)]";
-const primaryButtonClass = "rounded-2xl bg-[var(--text-main)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50";
+const primaryButtonClass = "rounded-2xl bg-[var(--selected-bg)] px-6 py-3 text-sm font-semibold text-[var(--selected-text)] shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50";
 const dangerButtonClass = "rounded-xl border border-[#f0d5cd] bg-[#fff5f2] px-4 py-2 text-sm font-bold text-[#a33a3a] transition hover:bg-white disabled:opacity-50";
 const secondaryButtonClass = "rounded-2xl border border-[var(--card-border)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--nav-text)] shadow-sm transition hover:-translate-y-0.5 hover:bg-white";
 
@@ -373,7 +383,7 @@ export default function BackOfficeGestionPage() {
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "apparence">("closures");
+  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence">("closures");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("#ffffff");
   const [promoColorStars, setPromoColorStars] = useState("#4f46e5");
@@ -395,7 +405,7 @@ export default function BackOfficeGestionPage() {
   const [appearanceTextMain, setAppearanceTextMain] = useState("");
   const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
-  const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("Salon de coiffure");
+  const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("");
   const [appearanceFont, setAppearanceFont] = useState("");
   const [appearanceSalonNameFont, setAppearanceSalonNameFont] = useState("");
   const [appearancePattern, setAppearancePattern] = useState("none");
@@ -406,19 +416,23 @@ export default function BackOfficeGestionPage() {
   const [salonNameFontSearch, setSalonNameFontSearch] = useState("");
   const [salonNameFontDropdownOpen, setSalonNameFontDropdownOpen] = useState(false);
   const salonNameFontDropdownRef = useRef<HTMLDivElement>(null);
-  const [appearanceHeroTagline, setAppearanceHeroTagline] = useState("L'élégance au naturel");
+  const [appearanceHeroTagline, setAppearanceHeroTagline] = useState("");
   const [appearanceHeroDescription, setAppearanceHeroDescription] = useState("");
-  const [appearanceHeroFeatures, setAppearanceHeroFeatures] = useState(["Techniques de professionnels", "Produits de qualité", "Ambiance chaleureuse"]);
+  const [appearanceHeroFeatures, setAppearanceHeroFeatures] = useState(["", "", ""]);
   const [savingHeroText, setSavingHeroText] = useState(false);
   const [appearancePrestations, setAppearancePrestations] = useState([
-    { title: "Coupe & brushing", description: "Coupe sur-mesure, brushing, mise en forme", price: "À partir de 28€" },
-    { title: "Coloration", description: "Coloration, mèches, balayage, ombré hair", price: "À partir de 45€" },
-    { title: "Soins & traitements", description: "Soins profonds, lissage, botox capillaire", price: "À partir de 20€" },
-    { title: "Coiffures", description: "Attaches, chignons, coiffures événementielles", price: "À partir de 35€" },
+    { title: "", description: "", price: "", link: "" },
+    { title: "", description: "", price: "", link: "" },
+    { title: "", description: "", price: "", link: "" },
+    { title: "", description: "", price: "", link: "" },
+    { title: "", description: "", price: "", link: "" },
+    { title: "", description: "", price: "", link: "" },
+    { title: "", description: "", price: "", link: "" },
+    { title: "", description: "", price: "", link: "" },
   ]);
   const [savingPrestations, setSavingPrestations] = useState(false);
-  const [appearanceAproposTitle, setAppearanceAproposTitle] = useState("un salon à taille humaine");
-  const [appearanceAproposText, setAppearanceAproposText] = useState("Chez nous, chaque rendez-vous est pensé comme un vrai moment de bien-être. Virginie vous accueille dans une ambiance conviviale, avec une attention particulière portée à l'écoute, au conseil et au résultat.");
+  const [appearanceAproposTitle, setAppearanceAproposTitle] = useState("");
+  const [appearanceAproposText, setAppearanceAproposText] = useState("");
   const [savingApropos, setSavingApropos] = useState(false);
   const [savingAppearanceMeta, setSavingAppearanceMeta] = useState(false);
   const [openColorPicker, setOpenColorPicker] = useState<string | null>(null);
@@ -435,6 +449,22 @@ export default function BackOfficeGestionPage() {
     { name: "", text: "" },
   ]);
   const [savingReviews, setSavingReviews] = useState(false);
+
+  const [galleryEnabled, setGalleryEnabled] = useState(false);
+  const [galleryTitle, setGalleryTitle] = useState("");
+  const [galleryText, setGalleryText] = useState("");
+  const [galleryPhotos, setGalleryPhotos] = useState<Array<{ url: string; caption: string }>>(
+    Array.from({ length: 12 }, () => ({ url: "", caption: "" }))
+  );
+  const [savingGallery, setSavingGallery] = useState(false);
+  const [uploadingGalleryIndex, setUploadingGalleryIndex] = useState<number | null>(null);
+
+  const [campaignMessage, setCampaignMessage] = useState("");
+  const [campaignClientCount, setCampaignClientCount] = useState<number | null>(null);
+  const [campaignCheckingCount, setCampaignCheckingCount] = useState(false);
+  const [campaignConfirm, setCampaignConfirm] = useState(false);
+  const [campaignSending, setCampaignSending] = useState(false);
+  const [campaignResult, setCampaignResult] = useState<{ sent: number; failed: number; errors: string[] } | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = selectedClient ? "hidden" : "";
@@ -509,7 +539,7 @@ export default function BackOfficeGestionPage() {
       const loadedSettings = (settingsRes.data ?? null) as SalonSettings | null;
       setSettings(loadedSettings);
       setAppearanceSalonName(loadedSettings?.salon_name ?? "");
-      setAppearanceSalonSubtitle(loadedSettings?.salon_subtitle ?? "Salon de coiffure");
+      setAppearanceSalonSubtitle(loadedSettings?.salon_subtitle ?? "");
       setAppearanceFont(loadedSettings?.site_font ?? "");
       setAppearanceSalonNameFont(loadedSettings?.font_salon_name ?? "");
       setAppearancePattern(loadedSettings?.bg_pattern ?? "none");
@@ -519,7 +549,12 @@ export default function BackOfficeGestionPage() {
       if (loadedSettings?.hero_tagline) setAppearanceHeroTagline(loadedSettings.hero_tagline);
       if (loadedSettings?.hero_description) setAppearanceHeroDescription(loadedSettings.hero_description);
       if (loadedSettings?.hero_features?.length) setAppearanceHeroFeatures(loadedSettings.hero_features);
-      if (loadedSettings?.site_prestations?.length) setAppearancePrestations(loadedSettings.site_prestations);
+      if (loadedSettings?.site_prestations?.length) {
+        const loaded = (loadedSettings.site_prestations as { title: string; description: string; price: string; link?: string }[]).map((p) => ({ ...p, link: p.link ?? "" }));
+        const padded = [...loaded];
+        while (padded.length < 8) padded.push({ title: "", description: "", price: "", link: "" });
+        setAppearancePrestations(padded);
+      }
       if (loadedSettings?.apropos_title) setAppearanceAproposTitle(loadedSettings.apropos_title);
       if (loadedSettings?.apropos_text) setAppearanceAproposText(loadedSettings.apropos_text);
       if (loadedSettings?.site_reviews?.length) {
@@ -527,6 +562,15 @@ export default function BackOfficeGestionPage() {
         const padded = [...loaded];
         while (padded.length < 5) padded.push({ name: "", text: "" });
         setAppearanceReviews(padded);
+      }
+      setGalleryEnabled(loadedSettings?.gallery_enabled ?? false);
+      setGalleryTitle(loadedSettings?.site_gallery?.title ?? "");
+      setGalleryText(loadedSettings?.site_gallery?.text ?? "");
+      {
+        const loaded = loadedSettings?.site_gallery?.photos ?? [];
+        const padded: Array<{ url: string; caption: string }> = [...loaded];
+        while (padded.length < 12) padded.push({ url: "", caption: "" });
+        setGalleryPhotos(padded);
       }
       setAppearanceTitles(loadedSettings?.color_titles ?? "");
       setAppearanceBadges(loadedSettings?.color_badges ?? "");
@@ -1297,6 +1341,83 @@ export default function BackOfficeGestionPage() {
     }
   };
 
+  const handleSaveGallery = async () => {
+    if (!settings) return;
+    try {
+      setSavingGallery(true);
+      setStatusMessage("");
+      const site_gallery = { title: galleryTitle, text: galleryText, photos: galleryPhotos };
+      const { error } = await supabase
+        .from("salon_settings")
+        .update({ gallery_enabled: galleryEnabled, site_gallery })
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
+      if (error) throw new Error(error.message);
+      setStatusMessage("Galerie enregistrée ✅");
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+    } finally {
+      setSavingGallery(false);
+    }
+  };
+
+  const handleUploadGalleryPhoto = async (index: number, file: File) => {
+    if (!settings) return;
+    try {
+      setUploadingGalleryIndex(index);
+      setStatusMessage("");
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `gallery-${salonId}-${index}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("site-images")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw new Error(uploadError.message);
+      const { data: urlData } = supabase.storage.from("site-images").getPublicUrl(path);
+      setGalleryPhotos((prev) => prev.map((p, i) => i === index ? { ...p, url: urlData.publicUrl } : p));
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+    } finally {
+      setUploadingGalleryIndex(null);
+    }
+  };
+
+  const handleCheckCampaignCount = async () => {
+    try {
+      setCampaignCheckingCount(true);
+      const res = await fetch("/api/send-sms-campaign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dryRun: true }),
+      });
+      const data = await res.json();
+      setCampaignClientCount(data.count ?? 0);
+    } catch {
+      setCampaignClientCount(null);
+    } finally {
+      setCampaignCheckingCount(false);
+    }
+  };
+
+  const handleSendCampaign = async () => {
+    if (!campaignMessage.trim()) return;
+    try {
+      setCampaignSending(true);
+      setCampaignResult(null);
+      const res = await fetch("/api/send-sms-campaign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: campaignMessage }),
+      });
+      const data = await res.json();
+      setCampaignResult(data);
+      setCampaignConfirm(false);
+    } catch (e: unknown) {
+      setCampaignResult({ sent: 0, failed: 0, errors: [(e as Error).message] });
+    } finally {
+      setCampaignSending(false);
+    }
+  };
+
   const handleSaveFont = async () => {
     if (!settings) return;
     try {
@@ -1463,6 +1584,10 @@ export default function BackOfficeGestionPage() {
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
+  const titlesLumG = (() => { const h = colorTitles.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
+  const accentsLumG = (() => { const h = colorAccents.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
+  const colorSelectedBg = titlesLumG <= 0.7 ? colorTitles : accentsLumG <= 0.7 ? colorAccents : "#1a1a2e";
+  const colorSelectedText = contrastText(colorSelectedBg);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
@@ -1470,7 +1595,7 @@ export default function BackOfficeGestionPage() {
       className="min-h-screen"
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; }`}</style>
+      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
       <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <header
@@ -1522,7 +1647,7 @@ export default function BackOfficeGestionPage() {
 
             <Link
               href="/back-office/gestion"
-              className="rounded-xl bg-[var(--accents)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
+              className="rounded-xl bg-[var(--selected-bg)] px-3 py-2 text-xs font-semibold text-[var(--selected-text)] shadow-sm transition hover:-translate-y-1 hover:scale-[1.08] hover:opacity-90 md:rounded-2xl md:px-4 md:py-3 md:text-sm"
             >
               Admin
             </Link>
@@ -1561,6 +1686,7 @@ export default function BackOfficeGestionPage() {
                   { id: "categories" as const, label: "Catégories", icon: "🗂️" },
                   { id: "services" as const, label: "Prestations", icon: "⭐" },
                   { id: "questionnaire" as const, label: "Questionnaire", icon: "📋" },
+                  { id: "galerie" as const, label: "Galerie", icon: "🖼️" },
                   { id: "apparence" as const, label: "Apparence", icon: "🎨" },
                 ]).map((tab) => (
                   <button
@@ -1569,7 +1695,7 @@ export default function BackOfficeGestionPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-semibold text-left transition ${
                       activeTab === tab.id
-                        ? "bg-[var(--text-main)] text-white shadow-[0_8px_20px_rgba(31,27,23,0.2)]"
+                        ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-[0_8px_20px_rgba(31,27,23,0.2)]"
                         : "border border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--nav-text)] hover:-translate-y-1 hover:scale-[1.05] hover:bg-[var(--panel-bg)]"
                     }`}
                   >
@@ -2206,6 +2332,108 @@ export default function BackOfficeGestionPage() {
                       </div>
                     )}
 
+                    <div className="border-t border-[var(--card-border)] pt-6">
+                      <div className="mb-4">
+                        <div className="mb-1 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                          <span className="text-xl">📣</span>
+                          Campagne SMS
+                        </div>
+                        <p className="text-sm text-[var(--nav-text)] opacity-70">
+                          Envoyez un message à tous vos clients ayant un numéro de téléphone.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-semibold text-[var(--nav-text)]">Message</label>
+                            <span className={`text-xs ${campaignMessage.length > 160 ? "font-semibold text-amber-600" : "text-[var(--nav-text)] opacity-60"}`}>
+                              {campaignMessage.length} car. · {Math.ceil(Math.max(1, campaignMessage.length) / 160)} SMS/destinataire
+                            </span>
+                          </div>
+                          <textarea
+                            rows={4}
+                            placeholder="Bonjour ! Profitez de nos offres de printemps…"
+                            value={campaignMessage}
+                            onChange={(e) => {
+                              setCampaignMessage(e.target.value);
+                              setCampaignResult(null);
+                              setCampaignConfirm(false);
+                            }}
+                            className={fieldClass + " resize-none"}
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={handleCheckCampaignCount}
+                            disabled={campaignCheckingCount}
+                            className="rounded-2xl border border-[var(--card-border)] px-5 py-2.5 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-[var(--panel-bg-secondary)] disabled:opacity-50"
+                          >
+                            {campaignCheckingCount ? "Vérification..." : "Vérifier les destinataires"}
+                          </button>
+                          {campaignClientCount !== null && (
+                            <span className="text-sm text-[var(--nav-text)] opacity-70">
+                              {campaignClientCount} client{campaignClientCount > 1 ? "s" : ""} avec un numéro
+                            </span>
+                          )}
+                        </div>
+
+                        {!campaignConfirm ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!campaignMessage.trim()) return;
+                              setCampaignConfirm(true);
+                            }}
+                            disabled={!campaignMessage.trim() || campaignSending}
+                            className={primaryButtonClass + " self-start"}
+                          >
+                            Envoyer la campagne
+                          </button>
+                        ) : (
+                          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                            <p className="mb-3 text-sm font-semibold text-amber-800">
+                              Confirmer l&apos;envoi{campaignClientCount !== null ? ` à ${campaignClientCount} destinataire${campaignClientCount > 1 ? "s" : ""}` : ""} ?
+                            </p>
+                            <div className="flex gap-3">
+                              <button
+                                type="button"
+                                onClick={handleSendCampaign}
+                                disabled={campaignSending}
+                                className="rounded-xl bg-amber-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50"
+                              >
+                                {campaignSending ? "Envoi en cours..." : "Confirmer l'envoi"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCampaignConfirm(false)}
+                                className="rounded-xl border border-amber-200 px-5 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {campaignResult && (
+                          <div className={`rounded-2xl border p-4 ${campaignResult.failed > 0 ? "border-amber-200 bg-amber-50" : "border-green-200 bg-green-50"}`}>
+                            <p className={`text-sm font-semibold ${campaignResult.failed > 0 ? "text-amber-800" : "text-green-800"}`}>
+                              {campaignResult.sent} SMS envoyé{campaignResult.sent > 1 ? "s" : ""}
+                              {campaignResult.failed > 0 && ` · ${campaignResult.failed} échec${campaignResult.failed > 1 ? "s" : ""}`}
+                            </p>
+                            {campaignResult.errors.length > 0 && (
+                              <ul className="mt-2 space-y-1">
+                                {campaignResult.errors.map((err, i) => (
+                                  <li key={i} className="text-xs text-amber-700">{err}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-8 text-center text-[var(--nav-text)]">
@@ -2278,7 +2506,7 @@ export default function BackOfficeGestionPage() {
                         type="button"
                         onClick={handleCreateCategory}
                         disabled={savingCategory}
-                        className="mt-5 w-full rounded-2xl bg-[var(--text-main)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                        className="mt-5 w-full rounded-2xl bg-[var(--selected-bg)] px-6 py-3 text-sm font-semibold text-[var(--selected-text)] shadow-sm transition hover:opacity-90 disabled:opacity-50"
                       >
                         {savingCategory ? "Ajout..." : "Ajouter la catégorie"}
                       </button>
@@ -2982,6 +3210,122 @@ export default function BackOfficeGestionPage() {
               </div>
               )}
 
+              {activeTab === "galerie" && (
+              <section className={cardClass + " p-5 md:p-7"}>
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                      <span className="text-xl">🖼️</span>
+                      Galerie
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight">Photos du salon</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveGallery}
+                    disabled={savingGallery}
+                    className={primaryButtonClass}
+                  >
+                    {savingGallery ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+
+                <div className="grid gap-6">
+                  {/* Toggle */}
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={galleryEnabled}
+                        onChange={(e) => setGalleryEnabled(e.target.checked)}
+                      />
+                      <div className={`h-6 w-11 rounded-full transition ${galleryEnabled ? "bg-[var(--selected-bg)]" : "bg-gray-200"}`} />
+                      <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${galleryEnabled ? "translate-x-5" : "translate-x-0"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-[var(--nav-text)]">
+                      Afficher la galerie sur le site
+                    </span>
+                  </label>
+
+                  {/* Carte de présentation */}
+                  <div className="rounded-2xl border border-[var(--card-border)] bg-white p-5">
+                    <div className="mb-4 text-sm font-bold text-[var(--nav-text)]">Carte de présentation</div>
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <label className="text-sm font-semibold text-[var(--nav-text)]">Titre</label>
+                        <input
+                          type="text"
+                          placeholder="Nos réalisations"
+                          value={galleryTitle}
+                          onChange={(e) => setGalleryTitle(e.target.value)}
+                          className={fieldClass}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <label className="text-sm font-semibold text-[var(--nav-text)]">Texte de présentation</label>
+                        <textarea
+                          rows={3}
+                          placeholder="Découvrez nos dernières créations…"
+                          value={galleryText}
+                          onChange={(e) => setGalleryText(e.target.value)}
+                          className={fieldClass + " resize-none"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 12 photos */}
+                  <div>
+                    <div className="mb-3 text-sm font-bold text-[var(--nav-text)]">Photos (12 max)</div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {galleryPhotos.map((photo, i) => (
+                        <div key={i} className="rounded-2xl border border-[var(--card-border)] bg-white p-4">
+                          <div className="mb-2 text-xs font-semibold text-[var(--nav-text)] opacity-60">Photo {i + 1}</div>
+                          {photo.url ? (
+                            <div className="relative mb-3 overflow-hidden rounded-xl">
+                              <img src={photo.url} alt={`Photo ${i + 1}`} className="h-36 w-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => setGalleryPhotos((prev) => prev.map((p, idx) => idx === i ? { ...p, url: "" } : p))}
+                                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80"
+                                aria-label="Supprimer la photo"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ) : (
+                            <label className={`mb-3 flex h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--card-border)] bg-[var(--panel-bg)] text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingGalleryIndex === i ? "opacity-50 pointer-events-none" : ""}`}>
+                              {uploadingGalleryIndex === i ? "Importation..." : (
+                                <>
+                                  <span className="text-2xl">📷</span>
+                                  Choisir une photo
+                                </>
+                              )}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={uploadingGalleryIndex !== null}
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadGalleryPhoto(i, f); e.target.value = ""; }}
+                              />
+                            </label>
+                          )}
+                          <textarea
+                            rows={3}
+                            placeholder="Légende…"
+                            value={photo.caption}
+                            onChange={(e) => setGalleryPhotos((prev) => prev.map((p, idx) => idx === i ? { ...p, caption: e.target.value } : p))}
+                            className={fieldClass + " resize-none text-sm"}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+              )}
+
               {activeTab === "apparence" && (
               <div className={cardClass + " p-5 md:p-7"}>
                 <div className="mb-6 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
@@ -3552,6 +3896,16 @@ export default function BackOfficeGestionPage() {
                                 type="text"
                                 value={p.price}
                                 onChange={(e) => setAppearancePrestations((prev) => prev.map((item, j) => j === i ? { ...item, price: e.target.value } : item))}
+                                className={fieldClass}
+                              />
+                            </label>
+                            <label className="grid gap-1.5 text-sm font-semibold text-[var(--nav-text)]">
+                              Lien (URL)
+                              <input
+                                type="url"
+                                value={p.link ?? ""}
+                                onChange={(e) => setAppearancePrestations((prev) => prev.map((item, j) => j === i ? { ...item, link: e.target.value } : item))}
+                                placeholder="https://..."
                                 className={fieldClass}
                               />
                             </label>
