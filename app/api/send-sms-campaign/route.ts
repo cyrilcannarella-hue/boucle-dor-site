@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 import { getCurrentSalon } from "@/lib/salon";
 
 export async function POST(req: NextRequest) {
-  const { message, dryRun } = await req.json();
+  const { message, dryRun, onlyWithAppointments } = await req.json();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -28,7 +28,16 @@ export async function POST(req: NextRequest) {
     .not("phone", "is", null)
     .neq("phone", "");
 
-  const recipients = (clientRows ?? []).filter((c) => c.phone && c.phone.trim() !== "");
+  let recipients = (clientRows ?? []).filter((c) => c.phone && c.phone.trim() !== "");
+
+  if (onlyWithAppointments) {
+    const { data: appointmentRows } = await supabase
+      .from("appointments")
+      .select("client_id")
+      .eq("salon_id", salon.id);
+    const clientIdsWithAppointments = new Set((appointmentRows ?? []).map((a) => a.client_id));
+    recipients = recipients.filter((c) => clientIdsWithAppointments.has(c.id));
+  }
 
   if (dryRun) {
     return NextResponse.json({ count: recipients.length });

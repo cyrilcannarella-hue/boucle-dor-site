@@ -472,6 +472,7 @@ export default function BackOfficeGestionPage() {
   const [uploadingGalleryIndex, setUploadingGalleryIndex] = useState<number | null>(null);
 
   const [campaignMessage, setCampaignMessage] = useState("");
+  const [campaignOnlyWithAppointments, setCampaignOnlyWithAppointments] = useState(false);
   const [campaignClientCount, setCampaignClientCount] = useState<number | null>(null);
   const [campaignCheckingCount, setCampaignCheckingCount] = useState(false);
   const [campaignConfirm, setCampaignConfirm] = useState(false);
@@ -1404,7 +1405,7 @@ export default function BackOfficeGestionPage() {
       const res = await fetch("/api/send-sms-campaign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dryRun: true }),
+        body: JSON.stringify({ dryRun: true, onlyWithAppointments: campaignOnlyWithAppointments }),
       });
       const data = await res.json();
       setCampaignClientCount(data.count ?? 0);
@@ -1423,7 +1424,7 @@ export default function BackOfficeGestionPage() {
       const res = await fetch("/api/send-sms-campaign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: campaignMessage }),
+        body: JSON.stringify({ message: campaignMessage, onlyWithAppointments: campaignOnlyWithAppointments }),
       });
       const data = await res.json();
       setCampaignResult(data);
@@ -2410,6 +2411,22 @@ export default function BackOfficeGestionPage() {
                             className={fieldClass + " resize-none"}
                           />
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCampaignOnlyWithAppointments((v) => !v);
+                            setCampaignClientCount(null);
+                            setCampaignConfirm(false);
+                          }}
+                          className={`self-start rounded-full px-4 py-2 text-sm font-semibold transition ${
+                            campaignOnlyWithAppointments
+                              ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-[0_8px_20px_rgba(31,27,23,0.2)]"
+                              : "border border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--nav-text)] hover:bg-[var(--panel-bg)]"
+                          }`}
+                        >
+                          {campaignOnlyWithAppointments ? "✓ " : ""}Uniquement les clients ayant eu un rendez-vous
+                        </button>
 
                         <div className="flex flex-wrap items-center gap-3">
                           <button
