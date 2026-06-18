@@ -179,7 +179,7 @@ export default function GaleriePage() {
           <a href="/" className="flex items-center gap-3">
             {logoUrl && (
               <div
-                className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_8px_20px_rgba(185,139,61,0.15)]"
+                className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] sm:h-14 sm:w-14 sm:rounded-[22px]"
                 style={{ borderColor: colorCardBorder, backgroundColor: colorPanelBg }}
               >
                 <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />

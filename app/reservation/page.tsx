@@ -1151,7 +1151,7 @@ export default function ReservationPage() {
         <div className="mx-auto flex w-[min(1200px,calc(100%-28px))] items-center justify-between gap-4 py-3">
           <Link href="/" className="group flex items-center gap-3">
             {logoUrl && (
-              <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border border-[var(--card-border)] bg-[var(--page-bg)] shadow-[0_12px_26px_rgba(185,139,61,0.18)]">
+              <div className="h-11 w-11 shrink-0 flex items-center justify-center overflow-hidden rounded-[18px] border border-[var(--card-border)] bg-[var(--page-bg)] shadow-[0_12px_26px_rgba(185,139,61,0.18)] sm:h-14 sm:w-14 sm:rounded-[22px]">
                 <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />
               </div>
             )}

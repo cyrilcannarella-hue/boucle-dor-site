@@ -400,7 +400,7 @@ useEffect(() => {
               aria-label="Retour en haut de page"
             >
               {logoImageUrl && (
-                <div className="h-14 w-14 shrink-0 flex items-center justify-center overflow-hidden rounded-[22px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)]" style={{ borderColor: colorCardBorder, backgroundColor: colorPanelBg }}>
+                <div className="h-11 w-11 shrink-0 flex items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] sm:h-14 sm:w-14 sm:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPanelBg }}>
                   <img src={logoImageUrl} alt={salonName} className="h-full w-full object-cover" />
                 </div>
               )}
