@@ -25,6 +25,7 @@ type SalonSettings = {
   color_gradient_end?: string | null;
   color_badges?: string | null;
   color_subtitles?: string | null;
+  color_hero_bg?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
   bg_pattern?: string | null;
@@ -116,6 +117,7 @@ export default function GaleriePage() {
   const colorTitles = settings.color_titles || "#1a1a2e";
   const colorAccents = settings.color_accents || "#4f46e5";
   const colorContactBg = settings.color_contact_bg || "#111827";
+  const colorHeroBg = settings.color_hero_bg || settings.color_contact_bg || "#111827";
   const colorPageBg = settings.color_page_bg || "#ffffff";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const bgPatternLayer = getPatternBgLayer(settings.bg_pattern, colorPageBg);
@@ -216,7 +218,7 @@ export default function GaleriePage() {
             animate="visible"
             variants={fadeUp}
             className="relative mb-10 overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-white/10 before:blur-3xl md:p-12"
-            style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorContactBg, 0.28)} 0%, ${colorContactBg} 50%, #050505 100%)` }}
+            style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, #050505 100%)` }}
           >
             {/* Étoiles décoratives animées */}
             <motion.span

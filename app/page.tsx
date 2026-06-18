@@ -63,6 +63,11 @@ type SalonSettings = {
   color_gradient_end?: string | null;
   color_badges?: string | null;
   color_subtitles?: string | null;
+  color_hero_bg?: string | null;
+  color_hero_accent?: string | null;
+  color_prestations_accent?: string | null;
+  color_apropos_accent?: string | null;
+  color_avis_accent?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
   bg_pattern?: string | null;
@@ -285,13 +290,16 @@ useEffect(() => {
   const logoImageUrl = settings?.logo_image_url || null;
   const heroImageUrl = settings?.hero_image_url || null;
   const aproposImageUrl = settings?.apropos_image_url || null;
-  const colorTitles = settings?.color_titles || "#1a1a2e";
-  const colorBadges = settings?.color_badges || settings?.color_titles || "#1a1a2e";
+  const colorContactAccent = settings?.color_badges || "#1a1a2e";
+  const colorHeroAccent = settings?.color_hero_accent || settings?.color_badges || "#1a1a2e";
+  const colorPrestationsAccent = settings?.color_prestations_accent || settings?.color_badges || "#1a1a2e";
+  const colorAproposAccent = settings?.color_apropos_accent || settings?.color_badges || "#1a1a2e";
+  const colorAvisAccent = settings?.color_avis_accent || settings?.color_badges || "#1a1a2e";
   const colorSubtitlesHero = settings?.color_subtitles || settings?.color_page_bg || "#ffffff";
   const colorSubtitlesLight = settings?.color_subtitles || settings?.color_text_secondary || "#6b7280";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorButtons = settings?.color_accents || "#4f46e5";
-  const colorHeroCard = settings?.color_contact_bg || "#111827";
+  const colorHeroBg = settings?.color_hero_bg || settings?.color_contact_bg || "#111827";
   const colorContactBg = settings?.color_contact_bg || "#111827";
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const colorPanelBg = derivePanelBg(colorPageBg);
@@ -302,7 +310,7 @@ useEffect(() => {
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorFooterText = settings?.color_text_secondary || "#6b7280";
-  const colorGradientStart = settings?.color_contact_bg || "#111827";
+  const colorGradientStart = colorHeroBg;
   const colorGradientEnd = settings?.color_gradient_end || "#4f46e5";
   const promoGradientFrom = settings?.promo_color_from || "#4f46e5";
   const promoGradientTo = settings?.promo_color_to || "#1a1a2e";
@@ -597,10 +605,10 @@ useEffect(() => {
           initial="hidden"
           animate="visible"
           className="relative overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-white/10 before:blur-3xl"
-          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroCard, 0.28)} 0%, ${colorHeroCard} 50%, #050505 100%)` }}
+          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, #050505 100%)` }}
         >
           {salonSubtitle && (
-            <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorBadges }}>
+            <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorHeroAccent }}>
               {salonSubtitle}
             </motion.div>
           )}
@@ -661,7 +669,7 @@ useEffect(() => {
           <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorSubtitlesHero}cc` }}>
             {heroFeatures.map((feat, i) => (
               <div key={feat} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 p-4 text-center">
-                <span className="shrink-0" style={{ color: colorBadges }}>
+                <span className="shrink-0" style={{ color: colorHeroAccent }}>
                   {i % 3 === 0 && (
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
                       <path d="M13.024 9.25c.47 0 .827-.433.637-.863a4 4 0 0 0-4.094-2.36c-.468.05-.665.576-.43.984l.361.644c.14.25.42.38.696.338a2.5 2.5 0 0 1 2.43 1.394c.167.34.496.863.4-.137ZM9.5 11.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 .27-1.138c.14-.25.073-.568-.172-.718L5.98 6.5a.75.75 0 0 0-1.03.274 4 4 0 1 0 6.818 3.969.75.75 0 0 0-.818-1.023A2.497 2.497 0 0 1 9.5 11.5Z" />
@@ -711,7 +719,7 @@ useEffect(() => {
         className="mx-auto w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 py-10"
       >
         <div className="mb-6">
-          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
+          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorPrestationsAccent, borderColor: `${colorPrestationsAccent}40`, backgroundColor: colorPanelBg }}>
             Prestations
           </div>
         </div>
@@ -761,7 +769,7 @@ useEffect(() => {
                 </button>
               )}
               <div className="mt-5 flex items-center justify-between gap-3">
-                <p className="text-base font-bold" style={{ color: colorTitles }}>{p.price}</p>
+                <p className="text-base font-bold" style={{ color: colorPrestationsAccent }}>{p.price}</p>
                 {p.link && (
                   <a
                     href={p.link}
@@ -796,7 +804,7 @@ useEffect(() => {
           className="rounded-[28px] border border-[var(--card-border)] p-6 shadow-sm"
           style={{ backgroundColor: colorPanelBg }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAproposAccent, borderColor: `${colorAproposAccent}40`, backgroundColor: colorPanelBg }}>
             À propos
           </div>
           <h2 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-4xl text-transparent">{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
@@ -826,7 +834,7 @@ useEffect(() => {
       {reviews.length > 0 && (
       <section className="mx-auto w-[min(1200px,calc(100%-32px))] py-10">
         <div className="mb-6">
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAvisAccent, borderColor: `${colorAvisAccent}40`, backgroundColor: colorPanelBg }}>
             Avis clients
           </div>
         </div>
@@ -837,12 +845,12 @@ useEffect(() => {
               <article
                 key={`${review.name}-${i}`}
                 className="flex w-80 shrink-0 flex-col rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm"
-                style={{ background: `linear-gradient(135deg, ${colorTitles}22 0%, ${colorPanelBg} 100%), ${colorPanelBg}` }}
+                style={{ background: `linear-gradient(135deg, ${colorAvisAccent}22 0%, ${colorPanelBg} 100%), ${colorPanelBg}` }}
               >
                 <p style={{ color: colorTextSecondary }}>
-                  <span style={{ color: colorBadges }}>"</span>{review.text}<span style={{ color: colorBadges }}>"</span>
+                  <span style={{ color: colorAvisAccent }}>"</span>{review.text}<span style={{ color: colorAvisAccent }}>"</span>
                 </p>
-                <div className="mt-auto pt-5 font-semibold" style={{ color: colorTitles }}>{review.name}</div>
+                <div className="mt-auto pt-5 font-semibold" style={{ color: colorAvisAccent }}>{review.name}</div>
               </article>
             ))}
           </div>
@@ -863,7 +871,7 @@ useEffect(() => {
           className="rounded-[30px] p-8 text-white"
           style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorContactBg, 0.22)} 0%, ${colorContactBg} 50%, #050505 100%)` }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadges, borderColor: `${colorBadges}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorContactAccent, borderColor: `${colorContactAccent}40`, backgroundColor: colorPanelBg }}>
             Contact
           </div>
 

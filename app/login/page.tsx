@@ -17,6 +17,7 @@ type SalonSettings = {
   color_accents?: string | null;
   color_nav_text?: string | null;
   color_contact_bg?: string | null;
+  color_hero_bg?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
   bg_pattern?: string | null;
@@ -44,7 +45,7 @@ export default function LoginPage() {
   useEffect(() => {
     supabase
       .from("salon_settings")
-      .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg,site_font,font_salon_name")
+      .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg,color_hero_bg,site_font,font_salon_name")
       .eq("salon_id", salonId)
       .single()
       .then(({ data }) => { if (data) setSettings(data as SalonSettings); });
@@ -66,7 +67,7 @@ export default function LoginPage() {
     }
   };
 
-  const colorPageBg = settings?.color_contact_bg || settings?.color_page_bg || "#111827";
+  const colorPageBg = settings?.color_hero_bg || settings?.color_contact_bg || settings?.color_page_bg || "#111827";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorTextMain = settings?.color_text_main || "#111827";

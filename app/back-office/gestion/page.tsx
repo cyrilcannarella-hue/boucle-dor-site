@@ -141,6 +141,11 @@ type SalonSettings = {
   color_card_border?: string | null;
   color_nav_text?: string | null;
   color_gradient_end?: string | null;
+  color_hero_bg?: string | null;
+  color_hero_accent?: string | null;
+  color_prestations_accent?: string | null;
+  color_apropos_accent?: string | null;
+  color_avis_accent?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
   bg_pattern?: string | null;
@@ -405,6 +410,11 @@ export default function BackOfficeGestionPage() {
   const [appearancePageBg, setAppearancePageBg] = useState("");
   const [appearanceTextMain, setAppearanceTextMain] = useState("");
   const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("");
+  const [appearanceHeroBg, setAppearanceHeroBg] = useState("");
+  const [appearanceHeroAccent, setAppearanceHeroAccent] = useState("");
+  const [appearancePrestationsAccent, setAppearancePrestationsAccent] = useState("");
+  const [appearanceAproposAccent, setAppearanceAproposAccent] = useState("");
+  const [appearanceAvisAccent, setAppearanceAvisAccent] = useState("");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("");
   const [appearanceFont, setAppearanceFont] = useState("");
@@ -581,6 +591,11 @@ export default function BackOfficeGestionPage() {
       setAppearancePageBg(loadedSettings?.color_page_bg ?? "");
       setAppearanceTextMain(loadedSettings?.color_text_main ?? "");
       setAppearanceTextSecondary(loadedSettings?.color_text_secondary ?? "");
+      setAppearanceHeroBg(loadedSettings?.color_hero_bg ?? loadedSettings?.color_contact_bg ?? "");
+      setAppearanceHeroAccent(loadedSettings?.color_hero_accent ?? loadedSettings?.color_badges ?? "");
+      setAppearancePrestationsAccent(loadedSettings?.color_prestations_accent ?? loadedSettings?.color_badges ?? "");
+      setAppearanceAproposAccent(loadedSettings?.color_apropos_accent ?? loadedSettings?.color_badges ?? "");
+      setAppearanceAvisAccent(loadedSettings?.color_avis_accent ?? loadedSettings?.color_badges ?? "");
       setClosures((closuresRes.data ?? []) as ClosureRow[]);
       setCategories((categoriesRes.data ?? []) as CategoryRow[]);
       setServices((servicesRes.data ?? []) as unknown as ServiceRow[]);
@@ -1462,6 +1477,11 @@ export default function BackOfficeGestionPage() {
           color_gradient_end: appearanceTitles,
           color_badges: appearanceBadges || null,
           color_subtitles: appearanceSubtitles || null,
+          color_hero_bg: appearanceHeroBg || null,
+          color_hero_accent: appearanceHeroAccent || null,
+          color_prestations_accent: appearancePrestationsAccent || null,
+          color_apropos_accent: appearanceAproposAccent || null,
+          color_avis_accent: appearanceAvisAccent || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
@@ -1483,6 +1503,11 @@ export default function BackOfficeGestionPage() {
         color_badges: appearanceBadges || null,
         color_subtitles: appearanceSubtitles || null,
         color_gradient_end: appearanceTitles,
+        color_hero_bg: appearanceHeroBg || null,
+        color_hero_accent: appearanceHeroAccent || null,
+        color_prestations_accent: appearancePrestationsAccent || null,
+        color_apropos_accent: appearanceAproposAccent || null,
+        color_avis_accent: appearanceAvisAccent || null,
       } : prev);
       setStatusMessage("Couleurs enregistrées ✅");
     } catch (error: unknown) {
@@ -3593,65 +3618,122 @@ export default function BackOfficeGestionPage() {
                       </button>
                     </div>
 
-                    <div className="grid gap-3">
+                    <div className="grid gap-6">
                       {(
                         [
-                          { key: "titles", label: "Titres", desc: "h2, h3, prix des prestations, nom auteur avis", value: appearanceTitles, setter: setAppearanceTitles },
-                          { key: "badges", label: "Badges", desc: "Pills de section (Prestations, À propos, Avis, Contact) et guillemets", value: appearanceBadges, setter: setAppearanceBadges },
-                          { key: "subtitles", label: "Sous-titres", desc: "Tagline hero, description hero, sous-titre salon, features hero", value: appearanceSubtitles, setter: setAppearanceSubtitles },
-                          { key: "accents", label: "Couleur secondaire", desc: "Boutons CTA et accents décoratifs", value: appearanceAccents, setter: setAppearanceAccents },
-                          { key: "contact", label: "Fond fenêtre", desc: "Section contact, carte hero et début du dégradé des titres", value: appearanceContactBg, setter: setAppearanceContactBg },
-                          { key: "pagebg", label: "Fond de page", desc: "Fond de page, header, footer et bordures des cartes", value: appearancePageBg, setter: setAppearancePageBg },
-                          { key: "textmain", label: "Texte principal", desc: "Navigation, boutons, nom du salon (header)", value: appearanceTextMain, setter: setAppearanceTextMain },
-                          { key: "textsecondary", label: "Descriptions", desc: "Corps de texte, descriptions prestations, texte des avis, horaires", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
-                        ] as { key: string; label: string; desc: string; value: string; setter: (v: string) => void }[]
-                      ).map(({ key, label, desc, value, setter }) => (
-                        <div key={key} className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white">
-                          <button
-                            type="button"
-                            className="flex w-full items-center gap-3 p-4 text-left"
-                            onClick={() => setOpenColorPicker(openColorPicker === key ? null : key)}
-                          >
-                            <div
-                              className="h-9 w-9 shrink-0 rounded-xl border border-[var(--card-border)] shadow-sm"
-                              style={value ? { backgroundColor: value } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "12px 12px" }}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold text-[var(--nav-text)]">{label}</div>
-                              <div className="text-xs text-[var(--nav-text)]">{desc}</div>
-                            </div>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              className={`h-4 w-4 shrink-0 text-[#a0927e] transition-transform ${openColorPicker === key ? "rotate-180" : ""}`}
-                            >
-                              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                          {openColorPicker === key && (
-                            <div className="border-t border-[var(--card-border)] p-4">
-                              <div className="space-y-1.5">
-                                {APPEARANCE_PALETTE.map((family) => (
-                                  <div key={family.label} className="flex items-center gap-1.5">
-                                    <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                                    <div className="flex gap-1">
-                                      {family.colors.map((c) => (
-                                        <button
-                                          key={c}
-                                          type="button"
-                                          onClick={() => setter(c)}
-                                          title={c}
-                                          className={`h-5 w-5 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
-                                          style={{ backgroundColor: c }}
-                                        />
+                          {
+                            title: "Fond de page",
+                            items: [
+                              { key: "pagebg", label: "Fond de page", desc: "Arrière-plan général, header, footer et bordures des cartes", value: appearancePageBg, setter: setAppearancePageBg },
+                            ],
+                          },
+                          {
+                            title: "Carte hero",
+                            items: [
+                              { key: "herobg", label: "Fond de la carte hero", desc: "Fond de la grande carte de présentation en haut du site", value: appearanceHeroBg, setter: setAppearanceHeroBg },
+                              { key: "heroaccent", label: "Badge & points forts", desc: "Pastille au-dessus du nom du salon et icônes des points forts (hero)", value: appearanceHeroAccent, setter: setAppearanceHeroAccent },
+                            ],
+                          },
+                          {
+                            title: "Prestations",
+                            items: [
+                              { key: "prestationsaccent", label: "Badge & prix", desc: "Pastille \"Prestations\" et prix affiché sur chaque carte", value: appearancePrestationsAccent, setter: setAppearancePrestationsAccent },
+                            ],
+                          },
+                          {
+                            title: "À propos",
+                            items: [
+                              { key: "aproposaccent", label: "Badge", desc: "Pastille \"À propos\" au-dessus du texte de présentation", value: appearanceAproposAccent, setter: setAppearanceAproposAccent },
+                            ],
+                          },
+                          {
+                            title: "Avis",
+                            items: [
+                              { key: "avisaccent", label: "Badge & mise en valeur", desc: "Pastille \"Avis clients\", guillemets et nom des auteurs sur les cartes d'avis", value: appearanceAvisAccent, setter: setAppearanceAvisAccent },
+                            ],
+                          },
+                          {
+                            title: "Contact",
+                            items: [
+                              { key: "contactbg", label: "Fond de la section", desc: "Fond de la section Contact en bas de page", value: appearanceContactBg, setter: setAppearanceContactBg },
+                              { key: "contactaccent", label: "Badge", desc: "Pastille \"Contact\" au-dessus des coordonnées du salon", value: appearanceBadges, setter: setAppearanceBadges },
+                            ],
+                          },
+                          {
+                            title: "Titres & sous-titres",
+                            items: [
+                              { key: "titles", label: "Titres", desc: "Fin du dégradé des grands titres (À propos, Prestations, Galerie) et survol des liens", value: appearanceTitles, setter: setAppearanceTitles },
+                              { key: "subtitles", label: "Sous-titres du hero", desc: "Phrase d'accroche, description et points forts sous le nom du salon", value: appearanceSubtitles, setter: setAppearanceSubtitles },
+                            ],
+                          },
+                          {
+                            title: "Texte",
+                            items: [
+                              { key: "textmain", label: "Texte principal", desc: "Navigation, boutons et nom du salon dans le header", value: appearanceTextMain, setter: setAppearanceTextMain },
+                              { key: "textsecondary", label: "Texte descriptif", desc: "Paragraphes, descriptions des prestations, texte des avis, horaires", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
+                            ],
+                          },
+                          {
+                            title: "Boutons & accents",
+                            items: [
+                              { key: "accents", label: "Couleur secondaire", desc: "Boutons, dégradés et accents décoratifs sur tout le site", value: appearanceAccents, setter: setAppearanceAccents },
+                            ],
+                          },
+                        ] as { title: string; items: { key: string; label: string; desc: string; value: string; setter: (v: string) => void }[] }[]
+                      ).map((group) => (
+                        <div key={group.title} className="grid gap-3">
+                          <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--gold)]">{group.title}</div>
+                          <div className="grid gap-3">
+                            {group.items.map(({ key, label, desc, value, setter }) => (
+                              <div key={key} className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white">
+                                <button
+                                  type="button"
+                                  className="flex w-full items-center gap-3 p-4 text-left"
+                                  onClick={() => setOpenColorPicker(openColorPicker === key ? null : key)}
+                                >
+                                  <div
+                                    className="h-9 w-9 shrink-0 rounded-xl border border-[var(--card-border)] shadow-sm"
+                                    style={value ? { backgroundColor: value } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "12px 12px" }}
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-semibold text-[var(--nav-text)]">{label}</div>
+                                    <div className="text-xs text-[var(--nav-text)]">{desc}</div>
+                                  </div>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    className={`h-4 w-4 shrink-0 text-[#a0927e] transition-transform ${openColorPicker === key ? "rotate-180" : ""}`}
+                                  >
+                                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                                {openColorPicker === key && (
+                                  <div className="border-t border-[var(--card-border)] p-4">
+                                    <div className="space-y-1.5">
+                                      {APPEARANCE_PALETTE.map((family) => (
+                                        <div key={family.label} className="flex items-center gap-1.5">
+                                          <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
+                                          <div className="flex gap-1">
+                                            {family.colors.map((c) => (
+                                              <button
+                                                key={c}
+                                                type="button"
+                                                onClick={() => setter(c)}
+                                                title={c}
+                                                className={`h-5 w-5 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                                style={{ backgroundColor: c }}
+                                              />
+                                            ))}
+                                          </div>
+                                        </div>
                                       ))}
                                     </div>
                                   </div>
-                                ))}
+                                )}
                               </div>
-                            </div>
-                          )}
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
