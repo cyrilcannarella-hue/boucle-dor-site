@@ -1379,6 +1379,13 @@ export default function BackOfficeGestionPage() {
     }
   };
 
+  const removeStorageFile = async (url: string | null | undefined) => {
+    if (!url) return;
+    const path = url.split("/site-images/").pop();
+    if (!path) return;
+    await supabase.storage.from("site-images").remove([path]);
+  };
+
   const handleUploadGalleryPhoto = async (index: number, file: File) => {
     if (!settings) return;
     try {
@@ -1391,7 +1398,9 @@ export default function BackOfficeGestionPage() {
         .upload(path, file, { upsert: true, contentType: file.type });
       if (uploadError) throw new Error(uploadError.message);
       const { data: urlData } = supabase.storage.from("site-images").getPublicUrl(path);
+      const oldUrl = galleryPhotos[index]?.url;
       setGalleryPhotos((prev) => prev.map((p, i) => i === index ? { ...p, url: urlData.publicUrl } : p));
+      await removeStorageFile(oldUrl);
     } catch (error: unknown) {
       setStatusMessage(`Erreur : ${(error as Error).message}`);
     } finally {
@@ -1562,6 +1571,7 @@ export default function BackOfficeGestionPage() {
         type === "apropos" ? "apropos_image_url" :
         type === "logo-pro" ? "logo_pro_image_url" :
         "logo_image_url";
+      const oldUrl = settings[column];
       const { data: saved, error: updateError } = await supabase
         .from("salon_settings")
         .update({ [column]: publicUrl })
@@ -1572,6 +1582,7 @@ export default function BackOfficeGestionPage() {
       if (updateError) throw new Error(updateError.message);
       if (!saved) throw new Error("Sauvegarde échouée : aucune ligne mise à jour (vérifiez les permissions Supabase).");
       setSettings((prev) => prev ? { ...prev, [column]: publicUrl } : prev);
+      await removeStorageFile(oldUrl);
       const label = type === "hero" ? "hero" : type === "apropos" ? "à propos" : type === "logo-pro" ? "logo pro" : "logo";
       setStatusMessage(`Photo ${label} mise à jour ✅`);
     } catch (error: unknown) {
@@ -1589,6 +1600,7 @@ export default function BackOfficeGestionPage() {
       type === "logo-pro" ? "logo_pro_image_url" :
       "logo_image_url";
     try {
+      const oldUrl = settings[column];
       const { error } = await supabase
         .from("salon_settings")
         .update({ [column]: null })
@@ -1596,6 +1608,7 @@ export default function BackOfficeGestionPage() {
         .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? { ...prev, [column]: null } : prev);
+      await removeStorageFile(oldUrl);
       const label = type === "hero" ? "hero" : type === "apropos" ? "à propos" : type === "logo-pro" ? "logo pro" : "logo";
       setStatusMessage(`Photo ${label} supprimée ✅`);
     } catch (error: unknown) {
@@ -3349,7 +3362,7 @@ export default function BackOfficeGestionPage() {
                               <img src={photo.url} alt={`Photo ${i + 1}`} className="h-36 w-full object-cover" />
                               <button
                                 type="button"
-                                onClick={() => setGalleryPhotos((prev) => prev.map((p, idx) => idx === i ? { ...p, url: "" } : p))}
+                                onClick={() => { void removeStorageFile(photo.url); setGalleryPhotos((prev) => prev.map((p, idx) => idx === i ? { ...p, url: "" } : p)); }}
                                 className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80"
                                 aria-label="Supprimer la photo"
                               >
