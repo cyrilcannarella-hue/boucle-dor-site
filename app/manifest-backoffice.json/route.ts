@@ -7,6 +7,7 @@ export const revalidate = 3600;
 export async function GET() {
   let salonName = "Votre salon";
   let bgColor = "#ffffff";
+  let logoUrl: string | null = null;
 
   try {
     const salon = await getCurrentSalon();
@@ -16,11 +17,13 @@ export async function GET() {
     );
     const { data } = await supabase
       .from("salon_settings")
-      .select("salon_name, color_page_bg")
+      .select("salon_name, color_page_bg, logo_pro_image_url, logo_image_url")
       .eq("salon_id", salon.id)
       .single();
     if (data?.salon_name) salonName = data.salon_name;
     if (data?.color_page_bg) bgColor = data.color_page_bg;
+    if (data?.logo_pro_image_url) logoUrl = data.logo_pro_image_url;
+    else if (data?.logo_image_url) logoUrl = data.logo_image_url;
   } catch {}
 
   return NextResponse.json(
@@ -33,18 +36,10 @@ export async function GET() {
       display: "standalone",
       background_color: bgColor,
       theme_color: bgColor,
-      icons: [
-        {
-          src: "/icon-pro-192.png?v=3",
-          sizes: "192x192",
-          type: "image/png",
-        },
-        {
-          src: "/icon-pro-512.png?v=3",
-          sizes: "512x512",
-          type: "image/png",
-        },
-      ],
+      icons: logoUrl ? [
+        { src: logoUrl, sizes: "192x192", type: "image/png" },
+        { src: logoUrl, sizes: "512x512", type: "image/png" },
+      ] : [],
     },
     { headers: { "Content-Type": "application/manifest+json" } }
   );

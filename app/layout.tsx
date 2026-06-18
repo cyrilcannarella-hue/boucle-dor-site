@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   let salonName = "Votre salon";
-  let iconUrl = "/icon.png";
+  let iconUrl: string | null = null;
   try {
     const salon = await getCurrentSalon();
     const supabase = createClient(
@@ -38,11 +38,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: salonName,
     description: `Réservation en ligne — ${salonName}`,
-    icons: {
+    icons: iconUrl ? {
       icon: [{ url: iconUrl, type: "image/png" }],
       apple: [{ url: iconUrl, type: "image/png" }],
       shortcut: iconUrl,
-    },
+    } : { icon: [], apple: [], shortcut: [] },
     appleWebApp: {
       capable: true,
       title: salonName,

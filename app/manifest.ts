@@ -7,6 +7,7 @@ export const revalidate = 3600;
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   let salonName = "Votre salon";
   let bgColor = "#ffffff";
+  let logoUrl: string | null = null;
 
   try {
     const salon = await getCurrentSalon();
@@ -16,11 +17,12 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     );
     const { data } = await supabase
       .from("salon_settings")
-      .select("salon_name, color_page_bg")
+      .select("salon_name, color_page_bg, logo_image_url")
       .eq("salon_id", salon.id)
       .single();
     if (data?.salon_name) salonName = data.salon_name;
     if (data?.color_page_bg) bgColor = data.color_page_bg;
+    if (data?.logo_image_url) logoUrl = data.logo_image_url;
   } catch {}
 
   return {
@@ -32,19 +34,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     background_color: bgColor,
     theme_color: bgColor,
     orientation: "portrait",
-    icons: [
-      {
-        src: "/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "maskable",
-      },
-      {
-        src: "/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
-    ],
+    icons: logoUrl ? [
+      { src: logoUrl, sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: logoUrl, sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ] : [],
   };
 }

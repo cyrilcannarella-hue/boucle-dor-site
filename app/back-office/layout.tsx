@@ -23,14 +23,11 @@ async function getSettings() {
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getSettings();
   const salonName = data?.salon_name || "Votre salon";
-  const iconUrl = data?.logo_pro_image_url || "/icon-pro-192.png";
+  const iconUrl = data?.logo_pro_image_url || null;
   return {
     title: `${salonName} Pro`,
     manifest: "/manifest-backoffice.json",
-    icons: {
-      icon: iconUrl,
-      apple: iconUrl,
-    },
+    icons: iconUrl ? { icon: iconUrl, apple: iconUrl } : { icon: [], apple: [] },
   };
 }
 
