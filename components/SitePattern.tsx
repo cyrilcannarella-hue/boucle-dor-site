@@ -1,4 +1,8 @@
 const PATTERN_BG_LAYERS: Record<string, string> = {
+  lignes: "repeating-linear-gradient(0deg,rgba(0,0,0,0.05) 0px,rgba(0,0,0,0.05) 1px,transparent 1px,transparent 12px)",
+  chevrons: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cpath d='M0 20L10 0L20 20L30 0L40 20' fill='none' stroke='rgba(0,0,0,0.08)' stroke-width='1.5'/%3E%3C/svg%3E\") 0 0 / 40px 20px",
+  vagues: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cpath d='M0 10 Q10 4 20 10 T40 10' fill='none' stroke='rgba(0,0,0,0.08)' stroke-width='1.5'/%3E%3C/svg%3E\") 0 0 / 40px 20px",
+  etoiles: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M14 0L17 11L28 14L17 17L14 28L11 17L0 14L11 11Z' fill='rgba(0,0,0,0.09)'/%3E%3C/svg%3E\") 0 0 / 28px 28px",
   grid: "linear-gradient(rgba(0,0,0,0.055) 1px,transparent 1px) 0 0 / 32px 32px,linear-gradient(90deg,rgba(0,0,0,0.055) 1px,transparent 1px) 0 0 / 32px 32px",
   dots: "radial-gradient(circle,rgba(0,0,0,0.13) 1px,transparent 1px) 0 0 / 24px 24px",
   circles: "radial-gradient(circle at center,rgba(0,0,0,0.08) 14px,transparent 14px) 0 0 / 48px 48px",
@@ -33,6 +37,10 @@ export function SitePattern(_: { pattern?: string | null }) {
 
 export const PATTERN_OPTIONS = [
   { value: "none", label: "Aucun" },
+  { value: "lignes", label: "Lignes" },
+  { value: "chevrons", label: "Chevrons" },
+  { value: "vagues", label: "Vagues" },
+  { value: "etoiles", label: "Étoiles" },
   { value: "dots", label: "Points" },
   { value: "circles", label: "Cercles" },
   { value: "bubbles", label: "Bulles" },

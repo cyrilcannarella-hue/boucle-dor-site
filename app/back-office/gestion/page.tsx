@@ -389,7 +389,7 @@ export default function BackOfficeGestionPage() {
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence">("closures");
-  const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "couleurs" | "hero" | "logo" | "logopro" | "photos" | "prestations" | "apropos" | "avis">("nom");
+  const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "police" | "couleurs" | "hero" | "logos" | "photos" | "prestations" | "apropos" | "avis">("nom");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("#ffffff");
   const [promoColorStars, setPromoColorStars] = useState("#4f46e5");
@@ -421,6 +421,7 @@ export default function BackOfficeGestionPage() {
   const [appearanceSalonNameFont, setAppearanceSalonNameFont] = useState("");
   const [appearancePattern, setAppearancePattern] = useState("none");
   const [savingFont, setSavingFont] = useState(false);
+  const [savingPattern, setSavingPattern] = useState(false);
   const [fontSearch, setFontSearch] = useState("");
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
   const fontDropdownRef = useRef<HTMLDivElement>(null);
@@ -1441,16 +1442,36 @@ export default function BackOfficeGestionPage() {
       setStatusMessage("");
       const { error } = await supabase
         .from("salon_settings")
-        .update({ site_font: appearanceFont || null, bg_pattern: appearancePattern || "none" })
+        .update({ site_font: appearanceFont || null })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
-      setSettings((prev) => prev ? { ...prev, site_font: appearanceFont || null, bg_pattern: appearancePattern || "none" } : prev);
-      setStatusMessage("Police et motif enregistrés ✅");
+      setSettings((prev) => prev ? { ...prev, site_font: appearanceFont || null } : prev);
+      setStatusMessage("Police enregistrée ✅");
     } catch (error: unknown) {
       setStatusMessage(`Erreur : ${(error as Error).message}`);
     } finally {
       setSavingFont(false);
+    }
+  };
+
+  const handleSavePattern = async () => {
+    if (!settings) return;
+    try {
+      setSavingPattern(true);
+      setStatusMessage("");
+      const { error } = await supabase
+        .from("salon_settings")
+        .update({ bg_pattern: appearancePattern || "none" })
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
+      if (error) throw new Error(error.message);
+      setSettings((prev) => prev ? { ...prev, bg_pattern: appearancePattern || "none" } : prev);
+      setStatusMessage("Motif enregistré ✅");
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+    } finally {
+      setSavingPattern(false);
     }
   };
 
@@ -3364,10 +3385,10 @@ export default function BackOfficeGestionPage() {
                   {([
                     { id: "nom" as const, label: "Nom du salon" },
                     { id: "motif" as const, label: "Motif de fond" },
+                    { id: "police" as const, label: "Police" },
                     { id: "couleurs" as const, label: "Couleurs" },
                     { id: "hero" as const, label: "Carte hero" },
-                    { id: "logo" as const, label: "Logo" },
-                    { id: "logopro" as const, label: "Logo Pro" },
+                    { id: "logos" as const, label: "Logos" },
                     { id: "photos" as const, label: "Photos" },
                     { id: "prestations" as const, label: "Prestations" },
                     { id: "apropos" as const, label: "À propos" },
@@ -3498,19 +3519,23 @@ export default function BackOfficeGestionPage() {
                       </div>
                       <button
                         type="button"
-                        onClick={handleSaveFont}
-                        disabled={savingFont}
+                        onClick={handleSavePattern}
+                        disabled={savingPattern}
                         className={primaryButtonClass}
                       >
-                        {savingFont ? "Enregistrement..." : "Enregistrer"}
+                        {savingPattern ? "Enregistrement..." : "Enregistrer"}
                       </button>
                     </div>
-                    <div className="mb-5 grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                    <div className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
                       Motif de fond
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                         {PATTERN_OPTIONS.map((opt) => {
                           const previewStyles: Record<string, React.CSSProperties> = {
                             none: {},
+                            lignes: { backgroundImage: "repeating-linear-gradient(0deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 5px)" },
+                            chevrons: { backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpath d='M0 10L5 0L10 10L15 0L20 10' fill='none' stroke='rgba(0,0,0,0.12)' stroke-width='1'/%3E%3C/svg%3E")`, backgroundSize: "20px 10px" },
+                            vagues: { backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpath d='M0 5 Q5 2 10 5 T20 5' fill='none' stroke='rgba(0,0,0,0.12)' stroke-width='1'/%3E%3C/svg%3E")`, backgroundSize: "20px 10px" },
+                            etoiles: { backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M7 0L8.5 5.5L14 7L8.5 8.5L7 14L5.5 8.5L0 7L5.5 5.5Z' fill='rgba(0,0,0,0.13)'/%3E%3C/svg%3E")`, backgroundSize: "14px 14px" },
                             grid: { backgroundImage: "linear-gradient(rgba(0,0,0,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.07) 1px,transparent 1px)", backgroundSize: "10px 10px" },
                             dots: { backgroundImage: "radial-gradient(circle,rgba(0,0,0,0.15) 1px,transparent 1px)", backgroundSize: "8px 8px" },
                             circles: { backgroundImage: "radial-gradient(circle at center,rgba(0,0,0,0.09) 5px,transparent 5px)", backgroundSize: "16px 16px" },
@@ -3531,13 +3556,30 @@ export default function BackOfficeGestionPage() {
                                 className="h-10 w-full rounded-lg border border-[var(--card-border)] bg-white"
                                 style={previewStyles[opt.value] ?? {}}
                               />
-                              <span className={`text-[10px] font-semibold ${isSelected ? "text-[var(--accents)]" : "text-[var(--nav-text)]"}`}>{opt.label}</span>
+                              <span className={`text-xs font-semibold ${isSelected ? "text-[var(--accents)]" : "text-[var(--nav-text)]"}`}>{opt.label}</span>
                             </button>
                           );
                         })}
                       </div>
                     </div>
+                  </div>
+                  )}
 
+                  {appearanceSubTab === "police" && (
+                  <div className={panelClass + " p-5"}>
+                    <div className="mb-5 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-lg font-black">Police</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveFont}
+                        disabled={savingFont}
+                        className={primaryButtonClass}
+                      >
+                        {savingFont ? "Enregistrement..." : "Enregistrer"}
+                      </button>
+                    </div>
                     <div className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
                       Police du site
                       <div className="relative" ref={fontDropdownRef}>
@@ -3794,89 +3836,90 @@ export default function BackOfficeGestionPage() {
                   </div>
                   )}
 
-                  {appearanceSubTab === "logo" && (
+                  {appearanceSubTab === "logos" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5">
-                      <div className="text-lg font-black">Logo</div>
+                      <div className="text-lg font-black">Logos</div>
                     </div>
-                    <div className="flex items-center gap-5">
-                      {settings?.logo_image_url && (
-                        <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
-                          <img
-                            src={settings.logo_image_url}
-                            alt="Logo actuel"
-                            className="h-24 w-24 object-cover"
-                          />
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-[var(--card-border)] bg-white p-4">
+                        <div className="mb-3 text-sm font-semibold text-[var(--nav-text)]">Logo</div>
+                        <div className="flex items-center gap-5">
+                          {settings?.logo_image_url && (
+                            <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg }}>
+                              <img
+                                src={settings.logo_image_url}
+                                alt="Logo actuel"
+                                className="h-24 w-24 object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-2">
+                            <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                              {uploadingLogo ? "Importation..." : "Choisir un logo"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={uploadingLogo}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  e.target.value = "";
+                                  if (file) void handleUploadPhoto("logo", file);
+                                }}
+                              />
+                            </label>
+                            {settings?.logo_image_url && (
+                              <button
+                                type="button"
+                                onClick={() => void handleDeletePhoto("logo")}
+                                className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                              >
+                                Supprimer
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex flex-col gap-2">
-                        <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
-                          {uploadingLogo ? "Importation..." : "Choisir un logo"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingLogo}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              e.target.value = "";
-                              if (file) void handleUploadPhoto("logo", file);
-                            }}
-                          />
-                        </label>
-                        {settings?.logo_image_url && (
-                          <button
-                            type="button"
-                            onClick={() => void handleDeletePhoto("logo")}
-                            className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-                          >
-                            Supprimer
-                          </button>
-                        )}
                       </div>
-                    </div>
-                  </div>
-                  )}
 
-                  {appearanceSubTab === "logopro" && (
-                  <div className={panelClass + " p-5"}>
-                    <div className="mb-5">
-                      <div className="text-lg font-black">Logo Pro</div>
-                    </div>
-                    <div className="flex items-center gap-5">
-                      {settings?.logo_pro_image_url && (
-                        <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg, width: 96, height: 96 }}>
-                          <img
-                            src={settings.logo_pro_image_url}
-                            alt="Logo Pro actuel"
-                            className="h-full w-full object-cover"
-                          />
+                      <div className="rounded-2xl border border-[var(--card-border)] bg-white p-4">
+                        <div className="mb-3 text-sm font-semibold text-[var(--nav-text)]">Logo Pro</div>
+                        <div className="flex items-center gap-5">
+                          {settings?.logo_pro_image_url && (
+                            <div className="overflow-hidden rounded-[22px] border shadow-sm shrink-0" style={{ borderColor: colorCardBorder, backgroundColor: colorPageBg, width: 96, height: 96 }}>
+                              <img
+                                src={settings.logo_pro_image_url}
+                                alt="Logo Pro actuel"
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-2">
+                            <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogoPro ? "opacity-50 pointer-events-none" : ""}`}>
+                              {uploadingLogoPro ? "Importation..." : "Choisir un logo pro"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={uploadingLogoPro}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  e.target.value = "";
+                                  if (file) void handleUploadPhoto("logo-pro", file);
+                                }}
+                              />
+                            </label>
+                            {settings?.logo_pro_image_url && (
+                              <button
+                                type="button"
+                                onClick={() => void handleDeletePhoto("logo-pro")}
+                                className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                              >
+                                Supprimer
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex flex-col gap-2">
-                        <label className={`block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white ${uploadingLogoPro ? "opacity-50 pointer-events-none" : ""}`}>
-                          {uploadingLogoPro ? "Importation..." : "Choisir un logo pro"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingLogoPro}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              e.target.value = "";
-                              if (file) void handleUploadPhoto("logo-pro", file);
-                            }}
-                          />
-                        </label>
-                        {settings?.logo_pro_image_url && (
-                          <button
-                            type="button"
-                            onClick={() => void handleDeletePhoto("logo-pro")}
-                            className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-                          >
-                            Supprimer
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
