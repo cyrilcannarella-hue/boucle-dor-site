@@ -384,6 +384,7 @@ export default function BackOfficeGestionPage() {
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence">("closures");
+  const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "couleurs" | "hero" | "logo" | "logopro" | "photos" | "prestations" | "apropos" | "avis">("nom");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("#ffffff");
   const [promoColorStars, setPromoColorStars] = useState("#4f46e5");
@@ -3334,8 +3335,36 @@ export default function BackOfficeGestionPage() {
                 </div>
                 <h2 className="mb-6 text-2xl font-black tracking-tight">Personnalisation du site</h2>
 
+                <div className="mb-6 flex flex-wrap gap-2 border-b border-[var(--card-border)] pb-4">
+                  {([
+                    { id: "nom" as const, label: "Nom du salon" },
+                    { id: "motif" as const, label: "Motif de fond" },
+                    { id: "couleurs" as const, label: "Couleurs" },
+                    { id: "hero" as const, label: "Carte hero" },
+                    { id: "logo" as const, label: "Logo" },
+                    { id: "logopro" as const, label: "Logo Pro" },
+                    { id: "photos" as const, label: "Photos" },
+                    { id: "prestations" as const, label: "Prestations" },
+                    { id: "apropos" as const, label: "À propos" },
+                    { id: "avis" as const, label: "Avis" },
+                  ]).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setAppearanceSubTab(tab.id)}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        appearanceSubTab === tab.id
+                          ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-[0_8px_20px_rgba(31,27,23,0.2)]"
+                          : "border border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--nav-text)] hover:bg-[var(--panel-bg)]"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="grid gap-6">
-                  {/* Nom du salon */}
+                  {appearanceSubTab === "nom" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
@@ -3434,8 +3463,9 @@ export default function BackOfficeGestionPage() {
                       </div>
                     </div>
                   </div>
+                  )}
 
-                  {/* Motif de fond */}
+                  {appearanceSubTab === "motif" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
@@ -3545,8 +3575,9 @@ export default function BackOfficeGestionPage() {
                       </div>
                     </div>
                   </div>
+                  )}
 
-                  {/* Couleurs */}
+                  {appearanceSubTab === "couleurs" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
@@ -3625,8 +3656,9 @@ export default function BackOfficeGestionPage() {
                       ))}
                     </div>
                   </div>
+                  )}
 
-                  {/* Carte hero */}
+                  {appearanceSubTab === "hero" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
@@ -3678,8 +3710,9 @@ export default function BackOfficeGestionPage() {
                       </div>
                     </div>
                   </div>
+                  )}
 
-                  {/* Logo */}
+                  {appearanceSubTab === "logo" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5">
                       <div className="text-lg font-black">Logo</div>
@@ -3721,8 +3754,9 @@ export default function BackOfficeGestionPage() {
                       </div>
                     </div>
                   </div>
+                  )}
 
-                  {/* Logo Pro */}
+                  {appearanceSubTab === "logopro" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5">
                       <div className="text-lg font-black">Logo Pro</div>
@@ -3764,8 +3798,9 @@ export default function BackOfficeGestionPage() {
                       </div>
                     </div>
                   </div>
+                  )}
 
-                  {/* Photos */}
+                  {appearanceSubTab === "photos" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5">
                       <div className="text-lg font-black">Photos</div>
@@ -3851,8 +3886,9 @@ export default function BackOfficeGestionPage() {
                       </div>
                     </div>
                   </div>
+                  )}
 
-                  {/* Prestations */}
+                  {appearanceSubTab === "prestations" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
@@ -3914,8 +3950,9 @@ export default function BackOfficeGestionPage() {
                       ))}
                     </div>
                   </div>
+                  )}
 
-                  {/* À propos */}
+                  {appearanceSubTab === "apropos" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
@@ -3952,8 +3989,9 @@ export default function BackOfficeGestionPage() {
                       </label>
                     </div>
                   </div>
+                  )}
 
-                  {/* Avis */}
+                  {appearanceSubTab === "avis" && (
                   <div className={panelClass + " p-5"}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
@@ -3996,6 +4034,7 @@ export default function BackOfficeGestionPage() {
                       ))}
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
               )}
