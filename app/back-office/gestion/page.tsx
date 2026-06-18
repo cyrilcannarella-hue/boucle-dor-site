@@ -391,9 +391,9 @@ export default function BackOfficeGestionPage() {
   const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence">("closures");
   const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "police" | "couleurs" | "hero" | "logos" | "photos" | "prestations" | "apropos" | "avis">("nom");
   const [savingPromo, setSavingPromo] = useState(false);
-  const [promoTextColor, setPromoTextColor] = useState("#ffffff");
-  const [promoColorStars, setPromoColorStars] = useState("#4f46e5");
-  const [promoBgColorState, setPromoBgColorState] = useState("#111827");
+  const [promoTextColor, setPromoTextColor] = useState("");
+  const [promoColorStars, setPromoColorStars] = useState("");
+  const [promoBgColorState, setPromoBgColorState] = useState("");
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
@@ -991,9 +991,9 @@ export default function BackOfficeGestionPage() {
         .from("salon_settings")
         .update({
           promo_text: settings.promo_text?.trim() || null,
-          promo_color_from: promoColorStars,
-          promo_text_color: promoTextColor,
-          promo_bg_color: promoBgColorState,
+          promo_color_from: promoColorStars || null,
+          promo_text_color: promoTextColor || null,
+          promo_bg_color: promoBgColorState || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId)
@@ -1914,13 +1914,13 @@ export default function BackOfficeGestionPage() {
                   {/* Aperçu */}
                   <div
                     className="flex items-center justify-center gap-2 px-4 py-3 text-lg font-semibold"
-                    style={{ background: `linear-gradient(to right, ${promoBgColorState}, ${promoColorStars}, ${promoBgColorState})` }}
+                    style={{ background: `linear-gradient(to right, ${promoBgColorState || "#111827"}, ${promoColorStars || "#4f46e5"}, ${promoBgColorState || "#111827"})` }}
                   >
-                    <span className="animate-pulse" style={{ color: promoColorStars }}>✦</span>
-                    <span style={{ color: promoTextColor }}>
+                    <span className="animate-pulse" style={{ color: promoColorStars || "#4f46e5" }}>✦</span>
+                    <span style={{ color: promoTextColor || "#ffffff" }}>
                       {settings?.promo_text?.trim() || "Aperçu du texte du bandeau"}
                     </span>
-                    <span className="animate-pulse" style={{ color: promoColorStars, animationDelay: "0.75s" }}>✦</span>
+                    <span className="animate-pulse" style={{ color: promoColorStars || "#4f46e5", animationDelay: "0.75s" }}>✦</span>
                   </div>
 
                   {/* Couleur du bandeau */}
@@ -1930,7 +1930,7 @@ export default function BackOfficeGestionPage() {
                       className="flex w-full items-center gap-3 p-3 text-left"
                       onClick={() => setOpenColorPicker(openColorPicker === "promo-bg" ? null : "promo-bg")}
                     >
-                      <div className="h-7 w-7 shrink-0 rounded-lg border border-[var(--card-border)] shadow-sm" style={{ backgroundColor: promoBgColorState }} />
+                      <div className="h-7 w-7 shrink-0 rounded-lg border border-[var(--card-border)] shadow-sm" style={promoBgColorState ? { backgroundColor: promoBgColorState } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "10px 10px" }} />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-[var(--nav-text)]">Couleur du bandeau</div>
                       </div>
@@ -1965,7 +1965,7 @@ export default function BackOfficeGestionPage() {
                       className="flex w-full items-center gap-3 p-3 text-left"
                       onClick={() => setOpenColorPicker(openColorPicker === "promo-stars" ? null : "promo-stars")}
                     >
-                      <div className="h-7 w-7 shrink-0 rounded-lg border border-[var(--card-border)] shadow-sm" style={{ backgroundColor: promoColorStars }} />
+                      <div className="h-7 w-7 shrink-0 rounded-lg border border-[var(--card-border)] shadow-sm" style={promoColorStars ? { backgroundColor: promoColorStars } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "10px 10px" }} />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-[var(--nav-text)]">Couleur des étoiles ✦</div>
                       </div>
@@ -2000,7 +2000,7 @@ export default function BackOfficeGestionPage() {
                       className="flex w-full items-center gap-3 p-3 text-left"
                       onClick={() => setOpenColorPicker(openColorPicker === "promo-text" ? null : "promo-text")}
                     >
-                      <div className="h-7 w-7 shrink-0 rounded-lg border border-[var(--card-border)] shadow-sm" style={{ backgroundColor: promoTextColor }} />
+                      <div className="h-7 w-7 shrink-0 rounded-lg border border-[var(--card-border)] shadow-sm" style={promoTextColor ? { backgroundColor: promoTextColor } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "10px 10px" }} />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-[var(--nav-text)]">Couleur du texte</div>
                       </div>
@@ -3303,7 +3303,6 @@ export default function BackOfficeGestionPage() {
                         <label className="text-sm font-semibold text-[var(--nav-text)]">Titre</label>
                         <input
                           type="text"
-                          placeholder="Nos réalisations"
                           value={galleryTitle}
                           onChange={(e) => setGalleryTitle(e.target.value)}
                           className={fieldClass}
@@ -3313,7 +3312,6 @@ export default function BackOfficeGestionPage() {
                         <label className="text-sm font-semibold text-[var(--nav-text)]">Texte de présentation</label>
                         <textarea
                           rows={3}
-                          placeholder="Découvrez nos dernières créations…"
                           value={galleryText}
                           onChange={(e) => setGalleryText(e.target.value)}
                           className={fieldClass + " resize-none"}
@@ -3360,7 +3358,6 @@ export default function BackOfficeGestionPage() {
                           )}
                           <textarea
                             rows={3}
-                            placeholder="Légende…"
                             value={photo.caption}
                             onChange={(e) => setGalleryPhotos((prev) => prev.map((p, idx) => idx === i ? { ...p, caption: e.target.value } : p))}
                             className={fieldClass + " resize-none text-sm"}
@@ -3432,7 +3429,6 @@ export default function BackOfficeGestionPage() {
                           type="text"
                           value={appearanceSalonName}
                           onChange={(e) => setAppearanceSalonName(e.target.value)}
-                          placeholder="Votre salon"
                           className={fieldClass}
                         />
                       </label>
@@ -3442,7 +3438,6 @@ export default function BackOfficeGestionPage() {
                           type="text"
                           value={appearanceSalonSubtitle}
                           onChange={(e) => setAppearanceSalonSubtitle(e.target.value)}
-                          placeholder="Salon de coiffure"
                           className={fieldClass}
                         />
                       </label>
@@ -3804,7 +3799,6 @@ export default function BackOfficeGestionPage() {
                           type="text"
                           value={appearanceHeroTagline}
                           onChange={(e) => setAppearanceHeroTagline(e.target.value)}
-                          placeholder="L'élégance au naturel"
                           className={fieldClass}
                         />
                       </label>
@@ -3814,7 +3808,6 @@ export default function BackOfficeGestionPage() {
                           value={appearanceHeroDescription}
                           rows={3}
                           onChange={(e) => setAppearanceHeroDescription(e.target.value)}
-                          placeholder={`${salonDisplayName}, votre salon de coiffure à taille humaine. Écoute, conseil et savoir-faire pour sublimer vos cheveux.`}
                           className={fieldClass + " resize-none"}
                         />
                       </label>
@@ -4099,7 +4092,6 @@ export default function BackOfficeGestionPage() {
                           type="text"
                           value={appearanceAproposTitle}
                           onChange={(e) => setAppearanceAproposTitle(e.target.value)}
-                          placeholder="un salon à taille humaine"
                           className={fieldClass}
                         />
                       </label>
