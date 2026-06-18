@@ -1,30 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-auth";
 
 export async function proxy(request: NextRequest) {
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isAdminLoginRoute = request.nextUrl.pathname === "/admin/login";
-
-  if (isAdminRoute) {
-    const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-    const isAuthenticated = verifyAdminSessionToken(token);
-
-    if (!isAuthenticated && !isAdminLoginRoute) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
-      return NextResponse.redirect(url);
-    }
-
-    if (isAuthenticated && isAdminLoginRoute) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin";
-      return NextResponse.redirect(url);
-    }
-
-    return NextResponse.next();
-  }
-
   let response = NextResponse.next({
     request,
   });
@@ -77,5 +54,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/back-office/:path*", "/admin", "/admin/:path*"],
+  matcher: ["/login", "/back-office/:path*"],
 };
