@@ -317,7 +317,7 @@ function normalizePhone(value: string) {
 export default function BackOfficeGestionPage() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
-  const { id: salonId } = useSalon();
+  const { id: salonId, slug: salonSlug, is_test: isTestSalon } = useSalon();
 
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -388,7 +388,7 @@ export default function BackOfficeGestionPage() {
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence">("closures");
+  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence" | "agendaplus">("closures");
   const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "police" | "couleurs" | "hero" | "logos" | "photos" | "prestations" | "apropos" | "avis">("nom");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("");
@@ -1749,6 +1749,7 @@ export default function BackOfficeGestionPage() {
                   { id: "questionnaire" as const, label: "Questionnaire", icon: "📋" },
                   { id: "galerie" as const, label: "Galerie", icon: "🖼️" },
                   { id: "apparence" as const, label: "Apparence", icon: "🎨" },
+                  ...(!isTestSalon ? [{ id: "agendaplus" as const, label: "Agenda+", icon: "💳" }] : []),
                 ]).map((tab) => (
                   <button
                     key={tab.id}
@@ -4184,6 +4185,36 @@ export default function BackOfficeGestionPage() {
                   )}
                 </div>
               </div>
+              )}
+
+              {activeTab === "agendaplus" && (
+              <section className={cardClass + " p-5 md:p-7"}>
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                      <span className="text-xl">💳</span>
+                      Abonnement
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight">
+                      Agenda+
+                    </h2>
+                  </div>
+                </div>
+
+                <div className={panelClass + " p-5"}>
+                  <p className="mb-5 text-sm font-medium text-[var(--nav-text)]">
+                    Mettez à jour votre carte bancaire, gérez vos factures, et tout ce qu&apos;il est possible de faire avec votre abonnement Agenda+.
+                  </p>
+                  <a
+                    href={`https://agenda-plus.fr/abonnement/portail/${salonSlug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={primaryButtonClass + " inline-block"}
+                  >
+                    Gérer mon abonnement
+                  </a>
+                </div>
+              </section>
               )}
               </div>
             </div>

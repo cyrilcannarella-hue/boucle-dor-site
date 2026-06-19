@@ -8,6 +8,7 @@ export type Salon = {
   slug: string;
   name: string;
   status: string;
+  is_test: boolean;
 };
 
 const DEFAULT_SALON_SLUG = "boucle-dor";
@@ -70,12 +71,12 @@ export async function getCurrentSalon(): Promise<Salon> {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
 
-  const { data } = await supabase.from("salons").select("id, slug, name, status").eq("slug", slug).maybeSingle();
+  const { data } = await supabase.from("salons").select("id, slug, name, status, is_test").eq("slug", slug).maybeSingle();
   if (data) return data;
 
   const { data: fallback } = await supabase
     .from("salons")
-    .select("id, slug, name, status")
+    .select("id, slug, name, status, is_test")
     .eq("slug", DEFAULT_SALON_SLUG)
     .single();
 
