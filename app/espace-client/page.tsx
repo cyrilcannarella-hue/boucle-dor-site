@@ -341,92 +341,34 @@ export default function EspaceClientPage() {
   }, [editingAppointment]);
 
   const loadAppointmentsByPhone = async (phoneValue: string) => {
-    const supabase = createClient();
     const digitsOnly = normalizePhone(phoneValue);
 
-    const { data: clientRows, error: clientError } = await supabase
-      .from("clients")
-      .select("id, first_name, last_name, phone, email")
-      .eq("salon_id", salonId)
-      .eq("phone", digitsOnly);
+    const res = await fetch("/api/espace-client/lookup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: digitsOnly }),
+    });
+    const json = await res.json();
 
-    if (clientError) {
-      throw new Error(clientError.message);
+    if (!res.ok) {
+      throw new Error(json.error ?? "Impossible de retrouver le rendez-vous.");
     }
 
-    if (!clientRows || clientRows.length === 0) {
-      return [];
-    }
-
-    const clientIds = clientRows.map((client) => client.id);
-
-    const { data: appointmentRows, error: appointmentError } = await supabase
-      .from("appointments")
-      .select(
-        `
-        id,
-        appointment_date,
-        start_time,
-        end_time,
-        status,
-        source,
-        price_cents,
-        client_message,
-        staff_id,
-        staff (
-          first_name,
-          last_name
-        ),
-        services (
-          id,
-          name,
-          duration_minutes,
-          categories (
-            name
-          )
-        ),
-        clients (
-          id,
-          first_name,
-          last_name,
-          phone,
-          email
-        )
-      `,
-      )
-      .eq("salon_id", salonId)
-      .in("client_id", clientIds)
-      .in("status", ["confirmed", "completed"])
-      .gte("appointment_date", new Date().toISOString().slice(0, 10))
-      .order("appointment_date", { ascending: true })
-      .order("start_time", { ascending: true });
-
-    if (appointmentError) {
-      throw new Error(appointmentError.message);
-    }
-
-    return (appointmentRows ?? []) as unknown as AppointmentRow[];
+    return (json.appointments ?? []) as unknown as AppointmentRow[];
   };
 
   const loadBusyRowsForDay = async (
     appointmentDate: string,
     appointmentIdToIgnore?: string,
   ) => {
-    const supabase = createClient();
+    const res = await fetch(`/api/public/busy-appointments?date=${appointmentDate}`);
+    const json = await res.json();
 
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("id, appointment_date, start_time, end_time, status")
-      .eq("salon_id", salonId)
-      .eq("appointment_date", appointmentDate)
-      .in("status", ["confirmed", "completed"])
-      .order("start_time", { ascending: true });
-
-    if (error) {
-      throw new Error((error as Error).message);
+    if (!res.ok) {
+      throw new Error(json.error ?? "Impossible de charger les créneaux.");
     }
 
-    const rows = ((data ?? []) as BusyRow[]).filter(
+    const rows = ((json.appointments ?? []) as BusyRow[]).filter(
       (item) => item.id !== appointmentIdToIgnore,
     );
     setBusyRows(rows);
@@ -488,20 +430,19 @@ export default function EspaceClientPage() {
   };
 
   const handleCancelAppointment = async (appointmentId: string) => {
-    const supabase = createClient();
-
     try {
       setCancellingId(appointmentId);
       setStatus("");
 
-      const { error } = await supabase
-        .from("appointments")
-        .update({ status: "cancelled" })
-        .eq("id", appointmentId)
-        .eq("salon_id", salonId);
+      const res = await fetch("/api/espace-client/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: normalizePhone(phone), appointmentId }),
+      });
+      const json = await res.json();
 
-      if (error) {
-        throw new Error((error as Error).message);
+      if (!res.ok) {
+        throw new Error(json.error ?? "Impossible d'annuler le rendez-vous.");
       }
 
       setAppointments((prev) => prev.filter((a) => a.id !== appointmentId));
@@ -691,20 +632,21 @@ export default function EspaceClientPage() {
       const startTime = formatPgTimeFromLabel(selectedTime);
       const endTime = formatPgTimeFromLabel(formatTime(endMinutes));
 
-      const supabase = createClient();
+      const res = await fetch("/api/espace-client/reschedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: normalizePhone(phone),
+          appointmentId: editingAppointment.id,
+          appointmentDate: selectedDateKey,
+          startTime,
+          endTime,
+        }),
+      });
+      const json = await res.json();
 
-      const { error } = await supabase
-        .from("appointments")
-        .update({
-          appointment_date: selectedDateKey,
-          start_time: startTime,
-          end_time: endTime,
-        })
-        .eq("id", editingAppointment.id)
-        .eq("salon_id", salonId);
-
-      if (error) {
-        throw new Error((error as Error).message);
+      if (!res.ok) {
+        throw new Error(json.error ?? "Impossible de modifier le rendez-vous.");
       }
 
       const refreshedAppointments = await loadAppointmentsByPhone(phone);

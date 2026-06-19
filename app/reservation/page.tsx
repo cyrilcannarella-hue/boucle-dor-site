@@ -36,17 +36,6 @@ type RealtimePayload = {
   old?: { appointment_date?: string };
 };
 
-type ClientRow = {
-  id: string;
-};
-
-type ExistingClientRow = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-};
-
 type BusyAppointment = {
   id: string;
   start_time: string;
@@ -585,23 +574,14 @@ export default function ReservationPage() {
   };
 
   const loadBusyAppointmentsForDay = async (appointmentDate: string) => {
-    const supabase = createClient();
+    const res = await fetch(`/api/public/busy-appointments?date=${appointmentDate}`);
+    const json = await res.json();
 
-    const { data, error } = await supabase
-      .from("appointments")
-      .select(
-        "id, start_time, end_time, break_start_time, break_end_time, status, staff_id",
-      )
-      .eq("salon_id", salonId)
-      .eq("appointment_date", appointmentDate)
-      .in("status", ["confirmed", "completed"])
-      .order("start_time", { ascending: true });
-
-    if (error) {
-      throw new Error((error as Error).message);
+    if (!res.ok) {
+      throw new Error(json.error ?? "Impossible de charger les créneaux.");
     }
 
-    const rows = (data ?? []) as BusyAppointment[];
+    const rows = (json.appointments ?? []) as BusyAppointment[];
     setBusyAppointments(rows);
     return rows;
   };
@@ -803,59 +783,33 @@ export default function ReservationPage() {
       return;
     }
 
-    const supabase = createClient();
+    try {
+      const res = await fetch("/api/reservation/lookup-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: normalizedPhone }),
+      });
+      const json = await res.json();
 
-    const { data, error } = await supabase
-      .from("clients")
-      .select("id, first_name, last_name, email")
-      .eq("salon_id", salonId)
-      .eq("phone", normalizedPhone)
-      .maybeSingle<ExistingClientRow>();
-
-    if (error) {
-      setIsKnownClient(false);
-      return;
-    }
-
-    if (data) {
-      setFirstName(data.first_name ?? "");
-      setLastName(data.last_name ?? "");
-      setEmail(data.email ?? "");
-      setIsKnownClient(true);
-
-      const { data: apptData } = await supabase
-        .from("appointments")
-        .select("id, appointment_date, appointment_answers(question_id, answer)")
-        .eq("salon_id", salonId)
-        .eq("client_id", data.id)
-        .order("appointment_date", { ascending: false })
-        .order("start_time", { ascending: false })
-        .limit(10);
-
-      if (apptData) {
-        type ApptWithAnswers = { id: string; appointment_answers: { question_id: string; answer: string }[] };
-        const recent = (apptData as ApptWithAnswers[]).find(
-          (a) => a.appointment_answers && a.appointment_answers.length > 0
-        );
-        if (recent) {
-          const prefilled: Record<string, string> = {};
-          for (const a of recent.appointment_answers) {
-            prefilled[a.question_id] = a.answer;
-          }
-          setAnswers(prefilled);
-        }
+      if (!res.ok || !json.exists) {
+        setIsKnownClient(false);
+        setAnswers({});
+        return;
       }
-      return;
-    }
 
-    setIsKnownClient(false);
-    setAnswers({});
+      setFirstName(json.firstName ?? "");
+      setLastName(json.lastName ?? "");
+      setEmail(json.email ?? "");
+      setIsKnownClient(true);
+      setAnswers(json.lastAnswers ?? {});
+    } catch {
+      setIsKnownClient(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const supabase = createClient();
     const digitsOnly = phone.replace(/\D/g, "");
 
     if (digitsOnly.length !== 10) {
@@ -927,78 +881,6 @@ export default function ReservationPage() {
           ? formatPgTimeFromLabel(formatTime(segments.breakEnd))
           : null;
 
-      let clientId: string | null = null;
-
-      const { data: existingClient, error: existingClientError } =
-        await supabase
-          .from("clients")
-          .select("id")
-          .eq("salon_id", salonId)
-          .eq("phone", normalizedPhone)
-          .maybeSingle<ClientRow>();
-
-      if (existingClientError) {
-        throw new Error(existingClientError.message);
-      }
-
-      if (existingClient?.id) {
-        clientId = existingClient.id;
-
-        const { error: updateClientError } = await supabase
-          .from("clients")
-          .update({
-            first_name: firstName,
-            last_name: lastName,
-            email: email || null,
-            notes: message || null,
-          })
-          .eq("id", clientId)
-          .eq("salon_id", salonId);
-
-        if (updateClientError) {
-          throw new Error(updateClientError.message);
-        }
-      } else {
-        const { data: insertedClient, error: insertClientError } =
-          await supabase
-            .from("clients")
-            .insert({
-              salon_id: salonId,
-              first_name: firstName,
-              last_name: lastName,
-              phone: normalizedPhone,
-              email: email || null,
-              notes: message || null,
-            })
-            .select("id")
-            .single<ClientRow>();
-
-        if (insertClientError) {
-          throw new Error(insertClientError.message);
-        }
-
-        clientId = insertedClient.id;
-      }
-
-      // Vérification anti-doublon : bloquer si un RDV confirmed existe déjà pour ce client à cette date/heure
-      if (clientId) {
-        const { data: existingAppointment } = await supabase
-          .from("appointments")
-          .select("id")
-          .eq("salon_id", salonId)
-          .eq("client_id", clientId)
-          .eq("appointment_date", appointmentDate)
-          .eq("start_time", startTime)
-          .eq("status", "confirmed")
-          .maybeSingle();
-
-        if (existingAppointment) {
-          setStatus("Vous avez déjà un rendez-vous confirmé à ce créneau.");
-          setSaving(false);
-          return;
-        }
-      }
-
       // Assignation automatique si "Pas de préférence" et plusieurs prestataires
       let assignedStaffId: string | null = selectedStaffId || null;
 
@@ -1036,39 +918,39 @@ export default function ReservationPage() {
         }
       }
 
-      const { data: newAppointment, error: appointmentError } = await supabase
-        .from("appointments")
-        .insert({
-          salon_id: salonId,
-          client_id: clientId,
-          service_id: selectedService.id,
-          appointment_date: appointmentDate,
-          start_time: startTime,
-          end_time: endTime,
-          break_start_time: breakStartTime,
-          break_end_time: breakEndTime,
-          status: "confirmed",
-          source: "web",
-          client_message: message || null,
-          price_cents: selectedService.priceCents,
-          staff_id: assignedStaffId,
-        })
-        .select("id")
-        .single();
+      const answersPayload = questions.map((q) => ({
+        questionId: q.id,
+        questionText: q.question,
+        answer: answers[q.id]?.trim() ?? "",
+      }));
 
-      if (appointmentError) {
-        throw new Error(appointmentError.message);
-      }
+      const bookRes = await fetch("/api/reservation/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: normalizedPhone,
+          firstName,
+          lastName,
+          email,
+          message,
+          serviceId: selectedService.id,
+          priceCents: selectedService.priceCents,
+          appointmentDate,
+          startTime,
+          endTime,
+          breakStartTime,
+          breakEndTime,
+          staffId: assignedStaffId,
+          answers: answersPayload,
+        }),
+      });
+      const bookJson = await bookRes.json();
 
-      if (questions.length > 0 && newAppointment?.id) {
-        const answersPayload = questions.map((q) => ({
-          salon_id: salonId,
-          appointment_id: newAppointment.id,
-          question_id: q.id,
-          question_text: q.question,
-          answer: answers[q.id]?.trim() ?? "",
-        }));
-        await supabase.from("appointment_answers").insert(answersPayload);
+      if (!bookRes.ok) {
+        setStatus(bookJson.error ?? "Impossible d'enregistrer le rendez-vous.");
+        setShowConfirmation(false);
+        setSaving(false);
+        return;
       }
 
       setStatus("Rendez-vous confirmé ✅");
