@@ -36,10 +36,21 @@ export async function generateViewport(): Promise<Viewport> {
   return { themeColor: data?.color_page_bg || "#ffffff" };
 }
 
-export default function BackOfficeLayout({
+export default async function BackOfficeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="overflow-x-hidden">{children}</div>;
+  const salon = await getCurrentSalon();
+
+  return (
+    <div className="overflow-x-hidden">
+      {salon.slug === "demo" && (
+        <div className="sticky top-0 z-50 bg-amber-400 px-4 py-2 text-center text-sm font-semibold text-amber-950">
+          Mode démonstration — vous pouvez naviguer librement, aucune modification n&apos;est enregistrée.
+        </div>
+      )}
+      {children}
+    </div>
+  );
 }
