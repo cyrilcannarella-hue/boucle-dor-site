@@ -261,9 +261,13 @@ useEffect(() => {
     };
     measure();
     document.fonts.ready.then(measure);
+    document.fonts.addEventListener("loadingdone", measure);
     const ro = new ResizeObserver(measure);
     ro.observe(parent);
-    return () => ro.disconnect();
+    return () => {
+      document.fonts.removeEventListener("loadingdone", measure);
+      ro.disconnect();
+    };
   }, [salonName, settings?.font_salon_name, settings?.hero_tagline]);
   const salonPhone = settings?.phone || null;
   const salonAddress = settings?.address || null;
