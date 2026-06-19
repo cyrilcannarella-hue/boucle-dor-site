@@ -584,7 +584,7 @@ export default function BackOfficePage() {
   const [editAppointmentMessage, setEditAppointmentMessage] = useState("");
   const [editAppointmentInternalNote, setEditAppointmentInternalNote] = useState("");
   const [smsCredits, setSmsCredits] = useState<{ provider: string; smsCount?: number | null; balance?: string; currency?: string; creditsLeft?: number } | null>(null);
-  const [agendaView, setAgendaView] = useState<"day" | "week">("day");
+  const [agendaView, setAgendaView] = useState<"day" | "week">("week");
   const [weekAppointments, setWeekAppointments] = useState<AppointmentRow[]>([]);
   const [weekExceptionClosures, setWeekExceptionClosures] = useState<ExceptionClosure[]>([]);
   const [loadingWeek, setLoadingWeek] = useState(false);
