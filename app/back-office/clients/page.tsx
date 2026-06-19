@@ -425,10 +425,7 @@ export default function BackOfficeClientsPage() {
       const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter((l) => l.trim());
       if (lines.length < 2) throw new Error("Le fichier est vide ou ne contient pas de données.");
 
-      // Détecter le séparateur (virgule ou point-virgule)
-      const sep = lines[0].includes(";") ? ";" : ",";
-
-      const parseCSVLine = (line: string) => {
+      const parseCSVLine = (line: string, separator: string) => {
         const result: string[] = [];
         let inQuote = false;
         let current = "";
@@ -437,7 +434,7 @@ export default function BackOfficeClientsPage() {
           if (char === '"') {
             if (inQuote && line[i + 1] === '"') { current += '"'; i++; }
             else inQuote = !inQuote;
-          } else if (char === sep && !inQuote) {
+          } else if (char === separator && !inQuote) {
             result.push(current.trim()); current = "";
           } else {
             current += char;
@@ -447,7 +444,22 @@ export default function BackOfficeClientsPage() {
         return result;
       };
 
-      const headers = parseCSVLine(lines[0]).map((h) => h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+      const normalizeHeader = (h: string) => h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      // Planity ajoute parfois une ligne parasite (nom du fichier) avant les vraies
+      // en-t\u00eates : on cherche la premi\u00e8re ligne qui ressemble \u00e0 un en-t\u00eate connu,
+      // et on d\u00e9tecte le s\u00e9parateur (virgule ou point-virgule) sur cette ligne pr\u00e9cise.
+      const KNOWN_HEADER_KEYS = ["prenom", "nom", "telephone", "phone", "mobile", "tel", "email", "mail"];
+      let headerIdx = 0;
+      for (let i = 0; i < Math.min(5, lines.length - 1); i++) {
+        const candidateSep = lines[i].includes(";") ? ";" : ",";
+        const candidateHeaders = parseCSVLine(lines[i], candidateSep).map(normalizeHeader);
+        const matchCount = candidateHeaders.filter((h) => KNOWN_HEADER_KEYS.some((k) => h.includes(k))).length;
+        if (matchCount >= 2) { headerIdx = i; break; }
+      }
+
+      const sep = lines[headerIdx].includes(";") ? ";" : ",";
+      const headers = parseCSVLine(lines[headerIdx], sep).map(normalizeHeader);
 
       // Mapping colonnes Planity et format standard
       const findCol = (keys: string[]) => {
@@ -464,28 +476,54 @@ export default function BackOfficeClientsPage() {
       const colEmail = findCol(["email", "mail", "e-mail"]);
       const colNotes = findCol(["note", "commentaire", "comment"]);
 
-      if (colFirst === -1 || colLast === -1 || colPhone === -1) {
+      if (colLast === -1 || colPhone === -1) {
         throw new Error("Colonnes introuvables. Le fichier doit avoir au minimum : Prénom, Nom, Téléphone.");
       }
 
-      const rows = lines.slice(1).map((l) => parseCSVLine(l));
+      // Planity exporte parfois un seul champ "Nom" avec prénom+nom mélangés
+      // (ex : "MARTINEZ Evelyse") au lieu de deux colonnes séparées.
+      const combinedName = colFirst === -1;
+
+      const rows = lines.slice(headerIdx + 1).map((l) => parseCSVLine(l, sep));
 
       // Récupérer les téléphones existants pour éviter les doublons
       const { data: existingData } = await supabase.from("clients").select("phone").eq("salon_id", salonId).limit(10000);
       const existingPhones = new Set((existingData ?? []).filter((r: { phone: string | null }) => r.phone).map((r: { phone: string | null }) => normalizePhone(r.phone!)));
 
+      // Téléphone Planity parfois au format international (+33/33) au lieu du format français à 10 chiffres
+      const toFrenchPhone = (raw: string) => {
+        let digits = normalizePhone(raw);
+        if (digits.length === 11 && digits.startsWith("33")) digits = "0" + digits.slice(2);
+        else if (digits.length === 13 && digits.startsWith("0033")) digits = "0" + digits.slice(4);
+        return digits;
+      };
+
       const toInsert: { first_name: string; last_name: string; phone: string; email: string | null; notes: string | null }[] = [];
       let skipped = 0;
 
       for (const row of rows) {
-        const first = (row[colFirst] ?? "").trim();
-        const last = (row[colLast] ?? "").trim();
+        let first: string;
+        let last: string;
+        if (combinedName) {
+          const full = (row[colLast] ?? "").trim().replace(/\s+/g, " ");
+          const parts = full.split(" ").filter(Boolean);
+          if (parts.length >= 2) {
+            first = parts[parts.length - 1];
+            last = parts.slice(0, -1).join(" ");
+          } else {
+            first = full;
+            last = "";
+          }
+        } else {
+          first = (row[colFirst] ?? "").trim();
+          last = (row[colLast] ?? "").trim();
+        }
         const rawPhone = (row[colPhone] ?? "").trim();
-        const phone = normalizePhone(rawPhone);
+        const phone = toFrenchPhone(rawPhone);
         const email = colEmail !== -1 ? (row[colEmail] ?? "").trim() || null : null;
         const notes = colNotes !== -1 ? (row[colNotes] ?? "").trim() || null : null;
 
-        if (!first || !last || phone.length !== 10) { skipped++; continue; }
+        if ((!first && !last) || phone.length !== 10) { skipped++; continue; }
         if (existingPhones.has(phone)) { skipped++; continue; }
 
         existingPhones.add(phone);
