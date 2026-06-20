@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
@@ -90,6 +90,15 @@ export default function GaleriePage() {
   const [settings, setSettings] = useState<SalonSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [typedText, setTypedText] = useState("");
+  const headerRef = useRef<HTMLElement>(null);
+
+  const scrollToSection = (id: string) => {
+    const target = document.getElementById(id);
+    if (!target) return;
+    const headerHeight = headerRef.current?.offsetHeight ?? 0;
+    const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 20;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -175,6 +184,7 @@ export default function GaleriePage() {
 
       {/* Header */}
       <header
+        ref={headerRef}
         className="sticky top-0 z-50 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
       >
@@ -279,7 +289,7 @@ export default function GaleriePage() {
             {photos.length > 0 && (
               <div className="relative z-10 mt-8">
                 <motion.button
-                  onClick={() => document.getElementById("photos")?.scrollIntoView({ behavior: "smooth" })}
+                  onClick={() => scrollToSection("photos")}
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                   className="btn-shimmer cursor-pointer rounded-full px-6 py-4 font-semibold shadow-lg shadow-black/20 transition hover:shadow-xl"
