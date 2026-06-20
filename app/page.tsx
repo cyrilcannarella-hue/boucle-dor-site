@@ -867,7 +867,8 @@ useEffect(() => {
                 href={`https://maps.google.com/?q=${encodeURIComponent(salonAddress)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group rounded-[20px] border border-white/10 p-5 transition hover:border-white/25 hover:bg-white/5"
+                className="group rounded-[20px] border p-5 transition hover:bg-white/5"
+                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}
               >
                 <strong className="flex items-center gap-2">
                   Adresse
@@ -885,7 +886,8 @@ useEffect(() => {
             {salonPhone && (
               <a
                 href={formatPhoneHref(salonPhone)}
-                className="group rounded-[20px] border border-white/10 p-5 transition hover:border-white/25 hover:bg-white/5"
+                className="group rounded-[20px] border p-5 transition hover:bg-white/5"
+                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}
               >
                 <strong className="flex items-center gap-2">
                   Téléphone
@@ -900,7 +902,8 @@ useEffect(() => {
             {salonEmail && (
               <a
                 href={`mailto:${salonEmail}`}
-                className="group rounded-[20px] border border-white/10 p-5 transition hover:border-white/25 hover:bg-white/5"
+                className="group rounded-[20px] border p-5 transition hover:bg-white/5"
+                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}
               >
                 <strong className="flex items-center gap-2">
                   Email
@@ -914,7 +917,7 @@ useEffect(() => {
             )}
 
             {hasAnyOpenDay && (
-              <div className="rounded-[20px] border border-white/10 p-5">
+              <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}>
                 <strong>Horaires</strong>
 
                 <div className="mt-3 grid gap-2 text-white/75">
