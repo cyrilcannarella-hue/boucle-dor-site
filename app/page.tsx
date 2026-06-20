@@ -178,6 +178,7 @@ export default function Home() {
   const [typedTagline, setTypedTagline] = useState("");
   const [typedDesc, setTypedDesc] = useState("");
   const lastScrollY = useRef(0);
+  const isAutoScrollingRef = useRef(false);
   const { scrollYProgress } = useScroll();
   const glowY = useTransform(scrollYProgress, [0, 1], [0, 220]);
   const glowRotate = useTransform(scrollYProgress, [0, 1], [0, 32]);
@@ -219,12 +220,23 @@ useEffect(() => {
 useEffect(() => {
   const handleScrollDir = () => {
     const currentY = window.scrollY;
-    setHeaderVisible(currentY < 80 || currentY < lastScrollY.current);
+    if (!isAutoScrollingRef.current) {
+      setHeaderVisible(currentY < 80 || currentY < lastScrollY.current);
+    }
     lastScrollY.current = currentY;
   };
   window.addEventListener("scroll", handleScrollDir, { passive: true });
   return () => window.removeEventListener("scroll", handleScrollDir);
 }, []);
+
+const scrollToSection = (id: string) => {
+  isAutoScrollingRef.current = true;
+  setHeaderVisible(true);
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const stopAutoScroll = () => { isAutoScrollingRef.current = false; };
+  window.addEventListener("scrollend", stopAutoScroll, { once: true });
+  window.setTimeout(stopAutoScroll, 1200);
+};
 
 useEffect(() => {
   let timer: ReturnType<typeof setTimeout>;
@@ -491,7 +503,7 @@ useEffect(() => {
                 ].map(([label, id]) => (
                   <button
                     key={label}
-                    onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
+                    onClick={() => scrollToSection(id)}
                     className="group relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gradient-end)]"
                   >
                     {label}
@@ -574,7 +586,7 @@ useEffect(() => {
               ].map(([label, id]) => (
                 <button
                   key={label}
-                  onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
+                  onClick={() => scrollToSection(id)}
                   className="rounded-full border border-white/45 bg-white/40 px-2 py-2 text-center text-[13px] font-medium text-[var(--nav-text)] transition active:scale-95"
                 >
                   {label}
@@ -681,6 +693,7 @@ useEffect(() => {
             {prestations.length > 0 && (
               <motion.a
                 href="#prestations"
+                onClick={(e) => { e.preventDefault(); scrollToSection("prestations"); }}
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 className="rounded-full border px-6 py-4 font-semibold transition hover:bg-white/5"
