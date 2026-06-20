@@ -219,7 +219,8 @@ const scrollToSection = (id: string) => {
   const target = document.getElementById(id);
   if (!target) return;
   const headerHeight = headerRef.current?.offsetHeight ?? 0;
-  const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 20;
+  const gap = id === "contact" ? -20 : 20;
+  const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - gap;
   window.scrollTo({ top, behavior: "smooth" });
 };
 
@@ -665,7 +666,7 @@ useEffect(() => {
           )}
 
           {heroFeatures.length > 0 && (
-          <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorSubtitlesHero}cc` }}>
+          <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm" style={{ color: `${colorSubtitlesHero}cc` }}>
             {heroFeatures.map((feat, i) => (
               <div key={feat} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 p-4 text-center">
                 <span className="shrink-0" style={{ color: colorHeroAccent }}>
