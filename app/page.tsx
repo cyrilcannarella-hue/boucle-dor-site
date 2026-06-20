@@ -111,23 +111,6 @@ function derivePanelBg(hex: string): string {
   return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
-function blendHex(hex1: string, hex2: string, ratio: number): string {
-  const h1 = hex1.replace("#", "");
-  const h2 = hex2.replace("#", "");
-  const r = Math.round(parseInt(h1.slice(0,2),16)*ratio + parseInt(h2.slice(0,2),16)*(1-ratio));
-  const g = Math.round(parseInt(h1.slice(2,4),16)*ratio + parseInt(h2.slice(2,4),16)*(1-ratio));
-  const b = Math.round(parseInt(h1.slice(4,6),16)*ratio + parseInt(h2.slice(4,6),16)*(1-ratio));
-  return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
-}
-
-function darkenHex(hex: string, factor: number): string {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.slice(0, 2), 16) * factor;
-  const g = parseInt(h.slice(2, 4), 16) * factor;
-  const b = parseInt(h.slice(4, 6), 16) * factor;
-  return `#${[r, g, b].map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
-}
-
 function contrastText(hex: string): string {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16);
@@ -146,23 +129,16 @@ const SalonNamePremium = memo(function SalonNamePremium({
   name,
   compact = false,
   goldColor = "#4f46e5",
-  gradientMidColor,
-  gradientEndColor = "#9f742f",
 }: {
   name: string;
   compact?: boolean;
   goldColor?: string;
-  gradientMidColor?: string;
-  gradientEndColor?: string;
 }) {
   const normalizedName = (name || "Votre salon").replace(/[‘’ʼ]/g, "’");
-  const gradient = gradientMidColor
-    ? `linear-gradient(to right, ${goldColor}, ${gradientMidColor}, ${gradientEndColor})`
-    : `linear-gradient(to right, ${goldColor}, ${gradientEndColor})`;
   return (
     <span
-      className={`bg-clip-text text-transparent [backface-visibility:hidden] ${compact ? "leading-none" : "leading-tight"}`}
-      style={{ backgroundImage: gradient }}
+      className={`[backface-visibility:hidden] ${compact ? "leading-none" : "leading-tight"}`}
+      style={{ color: goldColor }}
     >
       {normalizedName}
     </span>
@@ -333,7 +309,6 @@ useEffect(() => {
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorFooterText = settings?.color_text_secondary || "#6b7280";
-  const colorGradientStart = colorTextMain;
   const colorGradientEnd = settings?.color_gradient_end || "#4f46e5";
   const promoGradientFrom = settings?.promo_color_from || "#4f46e5";
   const promoGradientTo = settings?.promo_color_to || "#1a1a2e";
@@ -368,7 +343,6 @@ useEffect(() => {
           --card-border: ${colorCardBorder};
           --nav-text: ${colorNavText};
           --footer-text: ${colorFooterText};
-          --gradient-start: ${colorGradientStart};
           --gradient-end: ${colorGradientEnd};
           --accent-rgb: ${hexToRgb(colorAccents)};
           --hero-edge: ${contrastText(colorHeroBg)}1a;
@@ -430,7 +404,7 @@ useEffect(() => {
               <div className="min-w-0">
                 <div className="text-2xl leading-none tracking-[-0.04em] md:text-4xl">
                   <span style={{ fontFamily: "var(--font-salon-name)" }}>
-                    <SalonNamePremium name={salonName} compact goldColor={colorTextMain} gradientEndColor={colorAccents} />
+                    <SalonNamePremium name={salonName} compact goldColor={colorTextMain} />
                   </span>
                 </div>
                 <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] sm:block" style={{ color: colorSubtitlesLight }}>
@@ -628,7 +602,7 @@ useEffect(() => {
           initial="hidden"
           animate="visible"
           className="relative overflow-hidden rounded-[36px] border border-[var(--hero-edge)] p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-[var(--hero-edge)] before:blur-3xl"
-          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, ${darkenHex(colorHeroBg, 0.3)} 100%)` }}
+          style={{ background: colorHeroBg }}
         >
           {salonSubtitle && (
             <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorHeroAccent }}>
@@ -637,16 +611,16 @@ useEffect(() => {
           )}
           <motion.h1 variants={fadeUp} className="relative z-10 text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
             <span ref={heroNameRef} className="block mb-1 whitespace-nowrap" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05 }}>
-              <SalonNamePremium name={salonName} goldColor={contrastText(colorHeroBg)} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
+              <SalonNamePremium name={salonName} goldColor={contrastText(colorHeroBg)} />
             </span>
             {heroTagline && (
               <>
                 <span className="relative mt-3 inline-block text-3xl font-light tracking-[-0.03em] md:text-5xl">
                   <span className="invisible">{heroTagline}</span>
-                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${heroGradientTextStart}, ${colorAccents}, ${colorGradientEnd})` }}>
+                  <span className="absolute inset-0" style={{ color: heroGradientTextStart }}>
                     {typedTagline}
                     {typedTagline.length < heroTagline.length && (
-                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${heroGradientTextStart}, ${colorAccents})` }}>|</span>
+                      <span className="animate-pulse ml-0.5">|</span>
                     )}
                   </span>
                 </span>
@@ -730,7 +704,7 @@ useEffect(() => {
 
               <div className="mb-4 h-px w-10 rounded-full opacity-50" style={{ background: `linear-gradient(to right, ${colorAccents}, transparent)` }} />
 
-              <h3 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-xl font-semibold leading-snug text-transparent">{p.title}</h3>
+              <h3 className="text-xl font-semibold leading-snug" style={{ color: colorTextMain }}>{p.title}</h3>
               <p
                 ref={(el) => { descRefs.current[i] = el; }}
                 className="mt-2 text-sm leading-relaxed transition-all duration-300"
@@ -793,7 +767,7 @@ useEffect(() => {
           <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAproposAccent, borderColor: `${colorAproposAccent}40`, backgroundColor: colorPanelBg }}>
             À propos
           </div>
-          <h2 className="bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gold)] to-[var(--gradient-end)] bg-clip-text text-4xl text-transparent">{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
+          <h2 className="text-4xl" style={{ color: colorTextMain }}>{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
           {aproposText && <p className="mt-4" style={{ color: colorTextSecondary }}>{aproposText}</p>}
         </motion.div>
 
@@ -855,7 +829,7 @@ useEffect(() => {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="rounded-[30px] p-8 text-white"
-          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorContactBg, 0.22)} 0%, ${colorContactBg} 50%, ${darkenHex(colorContactBg, 0.3)} 100%)` }}
+          style={{ background: colorContactBg }}
         >
           <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorContactAccent, borderColor: `${colorContactAccent}40`, backgroundColor: colorPanelBg }}>
             Contact
