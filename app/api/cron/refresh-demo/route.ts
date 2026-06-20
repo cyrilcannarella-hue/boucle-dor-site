@@ -8,6 +8,16 @@ const FILL_PROBABILITY = 0.65;
 const PAST_DAYS = 7;
 const FUTURE_DAYS = 21;
 
+// Numéros des 14 clients fictifs créés pour le salon démo (voir le script de
+// seed initial). Tout client démo dont le numéro n'est pas dans cette liste
+// vient d'une vraie réservation testée sur le site public — on le supprime
+// à chaque passage pour ne jamais le réinjecter dans l'agenda fictif.
+const SEED_CLIENT_PHONES = [
+  "0700000001", "0700000002", "0700000003", "0700000004", "0700000005",
+  "0700000006", "0700000007", "0700000008", "0700000009", "0700000010",
+  "0700000011", "0700000012", "0700000013", "0700000014",
+];
+
 function parisDateKey(date: Date): string {
   return date.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
 }
@@ -39,6 +49,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Salon démo introuvable" }, { status: 404 });
   }
 
+  await supabase.from("appointment_answers").delete().eq("salon_id", salon.id);
+  await supabase.from("appointments").delete().eq("salon_id", salon.id);
+
+  // Nettoie les clients créés par de vraies réservations testées sur le
+  // site public (tout ce qui n'est pas un des 14 numéros de seed).
+  await supabase
+    .from("clients")
+    .delete()
+    .eq("salon_id", salon.id)
+    .not("phone", "in", `(${SEED_CLIENT_PHONES.join(",")})`);
+
   const [{ data: clients }, { data: services }, { data: staff }] = await Promise.all([
     supabase.from("clients").select("id").eq("salon_id", salon.id),
     supabase.from("services").select("id, price_cents, duration_minutes").eq("salon_id", salon.id),
@@ -48,9 +69,6 @@ export async function GET(req: NextRequest) {
   if (!clients?.length || !services?.length || !staff?.length) {
     return NextResponse.json({ error: "Données de base du salon démo manquantes" }, { status: 500 });
   }
-
-  await supabase.from("appointment_answers").delete().eq("salon_id", salon.id);
-  await supabase.from("appointments").delete().eq("salon_id", salon.id);
 
   const now = new Date();
   const todayKey = parisDateKey(now);
