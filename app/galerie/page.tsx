@@ -172,7 +172,7 @@ export default function GaleriePage() {
 
   return (
     <main
-      className="relative min-h-screen overflow-hidden scroll-smooth"
+      className="relative min-h-screen scroll-smooth"
       style={{
         background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}`,
         color: colorTextMain,

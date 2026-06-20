@@ -1009,7 +1009,7 @@ export default function ReservationPage() {
 
   return (
     <main
-      className="relative min-h-screen overflow-hidden"
+      className="relative min-h-screen"
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.24), transparent 34%), ${colorPageBg}` }}
     >
       <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
