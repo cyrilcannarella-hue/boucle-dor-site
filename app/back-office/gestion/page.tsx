@@ -242,18 +242,18 @@ const COLOR_OPTIONS = [
 ];
 
 const APPEARANCE_PALETTE: { label: string; colors: string[] }[] = [
-  { label: "Neutres",  colors: ["#818f7f","#a9b8a7","#fefff1","#ffffff","#fafafa","#f5f5f5","#ebebeb","#e0e0e0","#d4d4d4","#c4c4c4","#b5b5b5","#9c9c9c","#878787","#737373","#636363","#595959","#484848","#404040","#333333","#2c2c2c","#262626","#1f1f1f","#1a1a1a","#111111","#0d0d0d","#0a0a0a","#000000"] },
-  { label: "Taupes",  colors: ["#fffdf9","#faf5ef","#f5e9dc","#ede0cf","#e8d5be","#ddc9ad","#d4c0a4","#cbb498","#c2a98c","#b99c7a","#ae8d68","#9e7b56","#8a6a45","#7b5b37","#736058","#6e655c","#5c3d2e","#4a2f22","#3d2b1a","#2a1d12","#221610","#1f1b17","#140e09","#0f0b07"] },
-  { label: "Ors",     colors: ["#fffbe6","#fff8d6","#fef3c7","#feeaa8","#fde68a","#f8da70","#f3d27a","#f0c855","#f0c040","#eabb30","#e8b830","#ddb030","#d8b56d","#d4af37","#d8a646","#cea030","#c49030","#b98b3d","#ae8030","#a07530","#8b6914","#6b4f0c","#4a3608","#2a1e04"] },
-  { label: "Rouges",  colors: ["#fff5f5","#ffe8e8","#fee2e2","#fecaca","#fdb5b5","#fca5a5","#f98989","#f87171","#f55555","#f24040","#ef4444","#e02e2e","#dc2626","#cf1f1f","#c51c1c","#b91c1c","#a81818","#991b1b","#871717","#7f1d1d","#6b1515","#500f0f","#350808","#1a0000"] },
-  { label: "Oranges", colors: ["#fff8f2","#fff7ed","#fff0e0","#ffedd5","#fde0b8","#fed7aa","#fec884","#fdba74","#fcaa58","#fb923c","#f97f28","#f97316","#f36810","#f06010","#ea580c","#e04e08","#d44e08","#c2410c","#ae3a0a","#9a3412","#7c2d12","#5c2009","#3a1204","#1c0500"] },
-  { label: "Jaunes",  colors: ["#fffff0","#fefce8","#fefae0","#fef9c3","#fef6a8","#fef3a0","#fef08a","#fde870","#fde047","#fbd830","#facc15","#f8c400","#f5bc00","#edb400","#eab308","#dea800","#d4a200","#ca8a04","#b87a04","#a16207","#854d0e","#6b3d0a","#451a03","#1a0900"] },
-  { label: "Verts",   colors: ["#f5fff7","#edfff2","#f0fdf4","#e0fce8","#dcfce7","#c8f9d4","#bbf7d0","#a0f2b8","#86efac","#60e890","#4ade80","#30d468","#22c55e","#18b452","#16a34a","#138f40","#15803d","#128038","#166534","#145c2e","#14532d","#0e3d21","#052e16","#010f06"] },
-  { label: "Teals",   colors: ["#f0fffd","#e0fff9","#f0fdfa","#d0faf4","#ccfbf1","#b0f8ea","#99f6e4","#78f0d8","#5eead4","#42e0c4","#2dd4bf","#1ec8b0","#14b8a6","#0ea898","#0d9488","#0b8278","#0f766e","#0c6a64","#0c6660","#134e4a","#0e3d39","#042f2e","#011010","#000808"] },
-  { label: "Bleus",   colors: ["#f5f9ff","#eef4ff","#eff6ff","#e4f0ff","#dbeafe","#cce0fe","#bfdbfe","#a8cffd","#93c5fd","#78b8fc","#60a5fa","#4a94f8","#3b82f6","#2e72ef","#2563eb","#2058de","#1d4ed8","#1b48ce","#1a44c4","#1e40af","#1e3a8a","#162060","#0a1628","#040d1c"] },
-  { label: "Violets", colors: ["#faf5ff","#f7f0ff","#f5f3ff","#ede9fe","#e6e0fe","#ddd6fe","#d0c4fd","#c4b5fd","#b4a0fb","#a78bfa","#9878f8","#8b5cf6","#8048f0","#7c3aed","#7430e4","#6d28d9","#6522cc","#5e20c0","#5b21b6","#5018a8","#4c1d95","#3b166e","#2c1050","#0a0318"] },
-  { label: "Roses",   colors: ["#fef0ff","#fde8ff","#fdf4ff","#fce0fe","#fae8ff","#f8d0fd","#f5d0fe","#f2bafd","#f0abfc","#ec92fa","#e879f9","#e060f0","#d946ef","#d030e0","#c828d8","#c020cc","#c026d3","#b81cc4","#ab1ebe","#a21caf","#86198f","#6b1472","#350838","#1a031e"] },
-  { label: "Pinks",   colors: ["#fff5f8","#fff0f4","#fff1f2","#ffe8ec","#ffe4e6","#fed8dc","#fecdd3","#fdbfc6","#fda4af","#fc8898","#fb7185","#f85a72","#f43f5e","#f03050","#e82852","#e42050","#e11d48","#d81840","#cc1a42","#be123c","#9f1239","#7d0e2c","#3b0412","#1e0008"] },
+  { label: "Neutres",  colors: ["#ffffff","#fdfdfd","#fafafa","#f8f8f8","#f5f5f5","#f0f0f0","#ebebeb","#e6e6e6","#e0e0e0","#dadada","#d4d4d4","#cccccc","#c4c4c4","#bdbdbd","#b5b5b5","#a9a9a9","#9c9c9c","#929292","#878787","#7d7d7d","#737373","#6b6b6b","#636363","#5e5e5e","#595959","#515151","#484848","#444444","#404040","#3a3a3a","#333333","#303030","#2c2c2c","#292929","#262626","#232323","#1f1f1f","#1d1d1d","#1a1a1a","#161616","#111111","#0f0f0f","#0d0d0d","#0c0c0c","#0a0a0a","#050505","#000000"] },
+  { label: "Taupes",  colors: ["#fffdf9","#fdf9f4","#faf5ef","#f8efe6","#f5e9dc","#f1e5d6","#ede0cf","#ebdbc7","#e8d5be","#e3cfb6","#ddc9ad","#d9c5a9","#d4c0a4","#d0ba9e","#cbb498","#c7af92","#c2a98c","#bea383","#b99c7a","#b49571","#ae8d68","#a6845f","#9e7b56","#94734e","#8a6a45","#83633e","#7b5b37","#775e48","#736058","#71635a","#6e655c","#655145","#5c3d2e","#533628","#4a2f22","#442d1e","#3d2b1a","#342416","#2a1d12","#261a11","#221610","#211914","#1f1b17","#1a1510","#140e09","#120d08","#0f0b07"] },
+  { label: "Ors",  colors: ["#fffbe6","#fffade","#fff8d6","#fff6cf","#fef3c7","#feefb8","#feeaa8","#fee899","#fde68a","#fbe07d","#f8da70","#f6d675","#f3d27a","#f2cd68","#f0c855","#f0c44b","#f0c040","#edbe38","#eabb30","#e9ba30","#e8b830","#e3b430","#ddb030","#dbb34f","#d8b56d","#d6b252","#d4af37","#d6ab3f","#d8a646","#d3a33b","#cea030","#c99830","#c49030","#bf8e37","#b98b3d","#b48637","#ae8030","#a77b30","#a07530","#966f22","#8b6914","#7b5c10","#6b4f0c","#5b430a","#4a3608","#3a2a06","#2a1e04"] },
+  { label: "Rouges",  colors: ["#fff5f5","#ffefef","#ffe8e8","#ffe5e5","#fee2e2","#fed6d6","#fecaca","#fec0c0","#fdb5b5","#fdadad","#fca5a5","#fb9797","#f98989","#f97d7d","#f87171","#f76363","#f55555","#f44b4b","#f24040","#f14242","#ef4444","#e83939","#e02e2e","#de2a2a","#dc2626","#d62323","#cf1f1f","#ca1e1e","#c51c1c","#bf1c1c","#b91c1c","#b11a1a","#a81818","#a11a1a","#991b1b","#901919","#871717","#831a1a","#7f1d1d","#751919","#6b1515","#5e1212","#500f0f","#430c0c","#350808","#280404","#1a0000"] },
+  { label: "Oranges",  colors: ["#fff8f2","#fff8f0","#fff7ed","#fff4e7","#fff0e0","#ffefdb","#ffedd5","#fee7c7","#fde0b8","#fedcb1","#fed7aa","#fed097","#fec884","#fec17c","#fdba74","#fdb266","#fcaa58","#fc9e4a","#fb923c","#fa8932","#f97f28","#f9791f","#f97316","#f66e13","#f36810","#f26410","#f06010","#ed5c0e","#ea580c","#e5530a","#e04e08","#da4e08","#d44e08","#cb480a","#c2410c","#b83e0b","#ae3a0a","#a4370e","#9a3412","#8b3112","#7c2d12","#6c270e","#5c2009","#4b1907","#3a1204","#2b0c02","#1c0500"] },
+  { label: "Jaunes",  colors: ["#fefff1","#fffff0","#fffeec","#fefce8","#fefbe4","#fefae0","#fefad2","#fef9c3","#fef8b6","#fef6a8","#fef5a4","#fef3a0","#fef295","#fef08a","#feec7d","#fde870","#fde45c","#fde047","#fcdc3c","#fbd830","#fbd223","#facc15","#f9c80b","#f8c400","#f7c000","#f5bc00","#f1b800","#edb400","#ecb404","#eab308","#e4ae04","#dea800","#d9a500","#d4a200","#cf9602","#ca8a04","#c18204","#b87a04","#ad6e06","#a16207","#93580b","#854d0e","#78450c","#6b3d0a","#582c07","#451a03","#301202","#1a0900"] },
+  { label: "Verts",  colors: ["#f5fff7","#f1fff5","#edfff2","#effef3","#f0fdf4","#e8fdee","#e0fce8","#defce8","#dcfce7","#d2fbde","#c8f9d4","#c2f8d2","#bbf7d0","#aef5c4","#a0f2b8","#93f1b2","#86efac","#73ec9e","#a9b8a7","#60e890","#55e388","#4ade80","#3dd974","#818f7f","#30d468","#29cd63","#22c55e","#1dbd58","#18b452","#17ac4e","#16a34a","#159945","#138f40","#14883f","#15803d","#14803b","#128038","#147336","#166534","#156131","#145c2e","#14582e","#14532d","#114827","#0e3d21","#0a361c","#052e16","#031f0e","#010f06"] },
+  { label: "Teals",  colors: ["#f0fffd","#e8fffb","#e0fff9","#e8fefa","#f0fdfa","#e0fcf7","#d0faf4","#cefbf3","#ccfbf1","#befaee","#b0f8ea","#a5f7e7","#99f6e4","#89f3de","#78f0d8","#6bedd6","#5eead4","#50e5cc","#42e0c4","#38dac2","#2dd4bf","#26ceb8","#1ec8b0","#19c0ab","#14b8a6","#11b09f","#0ea898","#0e9e90","#0d9488","#0c8b80","#0b8278","#0d7c73","#0f766e","#0e7069","#0c6a64","#0c6862","#0c6660","#105a55","#134e4a","#114642","#0e3d39","#093634","#042f2e","#03201f","#011010","#010c0c","#000808"] },
+  { label: "Bleus",  colors: ["#f5f9ff","#f2f7ff","#eef4ff","#eff5ff","#eff6ff","#eaf3ff","#e4f0ff","#e0edff","#dbeafe","#d4e5fe","#cce0fe","#c6defe","#bfdbfe","#b4d5fe","#a8cffd","#9ecafd","#93c5fd","#86bffd","#78b8fc","#6caffb","#60a5fa","#559df9","#4a94f8","#438bf7","#3b82f6","#357af3","#2e72ef","#2a6bed","#2563eb","#235ee5","#2058de","#1f53db","#1d4ed8","#1c4bd3","#1b48ce","#1b46c9","#1a44c4","#1c42ba","#1e40af","#1e3d9d","#1e3a8a","#1a2d75","#162060","#101b44","#0a1628","#071222","#040d1c"] },
+  { label: "Violets",  colors: ["#faf5ff","#f9f3ff","#f7f0ff","#f6f2ff","#f5f3ff","#f1eeff","#ede9fe","#eae5fe","#e6e0fe","#e2dbfe","#ddd6fe","#d7cdfe","#d0c4fd","#cabdfd","#c4b5fd","#bcabfc","#b4a0fb","#ae96fb","#a78bfa","#a082f9","#9878f8","#926af7","#8b5cf6","#8652f3","#8048f0","#7e41ef","#7c3aed","#7835e9","#7430e4","#712cdf","#6d28d9","#6925d3","#6522cc","#6221c6","#5e20c0","#5d21bb","#5b21b6","#561daf","#5018a8","#4e1b9f","#4c1d95","#441a82","#3b166e","#34135f","#2c1050","#1b0a34","#0a0318"] },
+  { label: "Roses",  colors: ["#fef0ff","#feecff","#fde8ff","#fdeeff","#fdf4ff","#fdeaff","#fce0fe","#fbe4ff","#fae8ff","#f9dcfe","#f8d0fd","#f7d0fe","#f5d0fe","#f4c5fe","#f2bafd","#f1b3fd","#f0abfc","#ee9ffb","#ec92fa","#ea86fa","#e879f9","#e46df5","#e060f0","#dd53f0","#d946ef","#d53be8","#d030e0","#cc2cdc","#c828d8","#c424d2","#c020cc","#c023d0","#c026d3","#bc21cc","#b81cc4","#b21dc1","#ab1ebe","#a71db7","#a21caf","#941b9f","#86198f","#791781","#6b1472","#500e55","#350838","#28062b","#1a031e"] },
+  { label: "Pinks",  colors: ["#fff5f8","#fff3f6","#fff0f4","#fff1f3","#fff1f2","#ffedef","#ffe8ec","#ffe6e9","#ffe4e6","#ffdee1","#fed8dc","#fed3d8","#fecdd3","#fec6cd","#fdbfc6","#fdb2bb","#fda4af","#fd96a4","#fc8898","#fc7d8f","#fb7185","#fa667c","#f85a72","#f64d68","#f43f5e","#f23857","#f03050","#ec2c51","#e82852","#e62451","#e42050","#e31f4c","#e11d48","#dd1b44","#d81840","#d21941","#cc1a42","#c5163f","#be123c","#af123b","#9f1239","#8e1033","#7d0e2c","#5c091f","#3b0412","#2d020d","#1e0008"] },
 ];
 
 const cardClass = "rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur";
@@ -1948,14 +1948,14 @@ export default function BackOfficeGestionPage() {
                     </button>
                     {openColorPicker === "promo-bg" && (
                       <div className="border-t border-[var(--card-border)] p-3">
-                        <div className="space-y-2.5">
+                        <div className="space-y-1">
                           {APPEARANCE_PALETTE.map((family) => (
-                            <div key={family.label}>
-                              <span className="text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="mt-1 flex w-full flex-wrap gap-1.5">
+                            <div key={family.label} className="flex items-center gap-1.5">
+                              <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
+                              <div className="flex gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoBgColorState(c)} title={c}
-                                    className={`h-5 w-5 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 w-4 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -1983,14 +1983,14 @@ export default function BackOfficeGestionPage() {
                     </button>
                     {openColorPicker === "promo-stars" && (
                       <div className="border-t border-[var(--card-border)] p-3">
-                        <div className="space-y-2.5">
+                        <div className="space-y-1">
                           {APPEARANCE_PALETTE.map((family) => (
-                            <div key={family.label}>
-                              <span className="text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="mt-1 flex w-full flex-wrap gap-1.5">
+                            <div key={family.label} className="flex items-center gap-1.5">
+                              <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
+                              <div className="flex gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoColorStars(c)} title={c}
-                                    className={`h-5 w-5 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 w-4 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -2018,14 +2018,14 @@ export default function BackOfficeGestionPage() {
                     </button>
                     {openColorPicker === "promo-text" && (
                       <div className="border-t border-[var(--card-border)] p-3">
-                        <div className="space-y-2.5">
+                        <div className="space-y-1">
                           {APPEARANCE_PALETTE.map((family) => (
-                            <div key={family.label}>
-                              <span className="text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="mt-1 flex w-full flex-wrap gap-1.5">
+                            <div key={family.label} className="flex items-center gap-1.5">
+                              <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
+                              <div className="flex gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoTextColor(c)} title={c}
-                                    className={`h-5 w-5 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 w-4 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -3771,18 +3771,18 @@ export default function BackOfficeGestionPage() {
                                 </button>
                                 {openColorPicker === key && (
                                   <div className="border-t border-[var(--card-border)] p-4">
-                                    <div className="space-y-3">
+                                    <div className="space-y-1.5">
                                       {APPEARANCE_PALETTE.map((family) => (
-                                        <div key={family.label}>
-                                          <span className="text-[10px] text-[#a0927e]">{family.label}</span>
-                                          <div className="mt-1.5 flex w-full flex-wrap gap-1.5">
+                                        <div key={family.label} className="flex items-center gap-1.5">
+                                          <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
+                                          <div className="flex gap-1">
                                             {family.colors.map((c) => (
                                               <button
                                                 key={c}
                                                 type="button"
                                                 onClick={() => setter(c)}
                                                 title={c}
-                                                className={`h-6 w-6 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                                className={`h-5 w-5 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                                 style={{ backgroundColor: c }}
                                               />
                                             ))}
