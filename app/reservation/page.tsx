@@ -1048,7 +1048,7 @@ export default function ReservationPage() {
             )}
             <span>
               <span className="block text-2xl leading-none tracking-tight sm:text-3xl">
-                <SalonNameGradient name={salonName} goldColor={colorTextMain} goldEndColor={colorAccents} />
+                <SalonNameGradient name={salonName} goldColor={colorTextMain} />
               </span>
               <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
                 Réservation en ligne
@@ -1065,8 +1065,8 @@ export default function ReservationPage() {
             </Link>
             <Link
               href="/espace-client"
-              className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)] sm:inline-flex"
-              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
+              className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold transition sm:inline-flex"
+              style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 18px ${colorButtons}80` }}
             >
               Mes réservations
             </Link>
@@ -1503,8 +1503,8 @@ export default function ReservationPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-full px-6 py-4 font-semibold shadow-[0_14px_30px_rgba(30,20,10,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(30,20,10,0.22)] disabled:opacity-50"
-                  style={{ backgroundColor: colorButtons, color: colorButtonsText }}
+                  className="rounded-full px-6 py-4 font-semibold transition hover:-translate-y-0.5 disabled:opacity-50"
+                  style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(30,20,10,0.18), 0 0 18px ${colorButtons}80` }}
                 >
                   {saving ? "Enregistrement..." : "Confirmer le rendez-vous"}
                 </button>
@@ -1584,8 +1584,8 @@ export default function ReservationPage() {
               </a>
               <a
                 href="/"
-                className="rounded-full px-5 py-3 font-semibold shadow-md transition hover:-translate-y-0.5"
-                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
+                className="rounded-full px-5 py-3 font-semibold transition hover:-translate-y-0.5"
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1), 0 0 18px ${colorButtons}80` }}
               >
                 Retour à l’accueil
               </a>

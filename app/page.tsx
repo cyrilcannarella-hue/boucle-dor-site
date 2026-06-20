@@ -345,7 +345,6 @@ useEffect(() => {
           --footer-text: ${colorFooterText};
           --gradient-end: ${colorGradientEnd};
           --accent-rgb: ${hexToRgb(colorAccents)};
-          --hero-edge: ${contrastText(colorHeroBg)}1a;
         }
       `}</style>
   <motion.div
@@ -419,8 +418,8 @@ useEffect(() => {
                 href="/espace-client"
                 whileHover={{ y: -2, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
-                className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_12px_25px_rgba(17,17,17,0.16)] sm:block"
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorButtons}80` }}
+                className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold sm:block"
               >
                 Mes réservations
               </motion.a>
@@ -429,8 +428,8 @@ useEffect(() => {
                 whileTap={{ scale: 0.96 }}
                 animate={showReservationPulse ? { scale: [1, 1.05, 1] } : { scale: 1 }}
                 transition={showReservationPulse ? { repeat: Infinity, duration: 1.8, ease: "easeInOut" } : { duration: 0.3 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
-                className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_12px_25px_rgba(17,17,17,0.16)]"
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorButtons}80` }}
+                className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold"
               >
                 Prendre RDV
               </motion.a>
@@ -445,8 +444,8 @@ useEffect(() => {
                 href="/espace-client"
                 whileHover={{ y: -2, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
-                className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_12px_25px_rgba(17,17,17,0.16)]"
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorButtons}80` }}
+                className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold"
               >
                 Mes réservations
               </motion.a>
@@ -505,8 +504,8 @@ useEffect(() => {
                 whileTap={{ scale: 0.97 }}
                 animate={showReservationPulse ? { scale: [1, 1.05, 1] } : { scale: 1 }}
                 transition={showReservationPulse ? { repeat: Infinity, duration: 1.8, ease: "easeInOut" } : { duration: 0.3 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
-                className="btn-shimmer rounded-full px-5 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)]"
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 18px ${colorButtons}80` }}
+                className="btn-shimmer rounded-full px-5 py-3 text-sm font-semibold transition"
               >
                 Prendre RDV
               </motion.a>
@@ -520,7 +519,7 @@ useEffect(() => {
               <a
                 href="/espace-client"
                 className="btn-shimmer rounded-full px-3 py-2 text-center font-semibold transition active:scale-95"
-                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 18px ${colorButtons}80` }}
               >
                 Mes réservations
               </a>
@@ -601,8 +600,8 @@ useEffect(() => {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="relative overflow-hidden rounded-[36px] border border-[var(--hero-edge)] p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-[var(--hero-edge)] before:blur-3xl"
-          style={{ background: colorHeroBg }}
+          className="relative overflow-hidden rounded-[36px] border p-8 text-white"
+          style={{ background: colorHeroBg, borderColor: `${colorHeroAccent}80`, boxShadow: `0 24px 70px rgba(0,0,0,0.22), 0 0 28px ${colorHeroAccent}66` }}
         >
           {salonSubtitle && (
             <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorHeroAccent }}>

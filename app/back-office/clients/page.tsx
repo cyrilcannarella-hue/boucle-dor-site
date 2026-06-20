@@ -617,7 +617,7 @@ export default function BackOfficeClientsPage() {
                 Back office
               </div>
               <div className="mt-0.5 text-xl font-semibold leading-none md:mt-1 md:text-3xl">
-                <SalonNameGradient name={salonDisplayName} goldColor={colorTextMain} goldEndColor={colorAccents} /> Pro
+                <SalonNameGradient name={salonDisplayName} goldColor={colorTextMain} /> Pro
               </div>
             </div>
           </Link>

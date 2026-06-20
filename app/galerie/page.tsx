@@ -206,10 +206,7 @@ export default function GaleriePage() {
             )}
             <div>
               <div className="text-xl leading-none tracking-[-0.03em] md:text-2xl" style={{ fontFamily: "var(--font-salon-name)" }}>
-                <span
-                  className="bg-clip-text text-transparent [backface-visibility:hidden] leading-none"
-                  style={{ backgroundImage: `linear-gradient(to right, ${colorTextMain}, ${colorAccents})` }}
-                >
+                <span className="[backface-visibility:hidden] leading-none" style={{ color: colorTextMain }}>
                   {salonName.replace(/[''ʼ]/g, "'")}
                 </span>
               </div>
@@ -221,8 +218,8 @@ export default function GaleriePage() {
 
           <a
             href="/"
-            className="btn-shimmer rounded-full px-5 py-2.5 text-sm font-semibold shadow-[0_12px_25px_rgba(17,17,17,0.16)] transition hover:shadow-[0_16px_32px_rgba(17,17,17,0.22)]"
-            style={{ backgroundColor: colorAccents, color: contrastText(colorAccents) }}
+            className="btn-shimmer rounded-full px-5 py-2.5 text-sm font-semibold transition"
+            style={{ backgroundColor: colorAccents, color: contrastText(colorAccents), boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorAccents}80` }}
           >
             Accueil
           </a>
@@ -261,8 +258,8 @@ export default function GaleriePage() {
             {gallery.title && (
               <h1 className="relative z-10 mb-4 text-3xl font-black tracking-tight md:text-4xl">
                 <motion.span
-                  className="inline-block bg-clip-text text-transparent [backface-visibility:hidden]"
-                  style={{ backgroundImage: `linear-gradient(to right, ${contrastText(colorHeroBg)}, ${colorAccents}, ${colorGradientEnd})` }}
+                  className="inline-block [backface-visibility:hidden]"
+                  style={{ color: contrastText(colorHeroBg) }}
                   animate={{ scale: [1, 1.04, 1] }}
                   transition={{ duration: 3.2, ease: "easeInOut", repeat: Infinity }}
                 >
@@ -292,8 +289,8 @@ export default function GaleriePage() {
                   onClick={() => scrollToSection("photos")}
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
-                  className="btn-shimmer cursor-pointer rounded-full px-6 py-4 font-semibold shadow-lg shadow-black/20 transition hover:shadow-xl"
-                  style={{ backgroundColor: colorAccents, color: contrastText(colorAccents) }}
+                  className="btn-shimmer cursor-pointer rounded-full px-6 py-4 font-semibold transition"
+                  style={{ backgroundColor: colorAccents, color: contrastText(colorAccents), boxShadow: `0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -4px rgba(0,0,0,0.2), 0 0 18px ${colorAccents}80` }}
                 >
                   Voir les photos ↓
                 </motion.button>

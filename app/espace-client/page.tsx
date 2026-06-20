@@ -724,7 +724,7 @@ export default function EspaceClientPage() {
             )}
             <span>
               <span className="block text-xl leading-none tracking-tight sm:text-3xl">
-                <SalonNameGradient name={salonName} goldColor={colorTextMain} goldEndColor={colorAccents} />
+                <SalonNameGradient name={salonName} goldColor={colorTextMain} />
               </span>
               <span className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)] sm:block">
                 Mes réservations
@@ -741,8 +741,8 @@ export default function EspaceClientPage() {
             </Link>
             <Link
               href="/reservation"
-              className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)] sm:inline-flex"
-              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
+              className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold transition sm:inline-flex"
+              style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 18px ${colorButtons}80` }}
             >
               Réserver
             </Link>
@@ -779,7 +779,8 @@ export default function EspaceClientPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[var(--text-main)] to-[var(--gold)] px-5 py-3 font-semibold text-[var(--text-on-main)] shadow-[0_10px_24px_rgba(60,40,20,0.16)] transition hover:-translate-y-0.5 disabled:opacity-50"
+                className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[var(--text-main)] to-[var(--gold)] px-5 py-3 font-semibold text-[var(--text-on-main)] transition hover:-translate-y-0.5 disabled:opacity-50"
+                style={{ boxShadow: `0 10px 24px rgba(60,40,20,0.16), 0 0 18px ${colorTextMain}80` }}
               >
                 {loading ? "Recherche..." : "Retrouvez votre rendez-vous"}
               </button>
@@ -960,7 +961,7 @@ export default function EspaceClientPage() {
                         type="button"
                         onClick={() => setConfirmCancelId(appointment.id)}
                         className="min-h-[48px] rounded-full px-5 py-3 font-medium hover:opacity-90"
-                        style={{ backgroundColor: colorButtons, color: colorButtonsText }}
+                        style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 18px ${colorButtons}80` }}
                       >
                         Annuler le rendez-vous
                       </button>
@@ -1097,7 +1098,7 @@ export default function EspaceClientPage() {
                   onClick={handleSaveEdit}
                   disabled={savingEdit}
                   className="min-h-[48px] rounded-full px-5 py-3 font-medium hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: colorButtons, color: colorButtonsText }}
+                  style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 18px ${colorButtons}80` }}
                 >
                   {savingEdit
                     ? "Enregistrement..."

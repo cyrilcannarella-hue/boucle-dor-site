@@ -1679,7 +1679,7 @@ export default function BackOfficeGestionPage() {
                 Back office
               </div>
               <div className="mt-0.5 text-xl font-semibold leading-none md:mt-1 md:text-3xl">
-                <SalonNameGradient name={salonDisplayName} goldColor={colorTextMain} goldEndColor={colorAccents} /> Pro
+                <SalonNameGradient name={salonDisplayName} goldColor={colorTextMain} /> Pro
               </div>
             </div>
           </div>
@@ -3692,7 +3692,7 @@ export default function BackOfficeGestionPage() {
                             title: "Carte hero",
                             items: [
                               { key: "herobg", label: "Fond de la carte hero", desc: "Fond de la grande carte de présentation en haut du site", value: appearanceHeroBg, setter: setAppearanceHeroBg },
-                              { key: "heroaccent", label: "Badge & points forts", desc: "Pastille au-dessus du nom du salon et icônes des points forts (hero)", value: appearanceHeroAccent, setter: setAppearanceHeroAccent },
+                              { key: "heroaccent", label: "Badge & points forts", desc: "Pastille au-dessus du nom du salon et lueur des points forts (hero)", value: appearanceHeroAccent, setter: setAppearanceHeroAccent },
                             ],
                           },
                           {
@@ -3717,20 +3717,20 @@ export default function BackOfficeGestionPage() {
                             title: "Contact",
                             items: [
                               { key: "contactbg", label: "Fond de la section", desc: "Fond de la section Contact en bas de page", value: appearanceContactBg, setter: setAppearanceContactBg },
-                              { key: "contactaccent", label: "Badge", desc: "Pastille \"Contact\" au-dessus des coordonnées du salon", value: appearanceBadges, setter: setAppearanceBadges },
+                              { key: "contactaccent", label: "Badge", desc: "Pastille \"Contact\" et lueur des cartes (adresse, téléphone, email, horaires)", value: appearanceBadges, setter: setAppearanceBadges },
                             ],
                           },
                           {
                             title: "Titres & sous-titres",
                             items: [
-                              { key: "titles", label: "Titres", desc: "Fin du dégradé des grands titres (À propos, Prestations, Galerie) et survol des liens", value: appearanceTitles, setter: setAppearanceTitles },
+                              { key: "titles", label: "Liens & dégradés", desc: "Survol des liens du menu et du footer ; fin du dégradé du texte et des légendes sur la page Galerie", value: appearanceTitles, setter: setAppearanceTitles },
                               { key: "subtitles", label: "Sous-titres du hero", desc: "Phrase d'accroche, description et points forts sous le nom du salon", value: appearanceSubtitles, setter: setAppearanceSubtitles },
                             ],
                           },
                           {
                             title: "Texte",
                             items: [
-                              { key: "textmain", label: "Texte principal", desc: "Navigation, boutons et nom du salon dans le header", value: appearanceTextMain, setter: setAppearanceTextMain },
+                              { key: "textmain", label: "Texte principal", desc: "Navigation, boutons, nom du salon dans le header, et titres des cartes Prestations et À propos", value: appearanceTextMain, setter: setAppearanceTextMain },
                               { key: "textsecondary", label: "Texte descriptif", desc: "Paragraphes, descriptions des prestations, texte des avis, horaires", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
                             ],
                           },
