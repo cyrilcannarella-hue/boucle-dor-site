@@ -174,11 +174,8 @@ export default function Home() {
   const [settings, setSettings] = useState<SalonSettings | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showReservationPulse, setShowReservationPulse] = useState(false);
-  const [headerVisible, setHeaderVisible] = useState(true);
   const [typedTagline, setTypedTagline] = useState("");
   const [typedDesc, setTypedDesc] = useState("");
-  const lastScrollY = useRef(0);
-  const isAutoScrollingRef = useRef(false);
   const headerRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll();
   const glowY = useTransform(scrollYProgress, [0, 1], [0, 220]);
@@ -218,29 +215,12 @@ useEffect(() => {
   return () => window.removeEventListener("scroll", handleScroll);
 }, []);
 
-useEffect(() => {
-  const handleScrollDir = () => {
-    const currentY = window.scrollY;
-    if (!isAutoScrollingRef.current) {
-      setHeaderVisible(currentY < 80 || currentY < lastScrollY.current);
-    }
-    lastScrollY.current = currentY;
-  };
-  window.addEventListener("scroll", handleScrollDir, { passive: true });
-  return () => window.removeEventListener("scroll", handleScrollDir);
-}, []);
-
 const scrollToSection = (id: string) => {
   const target = document.getElementById(id);
   if (!target) return;
-  isAutoScrollingRef.current = true;
-  setHeaderVisible(true);
   const headerHeight = headerRef.current?.offsetHeight ?? 0;
   const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 20;
   window.scrollTo({ top, behavior: "smooth" });
-  const stopAutoScroll = () => { isAutoScrollingRef.current = false; };
-  window.addEventListener("scrollend", stopAutoScroll, { once: true });
-  window.setTimeout(stopAutoScroll, 1200);
 };
 
 useEffect(() => {
@@ -413,8 +393,6 @@ useEffect(() => {
         ref={headerRef}
         className="sticky top-0 z-50 shadow-[0_14px_45px_rgba(80,55,25,0.10)] backdrop-blur-md"
         style={{ borderBottom: `1px solid ${colorCardBorder}88`, background: `linear-gradient(to bottom, ${colorHeaderBg}d8, ${colorHeaderBg}f4)` }}
-        animate={{ y: headerVisible ? 0 : "-100%" }}
-        transition={{ duration: 0.28, ease: "easeInOut" }}
       >
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {/* Ligne haut */}
