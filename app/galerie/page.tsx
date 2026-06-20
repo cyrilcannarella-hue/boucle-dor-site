@@ -219,7 +219,7 @@ export default function GaleriePage() {
           <a
             href="/"
             className="btn-shimmer rounded-full px-5 py-2.5 text-sm font-semibold transition"
-            style={{ backgroundColor: colorAccents, color: contrastText(colorAccents), boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorAccents}80` }}
+            style={{ backgroundColor: colorAccents, color: contrastText(colorAccents), boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 28px 6px ${colorAccents}b3` }}
           >
             Accueil
           </a>
@@ -290,7 +290,7 @@ export default function GaleriePage() {
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                   className="btn-shimmer cursor-pointer rounded-full px-6 py-4 font-semibold transition"
-                  style={{ backgroundColor: colorAccents, color: contrastText(colorAccents), boxShadow: `0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -4px rgba(0,0,0,0.2), 0 0 18px ${colorAccents}80` }}
+                  style={{ backgroundColor: colorAccents, color: contrastText(colorAccents), boxShadow: `0 10px 15px -3px rgba(0,0,0,0.2), 0 4px 6px -4px rgba(0,0,0,0.2), 0 0 28px 6px ${colorAccents}b3` }}
                 >
                   Voir les photos ↓
                 </motion.button>

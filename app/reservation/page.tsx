@@ -1066,7 +1066,7 @@ export default function ReservationPage() {
             <Link
               href="/espace-client"
               className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold transition sm:inline-flex"
-              style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 18px ${colorButtons}80` }}
+              style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 28px 6px ${colorButtons}b3` }}
             >
               Mes réservations
             </Link>
@@ -1504,7 +1504,7 @@ export default function ReservationPage() {
                   type="submit"
                   disabled={saving}
                   className="rounded-full px-6 py-4 font-semibold transition hover:-translate-y-0.5 disabled:opacity-50"
-                  style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(30,20,10,0.18), 0 0 18px ${colorButtons}80` }}
+                  style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(30,20,10,0.18), 0 0 28px 6px ${colorButtons}b3` }}
                 >
                   {saving ? "Enregistrement..." : "Confirmer le rendez-vous"}
                 </button>
@@ -1585,7 +1585,7 @@ export default function ReservationPage() {
               <a
                 href="/"
                 className="rounded-full px-5 py-3 font-semibold transition hover:-translate-y-0.5"
-                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1), 0 0 18px ${colorButtons}80` }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1), 0 0 28px 6px ${colorButtons}b3` }}
               >
                 Retour à l’accueil
               </a>

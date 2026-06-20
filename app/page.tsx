@@ -418,7 +418,7 @@ useEffect(() => {
                 href="/espace-client"
                 whileHover={{ y: -2, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorButtons}80` }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 28px 6px ${colorButtons}b3` }}
                 className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold sm:block"
               >
                 Mes réservations
@@ -428,7 +428,7 @@ useEffect(() => {
                 whileTap={{ scale: 0.96 }}
                 animate={showReservationPulse ? { scale: [1, 1.05, 1] } : { scale: 1 }}
                 transition={showReservationPulse ? { repeat: Infinity, duration: 1.8, ease: "easeInOut" } : { duration: 0.3 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorButtons}80` }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 28px 6px ${colorButtons}b3` }}
                 className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold"
               >
                 Prendre RDV
@@ -444,7 +444,7 @@ useEffect(() => {
                 href="/espace-client"
                 whileHover={{ y: -2, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 18px ${colorButtons}80` }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 28px 6px ${colorButtons}b3` }}
                 className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold"
               >
                 Mes réservations
@@ -504,7 +504,7 @@ useEffect(() => {
                 whileTap={{ scale: 0.97 }}
                 animate={showReservationPulse ? { scale: [1, 1.05, 1] } : { scale: 1 }}
                 transition={showReservationPulse ? { repeat: Infinity, duration: 1.8, ease: "easeInOut" } : { duration: 0.3 }}
-                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 18px ${colorButtons}80` }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 28px 6px ${colorButtons}b3` }}
                 className="btn-shimmer rounded-full px-5 py-3 text-sm font-semibold transition"
               >
                 Prendre RDV
@@ -519,7 +519,7 @@ useEffect(() => {
               <a
                 href="/espace-client"
                 className="btn-shimmer rounded-full px-3 py-2 text-center font-semibold transition active:scale-95"
-                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 18px ${colorButtons}80` }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 28px 6px ${colorButtons}b3` }}
               >
                 Mes réservations
               </a>
@@ -601,7 +601,7 @@ useEffect(() => {
           initial="hidden"
           animate="visible"
           className="relative overflow-hidden rounded-[36px] border p-8 text-white"
-          style={{ background: colorHeroBg, borderColor: `${colorHeroAccent}80`, boxShadow: `0 24px 70px rgba(0,0,0,0.22), 0 0 28px ${colorHeroAccent}66` }}
+          style={{ background: colorHeroBg, borderColor: `${colorHeroAccent}80`, boxShadow: `0 24px 70px rgba(0,0,0,0.22), 0 0 40px 8px ${colorHeroAccent}99` }}
         >
           {salonSubtitle && (
             <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorHeroAccent }}>
@@ -644,7 +644,7 @@ useEffect(() => {
               <div
                 key={feat}
                 className="flex items-center justify-center gap-2 rounded-2xl border p-4 text-center"
-                style={{ borderColor: `${colorHeroAccent}80`, boxShadow: `0 0 14px ${colorHeroAccent}66` }}
+                style={{ borderColor: `${colorHeroAccent}80`, boxShadow: `0 0 22px 5px ${colorHeroAccent}99` }}
               >
                 <span>{feat}</span>
               </div>
@@ -841,7 +841,7 @@ useEffect(() => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}
+                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}
               >
                 <strong className="flex items-center gap-2">
                   Adresse
@@ -860,7 +860,7 @@ useEffect(() => {
               <a
                 href={formatPhoneHref(salonPhone)}
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}
+                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}
               >
                 <strong className="flex items-center gap-2">
                   Téléphone
@@ -876,7 +876,7 @@ useEffect(() => {
               <a
                 href={`mailto:${salonEmail}`}
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}
+                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}
               >
                 <strong className="flex items-center gap-2">
                   Email
@@ -890,7 +890,7 @@ useEffect(() => {
             )}
 
             {hasAnyOpenDay && (
-              <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 14px ${colorContactAccent}66` }}>
+              <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}>
                 <strong>Horaires</strong>
 
                 <div className="mt-3 grid gap-2 text-white/75">

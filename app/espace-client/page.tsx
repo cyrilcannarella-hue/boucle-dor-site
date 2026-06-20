@@ -742,7 +742,7 @@ export default function EspaceClientPage() {
             <Link
               href="/reservation"
               className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold transition sm:inline-flex"
-              style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 18px ${colorButtons}80` }}
+              style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 28px 6px ${colorButtons}b3` }}
             >
               Réserver
             </Link>
@@ -780,7 +780,7 @@ export default function EspaceClientPage() {
                 type="submit"
                 disabled={loading}
                 className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[var(--text-main)] to-[var(--gold)] px-5 py-3 font-semibold text-[var(--text-on-main)] transition hover:-translate-y-0.5 disabled:opacity-50"
-                style={{ boxShadow: `0 10px 24px rgba(60,40,20,0.16), 0 0 18px ${colorTextMain}80` }}
+                style={{ boxShadow: `0 10px 24px rgba(60,40,20,0.16), 0 0 28px 6px ${colorTextMain}b3` }}
               >
                 {loading ? "Recherche..." : "Retrouvez votre rendez-vous"}
               </button>
@@ -961,7 +961,7 @@ export default function EspaceClientPage() {
                         type="button"
                         onClick={() => setConfirmCancelId(appointment.id)}
                         className="min-h-[48px] rounded-full px-5 py-3 font-medium hover:opacity-90"
-                        style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 18px ${colorButtons}80` }}
+                        style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 28px 6px ${colorButtons}b3` }}
                       >
                         Annuler le rendez-vous
                       </button>
@@ -1098,7 +1098,7 @@ export default function EspaceClientPage() {
                   onClick={handleSaveEdit}
                   disabled={savingEdit}
                   className="min-h-[48px] rounded-full px-5 py-3 font-medium hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 18px ${colorButtons}80` }}
+                  style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 0 28px 6px ${colorButtons}b3` }}
                 >
                   {savingEdit
                     ? "Enregistrement..."
