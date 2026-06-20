@@ -12,33 +12,28 @@ export default function MagicCallbackPage() {
   useEffect(() => {
     const previewSalon = searchParams.get("preview_salon");
     const supabase = createClient();
-    let settled = false;
 
-    const proceed = async (session: unknown) => {
-      if (settled) return;
-      settled = true;
+    const proceed = async (hasSession: boolean) => {
       if (previewSalon) {
         await setPreviewSalonCookie(previewSalon);
       }
-      router.replace(session ? "/back-office" : "/login");
+      router.replace(hasSession ? "/back-office" : "/login");
     };
 
-    // detectSessionInUrl traite le hash #access_token=... de façon asynchrone :
-    // un getSession() immédiat peut arriver avant que la session soit posée.
-    // onAuthStateChange réagit dès qu'elle est prête ; le timeout sert de filet
-    // en cas d'absence de session (lien expiré, déjà utilisé, etc).
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) proceed(session);
-    });
+    // createBrowserClient (@supabase/ssr) ne traite pas automatiquement le
+    // hash #access_token=... d'un lien magique (contrairement au client
+    // supabase-js classique) — on extrait et pose la session nous-mêmes.
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
 
-    const fallback = setTimeout(() => {
-      supabase.auth.getSession().then(({ data: { session } }) => proceed(session));
-    }, 2000);
-
-    return () => {
-      subscription.subscription.unsubscribe();
-      clearTimeout(fallback);
-    };
+    if (accessToken && refreshToken) {
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ data: { session } }) => proceed(!!session));
+    } else {
+      supabase.auth.getSession().then(({ data: { session } }) => proceed(!!session));
+    }
   }, [router, searchParams]);
 
   return (
