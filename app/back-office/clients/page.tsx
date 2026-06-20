@@ -88,7 +88,6 @@ type SalonSettings = {
   salon_name?: string | null;
   logo_pro_image_url?: string | null;
   color_page_bg?: string | null;
-  color_titles?: string | null;
   color_header_bg?: string | null;
   color_text_main?: string | null;
   color_salon_name?: string | null;
@@ -209,7 +208,7 @@ export default function BackOfficeClientsPage() {
     loadClients();
     supabase
       .from("salon_settings")
-      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_salon_name, color_card_border, color_accents, color_nav_text, site_font, font_salon_name, bg_pattern")
+      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_header_bg, color_text_main, color_salon_name, color_card_border, color_accents, color_nav_text, site_font, font_salon_name, bg_pattern")
       .eq("salon_id", salonId)
       .limit(1)
       .maybeSingle()
@@ -568,7 +567,6 @@ export default function BackOfficeClientsPage() {
 
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
-  const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorSalonName = settings?.color_salon_name || colorTextMain;
@@ -577,11 +575,10 @@ export default function BackOfficeClientsPage() {
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
-  const titlesLumC = (() => { const h = colorTitles.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
   const accentsLumC = (() => { const h = colorAccents.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
-  const colorSelectedBg = titlesLumC <= 0.7 ? colorTitles : accentsLumC <= 0.7 ? colorAccents : "#1a1a2e";
+  const colorSelectedBg = accentsLumC <= 0.7 ? colorAccents : "#1a1a2e";
   const colorSelectedText = contrastText(colorSelectedBg);
-  const colorAvatarText = contrastText(titlesLumC >= accentsLumC ? colorTitles : colorAccents);
+  const colorAvatarText = contrastText(colorAccents);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
   return (
@@ -589,7 +586,7 @@ export default function BackOfficeClientsPage() {
       className="min-h-screen"
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
+      <style>{`:root { --gold: ${colorAccents}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
       <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <header
@@ -615,7 +612,7 @@ export default function BackOfficeClientsPage() {
             )}
 
             <div>
-              <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Back office
               </div>
               <div className="mt-0.5 text-xl font-semibold leading-none md:mt-1 md:text-3xl">
@@ -637,7 +634,7 @@ export default function BackOfficeClientsPage() {
         <aside className="space-y-4 md:space-y-5">
           <div className="overflow-hidden rounded-[24px] border border-[var(--card-border)]/90 bg-white/75 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur md:rounded-[30px]">
             <div className="p-4 md:p-6">
-              <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Fiches clients
               </div>
               <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Clients</h1>
@@ -699,7 +696,7 @@ export default function BackOfficeClientsPage() {
         <section className="rounded-[24px] border border-[var(--card-border)]/90 bg-white/75 p-4 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur md:rounded-[30px] md:p-6 md:p-7">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3 md:mb-6">
             <div>
-              <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>Base clients</div>
+              <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>Base clients</div>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight md:mt-2 md:text-3xl">Toutes les fiches</h2>
             </div>
 

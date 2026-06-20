@@ -51,7 +51,6 @@ type SalonSettings = {
   site_reviews?: Array<{ name: string; text: string }> | null;
   gallery_enabled?: boolean | null;
   site_gallery?: { title: string; text: string; photos: Array<{ url: string; caption: string }> } | null;
-  color_titles?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
   color_page_bg?: string | null;
@@ -61,7 +60,6 @@ type SalonSettings = {
   color_header_bg?: string | null;
   color_card_border?: string | null;
   color_nav_text?: string | null;
-  color_gradient_end?: string | null;
   color_badges?: string | null;
   color_contact_accent?: string | null;
   color_subtitles?: string | null;
@@ -306,7 +304,6 @@ useEffect(() => {
   const colorPrestationsAccent = settings?.color_prestations_accent || settings?.color_badges || "#1a1a2e";
   const colorAproposAccent = settings?.color_apropos_accent || settings?.color_badges || "#1a1a2e";
   const colorAvisAccent = settings?.color_avis_accent || settings?.color_badges || "#1a1a2e";
-  const colorSubtitlesLight = settings?.color_subtitles || settings?.color_text_secondary || "#6b7280";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorButtons = settings?.color_accents || "#4f46e5";
   const colorButtonsText = contrastText(colorButtons);
@@ -334,7 +331,6 @@ useEffect(() => {
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorFooterText = settings?.color_text_secondary || "#6b7280";
-  const colorGradientEnd = settings?.color_gradient_end || "#4f46e5";
   const promoGradientFrom = settings?.promo_color_from || "#4f46e5";
   const promoGradientTo = settings?.promo_color_to || "#1a1a2e";
   const promoBgColor = settings?.promo_bg_color || colorContactBg;
@@ -368,7 +364,6 @@ useEffect(() => {
           --card-border: ${colorCardBorder};
           --nav-text: ${colorNavText};
           --footer-text: ${colorFooterText};
-          --gradient-end: ${colorGradientEnd};
           --accent-rgb: ${hexToRgb(colorAccents)};
         }
       `}</style>
@@ -431,7 +426,7 @@ useEffect(() => {
                     <SalonNamePremium name={salonName} compact goldColor={colorSalonName} />
                   </span>
                 </div>
-                <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] sm:block" style={{ color: colorSubtitlesLight }}>
+                <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] sm:block" style={{ color: colorTextSecondary }}>
                   {salonSubtitle}
                 </div>
               </div>
@@ -487,20 +482,20 @@ useEffect(() => {
                   <button
                     key={label}
                     onClick={() => scrollToSection(id)}
-                    className="group relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gradient-end)]"
+                    className="group relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gold)]"
                   >
                     {label}
-                    <span className="absolute inset-x-4 -bottom-0.5 h-px scale-x-0 rounded-full bg-gradient-to-r from-[var(--gold)] via-[var(--gold-light)] to-[var(--gradient-end)] transition-transform duration-300 group-hover:scale-x-100" />
+                    <span className="absolute inset-x-4 -bottom-0.5 h-px scale-x-0 rounded-full bg-gradient-to-r from-[var(--gold)] via-[var(--gold-light)] to-[var(--gold)] transition-transform duration-300 group-hover:scale-x-100" />
                   </button>
                 ))}
 
                 {galleryEnabled && (
                   <a
                     href="/galerie"
-                    className="group relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gradient-end)]"
+                    className="group relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gold)]"
                   >
                     Galerie
-                    <span className="absolute inset-x-4 -bottom-0.5 h-px scale-x-0 rounded-full bg-gradient-to-r from-[var(--gold)] via-[var(--gold-light)] to-[var(--gradient-end)] transition-transform duration-300 group-hover:scale-x-100" />
+                    <span className="absolute inset-x-4 -bottom-0.5 h-px scale-x-0 rounded-full bg-gradient-to-r from-[var(--gold)] via-[var(--gold-light)] to-[var(--gold)] transition-transform duration-300 group-hover:scale-x-100" />
                   </a>
                 )}
 
@@ -509,7 +504,7 @@ useEffect(() => {
                     href={instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gradient-end)]"
+                    className="group relative flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition duration-300 hover:bg-white/70 hover:text-[var(--gold)]"
                     aria-label="Instagram"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
@@ -955,7 +950,7 @@ useEffect(() => {
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs text-[var(--footer-text)] transition hover:text-[var(--gradient-end)]"
+              className="flex items-center gap-1.5 text-xs text-[var(--footer-text)] transition hover:text-[var(--gold)]"
               aria-label="Instagram"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">

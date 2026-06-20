@@ -129,7 +129,6 @@ type SalonSettings = {
   promo_color_from?: string | null;
   promo_color_to?: string | null;
   promo_text_color?: string | null;
-  color_titles?: string | null;
   color_badges?: string | null;
   color_contact_accent?: string | null;
   color_subtitles?: string | null;
@@ -141,7 +140,6 @@ type SalonSettings = {
   color_header_bg?: string | null;
   color_card_border?: string | null;
   color_nav_text?: string | null;
-  color_gradient_end?: string | null;
   color_hero_bg?: string | null;
   color_hero_accent?: string | null;
   color_hero_badge?: string | null;
@@ -415,7 +413,6 @@ export default function BackOfficeGestionPage() {
   const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
   const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState<string | null>(null);
 
-  const [appearanceTitles, setAppearanceTitles] = useState("");
   const [appearanceBadges, setAppearanceBadges] = useState("");
   const [appearanceContactAccent, setAppearanceContactAccent] = useState("");
   const [appearanceSubtitles, setAppearanceSubtitles] = useState("");
@@ -613,7 +610,6 @@ export default function BackOfficeGestionPage() {
         while (padded.length < 12) padded.push({ url: "", caption: "" });
         setGalleryPhotos(padded);
       }
-      setAppearanceTitles(loadedSettings?.color_titles ?? "");
       setAppearanceBadges(loadedSettings?.color_badges ?? "");
       setAppearanceContactAccent(loadedSettings?.color_contact_accent ?? loadedSettings?.color_badges ?? "");
       setAppearanceSubtitles(loadedSettings?.color_subtitles ?? "");
@@ -1536,7 +1532,6 @@ export default function BackOfficeGestionPage() {
       const { error } = await supabase
         .from("salon_settings")
         .update({
-          color_titles: appearanceTitles,
           color_accents: appearanceAccents,
           color_contact_bg: appearanceContactBg,
           color_page_bg: appearancePageBg,
@@ -1545,7 +1540,6 @@ export default function BackOfficeGestionPage() {
           color_header_bg: appearancePageBg,
           color_card_border: deriveBorderColor(appearancePageBg),
           color_nav_text: appearanceTextMain,
-          color_gradient_end: appearanceTitles,
           color_badges: appearanceBadges || null,
           color_contact_accent: appearanceContactAccent || null,
           color_subtitles: appearanceSubtitles || null,
@@ -1572,7 +1566,6 @@ export default function BackOfficeGestionPage() {
       if (error) throw new Error(error.message);
       setSettings((prev) => prev ? {
         ...prev,
-        color_titles: appearanceTitles,
         color_accents: appearanceAccents,
         color_contact_bg: appearanceContactBg,
         color_page_bg: appearancePageBg,
@@ -1584,7 +1577,6 @@ export default function BackOfficeGestionPage() {
         color_badges: appearanceBadges || null,
         color_contact_accent: appearanceContactAccent || null,
         color_subtitles: appearanceSubtitles || null,
-        color_gradient_end: appearanceTitles,
         color_hero_bg: appearanceHeroBg || null,
         color_hero_accent: appearanceHeroAccent || null,
         color_hero_badge: appearanceHeroBadge || null,
@@ -1700,7 +1692,6 @@ export default function BackOfficeGestionPage() {
 
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
-  const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorSalonName = settings?.color_salon_name || colorTextMain;
@@ -1709,9 +1700,8 @@ export default function BackOfficeGestionPage() {
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
-  const titlesLumG = (() => { const h = colorTitles.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
   const accentsLumG = (() => { const h = colorAccents.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
-  const colorSelectedBg = titlesLumG <= 0.7 ? colorTitles : accentsLumG <= 0.7 ? colorAccents : "#1a1a2e";
+  const colorSelectedBg = accentsLumG <= 0.7 ? colorAccents : "#1a1a2e";
   const colorSelectedText = contrastText(colorSelectedBg);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");
 
@@ -1720,7 +1710,7 @@ export default function BackOfficeGestionPage() {
       className="min-h-screen"
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${hexToRgb(colorAccents)},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
+      <style>{`:root { --gold: ${colorAccents}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
       <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <header
@@ -1746,7 +1736,7 @@ export default function BackOfficeGestionPage() {
             )}
 
             <div>
-              <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Back office
               </div>
               <div className="mt-0.5 text-xl font-semibold leading-none md:mt-1 md:text-3xl">
@@ -3807,6 +3797,7 @@ export default function BackOfficeGestionPage() {
                               { key: "pagebg", label: "Fond de page", desc: "Arrière-plan général, header, footer et bordures des cartes", value: appearancePageBg, setter: setAppearancePageBg },
                               { key: "textmain", label: "Texte principal", desc: "Navigation, boutons et titres des cartes Prestations et À propos", value: appearanceTextMain, setter: setAppearanceTextMain },
                               { key: "textsecondary", label: "Texte descriptif", desc: "Paragraphes, descriptions des prestations, texte des avis, horaires", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
+                              { key: "accents", label: "Bouton", desc: "Boutons sur tout le site", value: appearanceAccents, setter: setAppearanceAccents },
                             ],
                           },
                           {
@@ -3848,19 +3839,6 @@ export default function BackOfficeGestionPage() {
                             items: [
                               { key: "contactbg", label: "Fond de la section", desc: "Fond de la section Contact en bas de page", value: appearanceContactBg, setter: setAppearanceContactBg },
                               { key: "contactaccent", label: "Badge", desc: "Pastille \"Contact\" et lueur des cartes (adresse, téléphone, email, horaires)", value: appearanceContactAccent, setter: setAppearanceContactAccent },
-                            ],
-                          },
-                          {
-                            title: "Titres & sous-titres",
-                            items: [
-                              { key: "titles", label: "Liens & dégradés", desc: "Survol des liens du menu et du footer ; fin du dégradé du texte et des légendes sur la page Galerie", value: appearanceTitles, setter: setAppearanceTitles },
-                              { key: "subtitles", label: "Sous-titres du hero", desc: "Phrase d'accroche, description et points forts sous le nom du salon", value: appearanceSubtitles, setter: setAppearanceSubtitles },
-                            ],
-                          },
-                          {
-                            title: "Boutons & accents",
-                            items: [
-                              { key: "accents", label: "Couleur secondaire", desc: "Boutons, dégradés et accents décoratifs sur tout le site", value: appearanceAccents, setter: setAppearanceAccents },
                             ],
                           },
                         ] as { title: string; items: { key: string; label: string; desc: string; value: string; setter: (v: string) => void }[] }[]

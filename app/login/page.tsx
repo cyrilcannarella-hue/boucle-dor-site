@@ -10,7 +10,6 @@ import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 type SalonSettings = {
   id: string;
   color_page_bg?: string | null;
-  color_titles?: string | null;
   color_header_bg?: string | null;
   color_text_main?: string | null;
   color_card_border?: string | null;
@@ -53,7 +52,7 @@ export default function LoginPage() {
   useEffect(() => {
     supabase
       .from("salon_settings")
-      .select("id,color_page_bg,color_titles,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg,color_hero_bg,site_font,font_salon_name")
+      .select("id,color_page_bg,color_header_bg,color_text_main,color_card_border,color_accents,color_nav_text,color_contact_bg,color_hero_bg,site_font,font_salon_name")
       .eq("salon_id", salonId)
       .single()
       .then(({ data }) => { if (data) setSettings(data as SalonSettings); });
@@ -77,7 +76,6 @@ export default function LoginPage() {
 
   const colorPageBg = settings?.color_hero_bg || settings?.color_contact_bg || settings?.color_page_bg || "#111827";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
-  const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorAccents = settings?.color_accents || "#4f46e5";
@@ -96,7 +94,7 @@ export default function LoginPage() {
         >
           <div
             className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]"
-            style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}
+            style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}
           >
             Espace salon
           </div>

@@ -13,7 +13,6 @@ type SalonSettings = {
   salon_name: string;
   salon_subtitle?: string | null;
   logo_image_url?: string | null;
-  color_titles?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
   color_page_bg?: string | null;
@@ -23,8 +22,6 @@ type SalonSettings = {
   color_header_bg?: string | null;
   color_card_border?: string | null;
   color_nav_text?: string | null;
-  color_gradient_end?: string | null;
-  color_badges?: string | null;
   color_subtitles?: string | null;
   color_hero_bg?: string | null;
   site_font?: string | null;
@@ -132,7 +129,6 @@ export default function GaleriePage() {
 
   if (loading || !settings?.gallery_enabled) return null;
 
-  const colorTitles = settings.color_titles || "#1a1a2e";
   const colorAccents = settings.color_accents || "#4f46e5";
   const colorContactBg = settings.color_contact_bg || "#111827";
   const colorHeroBg = settings.color_hero_bg || settings.color_contact_bg || "#111827";
@@ -145,9 +141,7 @@ export default function GaleriePage() {
   const colorHeaderBg = settings.color_header_bg || "#ffffff";
   const colorCardBorder = settings.color_card_border || "#e5e7eb";
   const colorNavText = settings.color_nav_text || "#111827";
-  const colorGradientEnd = settings.color_gradient_end || "#4f46e5";
   const colorSubtitles = settings.color_subtitles || colorTextSecondary;
-  const colorBadges = settings.color_badges || colorTitles;
   const salonName = settings.salon_name || "Votre salon";
   const logoUrl = settings.logo_image_url || null;
   const gallery = settings.site_gallery;
@@ -155,9 +149,8 @@ export default function GaleriePage() {
 
   const cssVars = `
     :root {
-      --gold: ${colorTitles};
+      --gold: ${colorAccents};
       --gold-light: ${colorAccents};
-      --gradient-end: ${colorGradientEnd};
       --nav-text: ${colorNavText};
       --text-main: ${colorTextMain};
       --text-secondary: ${colorTextSecondary};
@@ -273,8 +266,8 @@ export default function GaleriePage() {
               <p className="relative z-10 max-w-2xl text-base font-medium leading-relaxed">
                 <span className="invisible">{gallery.text}</span>
                 <span
-                  className="absolute inset-0 bg-clip-text text-transparent [backface-visibility:hidden]"
-                  style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitles || colorPageBg}, ${colorAccents}, ${colorGradientEnd})` }}
+                  className="absolute inset-0 [backface-visibility:hidden]"
+                  style={{ color: colorSubtitles || colorPageBg }}
                 >
                   {typedText}
                   {typedText.length < gallery.text.length && (
@@ -350,8 +343,8 @@ export default function GaleriePage() {
                     style={{ background: `linear-gradient(to right, ${colorAccents}, transparent)` }}
                   />
                   <p
-                    className="relative z-10 text-base font-medium leading-[1.8] bg-clip-text text-transparent [backface-visibility:hidden]"
-                    style={{ backgroundImage: `linear-gradient(to right, ${colorTitles}, ${colorAccents}, ${colorGradientEnd})` }}
+                    className="relative z-10 text-base font-medium leading-[1.8] [backface-visibility:hidden]"
+                    style={{ color: colorTextMain }}
                   >
                     {photo.caption || ""}
                   </p>

@@ -72,7 +72,6 @@ type SalonSettings = {
   is_open_sunday: boolean;
   phone?: string | null;
   color_page_bg?: string | null;
-  color_titles?: string | null;
   color_header_bg?: string | null;
   color_text_main?: string | null;
   color_salon_name?: string | null;
@@ -675,7 +674,6 @@ export default function EspaceClientPage() {
   const colorButtonsText = contrastText(colorButtons);
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
-  const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorSalonName = settings?.color_salon_name || colorTextMain;
@@ -695,7 +693,7 @@ export default function EspaceClientPage() {
       <SitePattern pattern={settings?.bg_pattern} />
       <style>{`
         :root {
-          --gold: ${colorTitles};
+          --gold: ${colorAccents};
           --text-secondary: ${colorTextSecondary};
           --card-border: ${colorCardBorder};
           --nav-text: ${colorNavText};
@@ -755,7 +753,7 @@ export default function EspaceClientPage() {
       <section className="mx-auto grid w-[min(1200px,calc(100%-20px))] gap-4 py-4 sm:w-[min(1200px,calc(100%-28px))] sm:gap-6 sm:py-10 lg:grid-cols-[0.78fr_1.22fr]">
         <aside className="contents lg:grid lg:gap-5">
           <div className="order-1 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
-            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Recherche
             </div>
             <h2 className="text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-3xl">
@@ -796,7 +794,7 @@ export default function EspaceClientPage() {
           </div>
 
           <div className="order-3 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
-            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Information
             </div>
             <h2 className="text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-3xl">
@@ -826,7 +824,7 @@ export default function EspaceClientPage() {
         <section className="order-2 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
-              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Résultats
               </div>
               <h2 className="text-[1.55rem] font-semibold leading-tight tracking-tight sm:text-3xl">
@@ -980,7 +978,7 @@ export default function EspaceClientPage() {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-3 sm:p-5 backdrop-blur-sm">
           <div className="flex min-h-full items-center justify-center">
             <div className="w-full max-w-4xl rounded-[24px] border border-white/50 bg-white/90 p-4 sm:rounded-[30px] sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.14)] backdrop-blur-xl">
-              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Modifier le rendez-vous
               </div>
               <h2 className="text-2xl leading-tight sm:text-4xl">

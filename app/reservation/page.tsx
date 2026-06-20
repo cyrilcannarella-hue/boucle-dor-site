@@ -88,7 +88,6 @@ type SalonSettings = {
   closing_time_sunday?: string | null;
   color_page_bg?: string | null;
   color_contact_bg?: string | null;
-  color_titles?: string | null;
   color_header_bg?: string | null;
   color_text_main?: string | null;
   color_salon_name?: string | null;
@@ -998,7 +997,6 @@ export default function ReservationPage() {
   const colorButtonsText = contrastText(colorButtons);
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
-  const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorSalonName = settings?.color_salon_name || colorTextMain;
@@ -1018,7 +1016,7 @@ export default function ReservationPage() {
       <SitePattern pattern={settings?.bg_pattern} />
       <style>{`
         :root {
-          --gold: ${colorTitles};
+          --gold: ${colorAccents};
           --text-secondary: ${colorTextSecondary};
           --card-border: ${colorCardBorder};
           --nav-text: ${colorNavText};
@@ -1080,7 +1078,7 @@ export default function ReservationPage() {
 
         {/* Catégories */}
         <section className="rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
-          <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+          <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
             1 • Catégorie
           </div>
           <h2 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -1110,7 +1108,7 @@ export default function ReservationPage() {
         <div className="grid gap-5">
           <section ref={serviceSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
             <div className="mb-4">
-              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 2 • Prestations
               </div>
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -1183,7 +1181,7 @@ export default function ReservationPage() {
           {staff.length > 1 && (
             <section ref={staffSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
               <div className="mb-5">
-                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                   3 • Prestataire
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -1237,7 +1235,7 @@ export default function ReservationPage() {
           <section ref={dateSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                   {staff.length > 1 ? "4 • Date" : "3 • Date"}
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -1345,7 +1343,7 @@ export default function ReservationPage() {
           <section ref={slotSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                   {staff.length > 1 ? "5 • Créneau" : "4 • Créneau"}
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -1384,7 +1382,7 @@ export default function ReservationPage() {
           <section ref={contactSectionRef} className="scroll-mt-28 rounded-[30px] border border-white/60 bg-white/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <div className="mb-2 inline-flex whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+                <div className="mb-2 inline-flex whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                   {staff.length > 1 ? "6 • Coordonnées" : "5 • Coordonnées"}
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -1519,7 +1517,7 @@ export default function ReservationPage() {
       {showConfirmation && selectedService ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/45 p-5 backdrop-blur-md sm:items-center">
           <div className="my-auto w-full max-w-3xl rounded-[32px] border border-white/60 bg-[var(--page-bg)]/95 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.16)] backdrop-blur-xl sm:p-8">
-            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Rendez-vous confirmé
             </div>
             <h2 className="text-4xl">

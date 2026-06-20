@@ -127,7 +127,6 @@ type SalonSettings = {
   closing_time_sunday?: string | null;
   logo_pro_image_url?: string | null;
   color_page_bg?: string | null;
-  color_titles?: string | null;
   color_header_bg?: string | null;
   color_text_main?: string | null;
   color_salon_name?: string | null;
@@ -1838,7 +1837,6 @@ export default function BackOfficePage() {
   };
 
   const colorPageBg = settings?.color_page_bg || "#ffffff";
-  const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
   const colorSalonName = settings?.color_salon_name || colorTextMain;
@@ -1851,9 +1849,8 @@ export default function BackOfficePage() {
 
   const accentRgb = hexToRgb(colorAccents);
   const accentRgbStr = accentRgb ? `${accentRgb.r},${accentRgb.g},${accentRgb.b}` : "216,166,70";
-  const titlesRgb = hexToRgb(colorTitles);
-  const titlesLum = titlesRgb ? (0.299 * titlesRgb.r + 0.587 * titlesRgb.g + 0.114 * titlesRgb.b) / 255 : 0;
-  const colorSelectedBg = titlesLum > 0.7 ? (accentRgb && (0.299 * accentRgb.r + 0.587 * accentRgb.g + 0.114 * accentRgb.b) / 255 < 0.7 ? colorAccents : "#1a1a2e") : colorTitles;
+  const accentLum = accentRgb ? (0.299 * accentRgb.r + 0.587 * accentRgb.g + 0.114 * accentRgb.b) / 255 : 0;
+  const colorSelectedBg = accentLum <= 0.7 ? colorAccents : "#1a1a2e";
   const colorSelectedText = contrastText(colorSelectedBg);
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
 
@@ -1862,7 +1859,7 @@ export default function BackOfficePage() {
       className="min-h-screen"
       style={{ color: colorTextMain, background: `${bgPatternLayer ? bgPatternLayer + "," : ""}radial-gradient(circle at top left, rgba(${accentRgbStr},0.10), transparent 34%), ${colorPageBg}` }}
     >
-      <style>{`:root { --gold: ${colorTitles}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
+      <style>{`:root { --gold: ${colorAccents}; --card-border: ${colorCardBorder}; --nav-text: ${colorNavText}; --text-main: ${colorTextMain}; --page-bg: ${colorPageBg}; --accents: ${colorAccents}; --panel-bg: ${colorPanelBg}; --panel-bg-secondary: ${colorPanelBgSecondary}; --selected-bg: ${colorSelectedBg}; --selected-text: ${colorSelectedText}; }`}</style>
       <SiteFont font={settings?.site_font} salonNameFont={settings?.font_salon_name} />
       <SitePattern pattern={settings?.bg_pattern} />
       <header
@@ -1888,7 +1885,7 @@ export default function BackOfficePage() {
             )}
 
             <div>
-              <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] md:text-[11px]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Back office
               </div>
               <div className="mt-0.5 text-xl font-semibold leading-none md:mt-1 md:text-3xl">
@@ -1936,7 +1933,7 @@ export default function BackOfficePage() {
         <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[310px_1fr] lg:items-start">
         <aside className="order-1 flex flex-col gap-4 lg:order-none md:gap-6 lg:sticky lg:top-5">
         <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
-            <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+            <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Navigation
             </div>
 
@@ -2023,7 +2020,7 @@ export default function BackOfficePage() {
 
             {staff.length > 0 && (
               <div className="mt-4">
-                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>Prestataire</div>
+                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>Prestataire</div>
                 <div className="flex flex-wrap gap-2">
                   {staff.map((member) => (
                     <button
@@ -2048,7 +2045,7 @@ export default function BackOfficePage() {
         </div>
 
         <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
-            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Action
             </div>
             <h2 className="text-3xl">Ajout rapide</h2>
@@ -2068,7 +2065,7 @@ export default function BackOfficePage() {
         </div>
 
         <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
-            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Résumé
             </div>
             <h2 className="text-3xl">RDV du jour</h2>
@@ -2092,7 +2089,7 @@ export default function BackOfficePage() {
         <section className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorTitles, borderColor: `${colorTitles}40`, backgroundColor: `${colorTitles}12` }}>
+              <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Agenda
               </div>
               {agendaView === "day" ? (
