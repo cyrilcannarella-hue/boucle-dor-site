@@ -61,24 +61,19 @@ type SalonSettings = {
   color_card_border?: string | null;
   color_nav_text?: string | null;
   color_badges?: string | null;
-  color_contact_accent?: string | null;
   color_subtitles?: string | null;
   color_hero_bg?: string | null;
   color_hero_accent?: string | null;
-  color_hero_badge?: string | null;
   color_hero_title?: string | null;
   color_hero_subtitle?: string | null;
   color_hero_text?: string | null;
   color_hero_feature?: string | null;
   color_prestations_accent?: string | null;
   color_prestations_bg?: string | null;
-  color_prestations_badge?: string | null;
   color_prestations_price?: string | null;
-  color_apropos_accent?: string | null;
   color_apropos_bg?: string | null;
   color_avis_accent?: string | null;
   color_avis_bg?: string | null;
-  color_avis_badge?: string | null;
   color_avis_name?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
@@ -299,16 +294,14 @@ useEffect(() => {
   const logoImageUrl = settings?.logo_image_url || null;
   const heroImageUrl = settings?.hero_image_url || null;
   const aproposImageUrl = settings?.apropos_image_url || null;
-  const colorContactAccent = settings?.color_contact_accent || settings?.color_badges || "#1a1a2e";
-  const colorHeroAccent = settings?.color_hero_accent || settings?.color_badges || "#1a1a2e";
-  const colorPrestationsAccent = settings?.color_prestations_accent || settings?.color_badges || "#1a1a2e";
-  const colorAproposAccent = settings?.color_apropos_accent || settings?.color_badges || "#1a1a2e";
-  const colorAvisAccent = settings?.color_avis_accent || settings?.color_badges || "#1a1a2e";
+  const colorBadge = settings?.color_badges || "#1a1a2e";
+  const colorHeroAccent = settings?.color_hero_accent || colorBadge;
+  const colorPrestationsAccent = settings?.color_prestations_accent || colorBadge;
+  const colorAvisAccent = settings?.color_avis_accent || colorBadge;
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorButtons = settings?.color_accents || "#4f46e5";
   const colorButtonsText = contrastText(colorButtons);
   const colorHeroBg = settings?.color_hero_bg || settings?.color_contact_bg || "#111827";
-  const colorHeroBadge = settings?.color_hero_badge || colorHeroAccent;
   const colorHeroTitle = settings?.color_hero_title || contrastText(colorHeroBg);
   const colorHeroSubtitle = settings?.color_hero_subtitle || settings?.color_subtitles || contrastText(colorHeroBg);
   const colorHeroText = settings?.color_hero_text || settings?.color_subtitles || settings?.color_page_bg || "#ffffff";
@@ -317,11 +310,9 @@ useEffect(() => {
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const colorPrestationsBg = settings?.color_prestations_bg || colorPanelBg;
-  const colorPrestationsBadge = settings?.color_prestations_badge || colorPrestationsAccent;
   const colorPrestationsPrice = settings?.color_prestations_price || colorPrestationsAccent;
   const colorAproposBg = settings?.color_apropos_bg || colorPanelBg;
   const colorAvisBg = settings?.color_avis_bg || colorPanelBg;
-  const colorAvisBadge = settings?.color_avis_badge || colorAvisAccent;
   const colorAvisName = settings?.color_avis_name || colorAvisAccent;
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTextMain = settings?.color_text_main || "#111827";
@@ -624,7 +615,7 @@ useEffect(() => {
           style={{ background: colorHeroBg }}
         >
           {salonSubtitle && (
-            <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorHeroBadge }}>
+            <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorBadge }}>
               {salonSubtitle}
             </motion.div>
           )}
@@ -698,7 +689,7 @@ useEffect(() => {
         className="mx-auto w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 py-10"
       >
         <div className="mb-6">
-          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorPrestationsBadge, borderColor: `${colorPrestationsBadge}40`, backgroundColor: colorPanelBg }}>
+          <div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}>
             Prestations
           </div>
         </div>
@@ -783,7 +774,7 @@ useEffect(() => {
           className="rounded-[28px] border border-[var(--card-border)] p-6 shadow-sm"
           style={{ backgroundColor: colorAproposBg }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAproposAccent, borderColor: `${colorAproposAccent}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}>
             À propos
           </div>
           <h2 className="text-4xl" style={{ color: colorTextMain }}>{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
@@ -813,7 +804,7 @@ useEffect(() => {
       {reviews.length > 0 && (
       <section className="mx-auto w-[min(1200px,calc(100%-32px))] py-10">
         <div className="mb-6">
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAvisBadge, borderColor: `${colorAvisBadge}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}>
             Avis clients
           </div>
         </div>
@@ -827,7 +818,7 @@ useEffect(() => {
                 style={{ backgroundColor: colorAvisBg }}
               >
                 <p style={{ color: colorTextSecondary }}>
-                  <span style={{ color: colorAvisBadge }}>"</span>{review.text}<span style={{ color: colorAvisBadge }}>"</span>
+                  <span style={{ color: colorBadge }}>"</span>{review.text}<span style={{ color: colorBadge }}>"</span>
                 </p>
                 <div className="mt-auto pt-5 font-semibold" style={{ color: colorAvisName }}>{review.name}</div>
               </article>
@@ -850,7 +841,7 @@ useEffect(() => {
           className="rounded-[30px] p-8"
           style={{ background: colorContactBg, color: colorTextSecondary }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorContactAccent, borderColor: `${colorContactAccent}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}>
             Contact
           </div>
 
@@ -861,7 +852,7 @@ useEffect(() => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}
+                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}
               >
                 <strong className="flex items-center gap-2">
                   Adresse
@@ -880,7 +871,7 @@ useEffect(() => {
               <a
                 href={formatPhoneHref(salonPhone)}
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}
+                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}
               >
                 <strong className="flex items-center gap-2">
                   Téléphone
@@ -896,7 +887,7 @@ useEffect(() => {
               <a
                 href={`mailto:${salonEmail}`}
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}
+                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}
               >
                 <strong className="flex items-center gap-2">
                   Email
@@ -910,7 +901,7 @@ useEffect(() => {
             )}
 
             {hasAnyOpenDay && (
-              <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}>
+              <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}>
                 <strong>Horaires</strong>
 
                 <div className="mt-3 grid gap-2">

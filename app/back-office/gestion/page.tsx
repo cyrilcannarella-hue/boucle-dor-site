@@ -130,7 +130,6 @@ type SalonSettings = {
   promo_color_to?: string | null;
   promo_text_color?: string | null;
   color_badges?: string | null;
-  color_contact_accent?: string | null;
   color_subtitles?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
@@ -142,20 +141,16 @@ type SalonSettings = {
   color_nav_text?: string | null;
   color_hero_bg?: string | null;
   color_hero_accent?: string | null;
-  color_hero_badge?: string | null;
   color_hero_title?: string | null;
   color_hero_subtitle?: string | null;
   color_hero_text?: string | null;
   color_hero_feature?: string | null;
   color_prestations_accent?: string | null;
   color_prestations_bg?: string | null;
-  color_prestations_badge?: string | null;
   color_prestations_price?: string | null;
-  color_apropos_accent?: string | null;
   color_apropos_bg?: string | null;
   color_avis_accent?: string | null;
   color_avis_bg?: string | null;
-  color_avis_badge?: string | null;
   color_avis_name?: string | null;
   color_salon_name?: string | null;
   site_font?: string | null;
@@ -414,7 +409,6 @@ export default function BackOfficeGestionPage() {
   const [confirmDeleteQuestionId, setConfirmDeleteQuestionId] = useState<string | null>(null);
 
   const [appearanceBadges, setAppearanceBadges] = useState("");
-  const [appearanceContactAccent, setAppearanceContactAccent] = useState("");
   const [appearanceSubtitles, setAppearanceSubtitles] = useState("");
   const [appearanceAccents, setAppearanceAccents] = useState("");
   const [appearanceContactBg, setAppearanceContactBg] = useState("");
@@ -423,20 +417,16 @@ export default function BackOfficeGestionPage() {
   const [appearanceTextSecondary, setAppearanceTextSecondary] = useState("");
   const [appearanceHeroBg, setAppearanceHeroBg] = useState("");
   const [appearanceHeroAccent, setAppearanceHeroAccent] = useState("");
-  const [appearanceHeroBadge, setAppearanceHeroBadge] = useState("");
   const [appearanceHeroTitle, setAppearanceHeroTitle] = useState("");
   const [appearanceHeroSubtitle, setAppearanceHeroSubtitle] = useState("");
   const [appearanceHeroText, setAppearanceHeroText] = useState("");
   const [appearanceHeroFeature, setAppearanceHeroFeature] = useState("");
   const [appearancePrestationsAccent, setAppearancePrestationsAccent] = useState("");
   const [appearancePrestationsBg, setAppearancePrestationsBg] = useState("");
-  const [appearancePrestationsBadge, setAppearancePrestationsBadge] = useState("");
   const [appearancePrestationsPrice, setAppearancePrestationsPrice] = useState("");
-  const [appearanceAproposAccent, setAppearanceAproposAccent] = useState("");
   const [appearanceAproposBg, setAppearanceAproposBg] = useState("");
   const [appearanceAvisAccent, setAppearanceAvisAccent] = useState("");
   const [appearanceAvisBg, setAppearanceAvisBg] = useState("");
-  const [appearanceAvisBadge, setAppearanceAvisBadge] = useState("");
   const [appearanceAvisName, setAppearanceAvisName] = useState("");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("");
@@ -611,7 +601,6 @@ export default function BackOfficeGestionPage() {
         setGalleryPhotos(padded);
       }
       setAppearanceBadges(loadedSettings?.color_badges ?? "");
-      setAppearanceContactAccent(loadedSettings?.color_contact_accent ?? loadedSettings?.color_badges ?? "");
       setAppearanceSubtitles(loadedSettings?.color_subtitles ?? "");
       setAppearanceAccents(loadedSettings?.color_accents ?? "");
       setAppearanceContactBg(loadedSettings?.color_contact_bg ?? "");
@@ -620,20 +609,16 @@ export default function BackOfficeGestionPage() {
       setAppearanceTextSecondary(loadedSettings?.color_text_secondary ?? "");
       setAppearanceHeroBg(loadedSettings?.color_hero_bg ?? loadedSettings?.color_contact_bg ?? "");
       setAppearanceHeroAccent(loadedSettings?.color_hero_accent ?? loadedSettings?.color_badges ?? "");
-      setAppearanceHeroBadge(loadedSettings?.color_hero_badge ?? "");
       setAppearanceHeroTitle(loadedSettings?.color_hero_title ?? "");
       setAppearanceHeroSubtitle(loadedSettings?.color_hero_subtitle ?? "");
       setAppearanceHeroText(loadedSettings?.color_hero_text ?? "");
       setAppearanceHeroFeature(loadedSettings?.color_hero_feature ?? "");
       setAppearancePrestationsAccent(loadedSettings?.color_prestations_accent ?? loadedSettings?.color_badges ?? "");
       setAppearancePrestationsBg(loadedSettings?.color_prestations_bg ?? "");
-      setAppearancePrestationsBadge(loadedSettings?.color_prestations_badge ?? "");
       setAppearancePrestationsPrice(loadedSettings?.color_prestations_price ?? "");
-      setAppearanceAproposAccent(loadedSettings?.color_apropos_accent ?? loadedSettings?.color_badges ?? "");
       setAppearanceAproposBg(loadedSettings?.color_apropos_bg ?? "");
       setAppearanceAvisAccent(loadedSettings?.color_avis_accent ?? loadedSettings?.color_badges ?? "");
       setAppearanceAvisBg(loadedSettings?.color_avis_bg ?? "");
-      setAppearanceAvisBadge(loadedSettings?.color_avis_badge ?? "");
       setAppearanceAvisName(loadedSettings?.color_avis_name ?? "");
       setClosures((closuresRes.data ?? []) as ClosureRow[]);
       setCategories((categoriesRes.data ?? []) as CategoryRow[]);
@@ -1541,24 +1526,19 @@ export default function BackOfficeGestionPage() {
           color_card_border: deriveBorderColor(appearancePageBg),
           color_nav_text: appearanceTextMain,
           color_badges: appearanceBadges || null,
-          color_contact_accent: appearanceContactAccent || null,
           color_subtitles: appearanceSubtitles || null,
           color_hero_bg: appearanceHeroBg || null,
           color_hero_accent: appearanceHeroAccent || null,
-          color_hero_badge: appearanceHeroBadge || null,
           color_hero_title: appearanceHeroTitle || null,
           color_hero_subtitle: appearanceHeroSubtitle || null,
           color_hero_text: appearanceHeroText || null,
           color_hero_feature: appearanceHeroFeature || null,
           color_prestations_accent: appearancePrestationsAccent || null,
           color_prestations_bg: appearancePrestationsBg || null,
-          color_prestations_badge: appearancePrestationsBadge || null,
           color_prestations_price: appearancePrestationsPrice || null,
-          color_apropos_accent: appearanceAproposAccent || null,
           color_apropos_bg: appearanceAproposBg || null,
           color_avis_accent: appearanceAvisAccent || null,
           color_avis_bg: appearanceAvisBg || null,
-          color_avis_badge: appearanceAvisBadge || null,
           color_avis_name: appearanceAvisName || null,
         })
         .eq("id", settings.id)
@@ -1575,24 +1555,19 @@ export default function BackOfficeGestionPage() {
         color_card_border: appearancePageBg,
         color_nav_text: appearanceTextMain,
         color_badges: appearanceBadges || null,
-        color_contact_accent: appearanceContactAccent || null,
         color_subtitles: appearanceSubtitles || null,
         color_hero_bg: appearanceHeroBg || null,
         color_hero_accent: appearanceHeroAccent || null,
-        color_hero_badge: appearanceHeroBadge || null,
         color_hero_title: appearanceHeroTitle || null,
         color_hero_subtitle: appearanceHeroSubtitle || null,
         color_hero_text: appearanceHeroText || null,
         color_hero_feature: appearanceHeroFeature || null,
         color_prestations_accent: appearancePrestationsAccent || null,
         color_prestations_bg: appearancePrestationsBg || null,
-        color_prestations_badge: appearancePrestationsBadge || null,
         color_prestations_price: appearancePrestationsPrice || null,
-        color_apropos_accent: appearanceAproposAccent || null,
         color_apropos_bg: appearanceAproposBg || null,
         color_avis_accent: appearanceAvisAccent || null,
         color_avis_bg: appearanceAvisBg || null,
-        color_avis_badge: appearanceAvisBadge || null,
         color_avis_name: appearanceAvisName || null,
       } : prev);
       setStatusMessage("Couleurs enregistrées ✅");
@@ -3797,13 +3772,13 @@ export default function BackOfficeGestionPage() {
                               { key: "textmain", label: "Texte principal", desc: "Navigation, boutons et titres des cartes Prestations et À propos", value: appearanceTextMain, setter: setAppearanceTextMain },
                               { key: "textsecondary", label: "Texte descriptif", desc: "Paragraphes, descriptions des prestations, texte des avis, horaires", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
                               { key: "accents", label: "Bouton", desc: "Boutons sur tout le site", value: appearanceAccents, setter: setAppearanceAccents },
+                              { key: "badges", label: "Badge", desc: "Pastilles de section (Hero, Prestations, À propos, Avis, Contact)", value: appearanceBadges, setter: setAppearanceBadges },
                             ],
                           },
                           {
                             title: "Carte hero",
                             items: [
                               { key: "herobg", label: "Fond", desc: "Fond de la grande carte de présentation en haut du site", value: appearanceHeroBg, setter: setAppearanceHeroBg },
-                              { key: "herobadge", label: "Badge", desc: "Pastille au-dessus du nom du salon", value: appearanceHeroBadge, setter: setAppearanceHeroBadge },
                               { key: "herotitle", label: "Titre", desc: "Nom du salon en grand dans la carte hero", value: appearanceHeroTitle, setter: setAppearanceHeroTitle },
                               { key: "herosubtitle", label: "Sous-titre", desc: "Phrase d'accroche sous le nom du salon", value: appearanceHeroSubtitle, setter: setAppearanceHeroSubtitle },
                               { key: "herotext", label: "Texte", desc: "Description sous la phrase d'accroche", value: appearanceHeroText, setter: setAppearanceHeroText },
@@ -3814,7 +3789,6 @@ export default function BackOfficeGestionPage() {
                             title: "Prestations",
                             items: [
                               { key: "prestationsbg", label: "Fond", desc: "Fond des cartes de prestations", value: appearancePrestationsBg, setter: setAppearancePrestationsBg },
-                              { key: "prestationsbadge", label: "Badge", desc: "Pastille \"Prestations\" au-dessus des cartes", value: appearancePrestationsBadge, setter: setAppearancePrestationsBadge },
                               { key: "prestationsprice", label: "Prix", desc: "Prix affiché sur chaque carte de prestation", value: appearancePrestationsPrice, setter: setAppearancePrestationsPrice },
                             ],
                           },
@@ -3822,14 +3796,12 @@ export default function BackOfficeGestionPage() {
                             title: "À propos",
                             items: [
                               { key: "aproposbg", label: "Fond", desc: "Fond de la carte À propos", value: appearanceAproposBg, setter: setAppearanceAproposBg },
-                              { key: "aproposaccent", label: "Badge", desc: "Pastille \"À propos\" au-dessus du texte de présentation", value: appearanceAproposAccent, setter: setAppearanceAproposAccent },
                             ],
                           },
                           {
                             title: "Avis",
                             items: [
                               { key: "avisbg", label: "Fond", desc: "Fond des cartes d'avis", value: appearanceAvisBg, setter: setAppearanceAvisBg },
-                              { key: "avisbadge", label: "Badge", desc: "Pastille \"Avis clients\" et guillemets sur les cartes d'avis", value: appearanceAvisBadge, setter: setAppearanceAvisBadge },
                               { key: "avisname", label: "Prénom", desc: "Nom de l'auteur affiché sous chaque avis", value: appearanceAvisName, setter: setAppearanceAvisName },
                             ],
                           },
@@ -3837,7 +3809,6 @@ export default function BackOfficeGestionPage() {
                             title: "Contact",
                             items: [
                               { key: "contactbg", label: "Fond de la section", desc: "Fond de la section Contact en bas de page", value: appearanceContactBg, setter: setAppearanceContactBg },
-                              { key: "contactaccent", label: "Badge", desc: "Pastille \"Contact\" et lueur des cartes (adresse, téléphone, email, horaires)", value: appearanceContactAccent, setter: setAppearanceContactAccent },
                             ],
                           },
                         ] as { title: string; items: { key: string; label: string; desc: string; value: string; setter: (v: string) => void }[] }[]
