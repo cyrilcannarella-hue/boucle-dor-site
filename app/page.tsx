@@ -56,6 +56,7 @@ type SalonSettings = {
   color_contact_bg?: string | null;
   color_page_bg?: string | null;
   color_text_main?: string | null;
+  color_salon_name?: string | null;
   color_text_secondary?: string | null;
   color_header_bg?: string | null;
   color_card_border?: string | null;
@@ -304,6 +305,7 @@ useEffect(() => {
   const colorPanelBg = derivePanelBg(colorPageBg);
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTextMain = settings?.color_text_main || "#111827";
+  const colorSalonName = settings?.color_salon_name || colorTextMain;
   const colorTextSecondary = settings?.color_text_secondary || "#6b7280";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
@@ -403,7 +405,7 @@ useEffect(() => {
               <div className="min-w-0">
                 <div className="text-2xl leading-none tracking-[-0.04em] md:text-4xl">
                   <span style={{ fontFamily: "var(--font-salon-name)" }}>
-                    <SalonNamePremium name={salonName} compact goldColor={colorTextMain} />
+                    <SalonNamePremium name={salonName} compact goldColor={colorSalonName} />
                   </span>
                 </div>
                 <div className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.26em] sm:block" style={{ color: colorSubtitlesLight }}>
@@ -600,8 +602,8 @@ useEffect(() => {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="relative overflow-hidden rounded-[36px] border p-8 text-white"
-          style={{ background: colorHeroBg, borderColor: `${colorHeroAccent}80`, boxShadow: `0 24px 70px rgba(0,0,0,0.22), 0 0 40px 8px ${colorHeroAccent}99` }}
+          className="relative overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)]"
+          style={{ background: colorHeroBg }}
         >
           {salonSubtitle && (
             <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorHeroAccent }}>
@@ -644,7 +646,7 @@ useEffect(() => {
               <div
                 key={feat}
                 className="flex items-center justify-center gap-2 rounded-2xl border p-4 text-center"
-                style={{ borderColor: `${colorHeroAccent}80`, boxShadow: `0 0 22px 5px ${colorHeroAccent}99` }}
+                style={{ borderColor: `${colorHeroAccent}80`, boxShadow: `0 0 14px 2px ${colorHeroAccent}66` }}
               >
                 <span>{feat}</span>
               </div>

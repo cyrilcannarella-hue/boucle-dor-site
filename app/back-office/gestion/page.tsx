@@ -146,6 +146,7 @@ type SalonSettings = {
   color_prestations_accent?: string | null;
   color_apropos_accent?: string | null;
   color_avis_accent?: string | null;
+  color_salon_name?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
   bg_pattern?: string | null;
@@ -416,6 +417,7 @@ export default function BackOfficeGestionPage() {
   const [appearanceAvisAccent, setAppearanceAvisAccent] = useState("");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("");
+  const [appearanceSalonNameColor, setAppearanceSalonNameColor] = useState("");
   const [appearanceFont, setAppearanceFont] = useState("");
   const [appearanceSalonNameFont, setAppearanceSalonNameFont] = useState("");
   const [appearancePattern, setAppearancePattern] = useState("none");
@@ -552,6 +554,7 @@ export default function BackOfficeGestionPage() {
       setSettings(loadedSettings);
       setAppearanceSalonName(loadedSettings?.salon_name ?? "");
       setAppearanceSalonSubtitle(loadedSettings?.salon_subtitle ?? "");
+      setAppearanceSalonNameColor(loadedSettings?.color_salon_name ?? "");
       setAppearanceFont(loadedSettings?.site_font ?? "");
       setAppearanceSalonNameFont(loadedSettings?.font_salon_name ?? "");
       setAppearancePattern(loadedSettings?.bg_pattern ?? "none");
@@ -1309,6 +1312,7 @@ export default function BackOfficeGestionPage() {
           salon_name: appearanceSalonName.trim() || settings.salon_name,
           salon_subtitle: appearanceSalonSubtitle.trim() || null,
           font_salon_name: appearanceSalonNameFont || null,
+          color_salon_name: appearanceSalonNameColor || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
@@ -1318,6 +1322,7 @@ export default function BackOfficeGestionPage() {
         salon_name: appearanceSalonName.trim() || prev.salon_name,
         salon_subtitle: appearanceSalonSubtitle.trim() || null,
         font_salon_name: appearanceSalonNameFont || null,
+        color_salon_name: appearanceSalonNameColor || null,
       } : prev);
       setStatusMessage("Nom du salon enregistré ✅");
     } catch (error: unknown) {
@@ -1633,6 +1638,7 @@ export default function BackOfficeGestionPage() {
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
+  const colorSalonName = settings?.color_salon_name || colorTextMain;
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorNavText = settings?.color_nav_text || "#111827";
@@ -1679,7 +1685,7 @@ export default function BackOfficeGestionPage() {
                 Back office
               </div>
               <div className="mt-0.5 text-xl font-semibold leading-none md:mt-1 md:text-3xl">
-                <SalonNameGradient name={salonDisplayName} goldColor={colorTextMain} /> Pro
+                <SalonNameGradient name={salonDisplayName} goldColor={colorSalonName} /> Pro
               </div>
             </div>
           </div>
@@ -3526,6 +3532,54 @@ export default function BackOfficeGestionPage() {
                           )}
                         </div>
                       </div>
+
+                      <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white">
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-3 p-4 text-left"
+                          onClick={() => setOpenColorPicker(openColorPicker === "salonnamecolor" ? null : "salonnamecolor")}
+                        >
+                          <div
+                            className="h-9 w-9 shrink-0 rounded-xl border border-[var(--card-border)] shadow-sm"
+                            style={appearanceSalonNameColor ? { backgroundColor: appearanceSalonNameColor } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "12px 12px" }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-[var(--nav-text)]">Couleur du nom</div>
+                            <div className="text-xs text-[var(--nav-text)]">Nom du salon dans le logo du header, sur toutes les pages</div>
+                          </div>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            className={`h-4 w-4 shrink-0 text-[#a0927e] transition-transform ${openColorPicker === "salonnamecolor" ? "rotate-180" : ""}`}
+                          >
+                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {openColorPicker === "salonnamecolor" && (
+                          <div className="border-t border-[var(--card-border)] p-4">
+                            <div className="space-y-1.5">
+                              {APPEARANCE_PALETTE.map((family) => (
+                                <div key={family.label} className="flex items-center gap-1.5">
+                                  <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
+                                  <div className="flex min-w-0 flex-1 gap-1">
+                                    {family.colors.map((c) => (
+                                      <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setAppearanceSalonNameColor(c)}
+                                        title={c}
+                                        className={`h-5 min-w-0 flex-1 rounded transition-transform ${appearanceSalonNameColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                        style={{ backgroundColor: c }}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   )}
@@ -3730,7 +3784,7 @@ export default function BackOfficeGestionPage() {
                           {
                             title: "Texte",
                             items: [
-                              { key: "textmain", label: "Texte principal", desc: "Navigation, boutons, nom du salon dans le header, et titres des cartes Prestations et À propos", value: appearanceTextMain, setter: setAppearanceTextMain },
+                              { key: "textmain", label: "Texte principal", desc: "Navigation, boutons et titres des cartes Prestations et À propos", value: appearanceTextMain, setter: setAppearanceTextMain },
                               { key: "textsecondary", label: "Texte descriptif", desc: "Paragraphes, descriptions des prestations, texte des avis, horaires", value: appearanceTextSecondary, setter: setAppearanceTextSecondary },
                             ],
                           },

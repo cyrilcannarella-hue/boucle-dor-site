@@ -18,6 +18,7 @@ type SalonSettings = {
   color_contact_bg?: string | null;
   color_page_bg?: string | null;
   color_text_main?: string | null;
+  color_salon_name?: string | null;
   color_text_secondary?: string | null;
   color_header_bg?: string | null;
   color_card_border?: string | null;
@@ -139,6 +140,7 @@ export default function GaleriePage() {
   const colorPanelBg = derivePanelBg(colorPageBg);
   const bgPatternLayer = getPatternBgLayer(settings.bg_pattern, colorPageBg);
   const colorTextMain = settings.color_text_main || "#111827";
+  const colorSalonName = settings.color_salon_name || colorTextMain;
   const colorTextSecondary = settings.color_text_secondary || "#6b7280";
   const colorHeaderBg = settings.color_header_bg || "#ffffff";
   const colorCardBorder = settings.color_card_border || "#e5e7eb";
@@ -206,7 +208,7 @@ export default function GaleriePage() {
             )}
             <div>
               <div className="text-xl leading-none tracking-[-0.03em] md:text-2xl" style={{ fontFamily: "var(--font-salon-name)" }}>
-                <span className="[backface-visibility:hidden] leading-none" style={{ color: colorTextMain }}>
+                <span className="[backface-visibility:hidden] leading-none" style={{ color: colorSalonName }}>
                   {salonName.replace(/[''ʼ]/g, "'")}
                 </span>
               </div>

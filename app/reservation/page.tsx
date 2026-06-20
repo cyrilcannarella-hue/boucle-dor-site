@@ -91,6 +91,7 @@ type SalonSettings = {
   color_titles?: string | null;
   color_header_bg?: string | null;
   color_text_main?: string | null;
+  color_salon_name?: string | null;
   color_text_secondary?: string | null;
   color_card_border?: string | null;
   color_accents?: string | null;
@@ -1000,6 +1001,7 @@ export default function ReservationPage() {
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
+  const colorSalonName = settings?.color_salon_name || colorTextMain;
   const colorTextSecondary = settings?.color_text_secondary || "#6b7280";
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorAccents = settings?.color_accents || "#4f46e5";
@@ -1048,7 +1050,7 @@ export default function ReservationPage() {
             )}
             <span>
               <span className="block text-2xl leading-none tracking-tight sm:text-3xl">
-                <SalonNameGradient name={salonName} goldColor={colorTextMain} />
+                <SalonNameGradient name={salonName} goldColor={colorSalonName} />
               </span>
               <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
                 Réservation en ligne

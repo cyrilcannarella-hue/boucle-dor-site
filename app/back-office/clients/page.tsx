@@ -91,6 +91,7 @@ type SalonSettings = {
   color_titles?: string | null;
   color_header_bg?: string | null;
   color_text_main?: string | null;
+  color_salon_name?: string | null;
   color_card_border?: string | null;
   color_accents?: string | null;
   color_nav_text?: string | null;
@@ -208,7 +209,7 @@ export default function BackOfficeClientsPage() {
     loadClients();
     supabase
       .from("salon_settings")
-      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_card_border, color_accents, color_nav_text, site_font, font_salon_name, bg_pattern")
+      .select("id, salon_name, logo_pro_image_url, color_page_bg, color_titles, color_header_bg, color_text_main, color_salon_name, color_card_border, color_accents, color_nav_text, site_font, font_salon_name, bg_pattern")
       .eq("salon_id", salonId)
       .limit(1)
       .maybeSingle()
@@ -570,6 +571,7 @@ export default function BackOfficeClientsPage() {
   const colorTitles = settings?.color_titles || "#1a1a2e";
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
+  const colorSalonName = settings?.color_salon_name || colorTextMain;
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorNavText = settings?.color_nav_text || "#111827";
@@ -617,7 +619,7 @@ export default function BackOfficeClientsPage() {
                 Back office
               </div>
               <div className="mt-0.5 text-xl font-semibold leading-none md:mt-1 md:text-3xl">
-                <SalonNameGradient name={salonDisplayName} goldColor={colorTextMain} /> Pro
+                <SalonNameGradient name={salonDisplayName} goldColor={colorSalonName} /> Pro
               </div>
             </div>
           </Link>
