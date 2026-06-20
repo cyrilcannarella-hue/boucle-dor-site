@@ -1952,10 +1952,10 @@ export default function BackOfficeGestionPage() {
                           {APPEARANCE_PALETTE.map((family) => (
                             <div key={family.label} className="flex items-center gap-1.5">
                               <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="flex gap-1">
+                              <div className="flex min-w-0 flex-1 gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoBgColorState(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 min-w-0 flex-1 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -1987,10 +1987,10 @@ export default function BackOfficeGestionPage() {
                           {APPEARANCE_PALETTE.map((family) => (
                             <div key={family.label} className="flex items-center gap-1.5">
                               <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="flex gap-1">
+                              <div className="flex min-w-0 flex-1 gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoColorStars(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 min-w-0 flex-1 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -2022,10 +2022,10 @@ export default function BackOfficeGestionPage() {
                           {APPEARANCE_PALETTE.map((family) => (
                             <div key={family.label} className="flex items-center gap-1.5">
                               <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="flex gap-1">
+                              <div className="flex min-w-0 flex-1 gap-1">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoTextColor(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-4 min-w-0 flex-1 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -3775,14 +3775,14 @@ export default function BackOfficeGestionPage() {
                                       {APPEARANCE_PALETTE.map((family) => (
                                         <div key={family.label} className="flex items-center gap-1.5">
                                           <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                                          <div className="flex gap-1">
+                                          <div className="flex min-w-0 flex-1 gap-1">
                                             {family.colors.map((c) => (
                                               <button
                                                 key={c}
                                                 type="button"
                                                 onClick={() => setter(c)}
                                                 title={c}
-                                                className={`h-5 w-5 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                                className={`h-5 min-w-0 flex-1 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                                 style={{ backgroundColor: c }}
                                               />
                                             ))}
