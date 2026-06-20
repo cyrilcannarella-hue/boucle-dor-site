@@ -664,30 +664,6 @@ useEffect(() => {
             </motion.p>
           )}
 
-          <motion.div variants={fadeUp} className="relative z-10 mt-8 flex flex-wrap gap-3">
-            <motion.a
-              href="/reservation"
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className="btn-shimmer rounded-full px-6 py-4 font-semibold shadow-lg shadow-black/20 transition hover:shadow-xl"
-              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
-            >
-              Réserver en ligne
-            </motion.a>
-            {prestations.length > 0 && (
-              <motion.a
-                href="#prestations"
-                onClick={(e) => { e.preventDefault(); scrollToSection("prestations"); }}
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="rounded-full border px-6 py-4 font-semibold transition hover:bg-white/5"
-                style={{ borderColor: `${colorButtons}60`, color: colorButtons }}
-              >
-                Découvrir nos prestations
-              </motion.a>
-            )}
-          </motion.div>
-
           {heroFeatures.length > 0 && (
           <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm md:grid-cols-3" style={{ color: `${colorSubtitlesHero}cc` }}>
             {heroFeatures.map((feat, i) => (
@@ -977,25 +953,6 @@ useEffect(() => {
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            {salonPhone && (
-              <a
-                href={formatPhoneHref(salonPhone)}
-                className="rounded-full px-6 py-4 font-semibold"
-                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
-              >
-                Appeler le salon
-              </a>
-            )}
-            <a
-              href="/reservation"
-              className="btn-shimmer rounded-full px-6 py-4 font-semibold shadow-lg shadow-black/20 transition hover:shadow-xl"
-              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
-            >
-              Réserver en ligne
-            </a>
           </div>
         </motion.div>
       </section>
