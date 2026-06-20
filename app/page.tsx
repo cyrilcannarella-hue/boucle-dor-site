@@ -667,26 +667,12 @@ useEffect(() => {
 
           {heroFeatures.length > 0 && (
           <motion.div variants={fadeUp} className="relative z-10 mt-10 grid gap-4 text-sm" style={{ color: `${colorSubtitlesHero}cc` }}>
-            {heroFeatures.map((feat, i) => (
-              <div key={feat} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 p-4 text-center">
-                <span className="shrink-0" style={{ color: colorHeroAccent }}>
-                  {i % 3 === 0 && (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                      <path d="M13.024 9.25c.47 0 .827-.433.637-.863a4 4 0 0 0-4.094-2.36c-.468.05-.665.576-.43.984l.361.644c.14.25.42.38.696.338a2.5 2.5 0 0 1 2.43 1.394c.167.34.496.863.4-.137ZM9.5 11.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 .27-1.138c.14-.25.073-.568-.172-.718L5.98 6.5a.75.75 0 0 0-1.03.274 4 4 0 1 0 6.818 3.969.75.75 0 0 0-.818-1.023A2.497 2.497 0 0 1 9.5 11.5Z" />
-                      <path fillRule="evenodd" d="M14.28 10.72a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06l7.5-7.5a.75.75 0 0 1 1.06 0ZM4.72 10.72a.75.75 0 0 0 0 1.06l1.5 1.5a.75.75 0 0 0 1.06-1.06l-1.5-1.5a.75.75 0 0 0-1.06 0Z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  {i % 3 === 1 && (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                      <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  {i % 3 === 2 && (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                      <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 0 1-1.162-.682 22.045 22.045 0 0 1-2.582-2.184C4.045 12.376 2 9.805 2 6.5a4.5 4.5 0 0 1 8-2.828A4.5 4.5 0 0 1 18 6.5c0 3.305-2.045 5.876-3.885 7.516a22.049 22.049 0 0 1-3.744 2.866l-.02.01-.006.003-.001.001a.752.752 0 0 1-.69.001l-.001-.001Z" />
-                    </svg>
-                  )}
-                </span>
+            {heroFeatures.map((feat) => (
+              <div
+                key={feat}
+                className="flex items-center justify-center gap-2 rounded-2xl border p-4 text-center"
+                style={{ borderColor: `${colorHeroAccent}80`, boxShadow: `0 0 14px ${colorHeroAccent}66` }}
+              >
                 <span>{feat}</span>
               </div>
             ))}
