@@ -31,6 +31,14 @@ function hexToRgb(hex: string) {
   return `${r},${g},${b}`;
 }
 
+function contrastText(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.40 ? "#111827" : "#ffffff";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -125,8 +133,8 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 rounded-full px-6 py-4 font-semibold text-white hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: colorAccents }}
+              className="mt-2 rounded-full px-6 py-4 font-semibold hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: colorAccents, color: contrastText(colorAccents) }}
             >
               {loading ? "Connexion..." : "Se connecter"}
             </button>

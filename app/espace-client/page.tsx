@@ -118,6 +118,14 @@ function hexToRgb(hex: string): string {
   return `${r},${g},${b}`;
 }
 
+function contrastText(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.40 ? "#111827" : "#ffffff";
+}
+
 function formatFrenchDate(dateStr: string) {
   const [year, month, day] = dateStr.split("-").map(Number);
   const date = new Date(year, month - 1, day, 12, 0, 0, 0);
@@ -663,6 +671,7 @@ export default function EspaceClientPage() {
   };
 
   const colorButtons = settings?.color_accents || "#4f46e5";
+  const colorButtonsText = contrastText(colorButtons);
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorTitles = settings?.color_titles || "#1a1a2e";
@@ -689,6 +698,7 @@ export default function EspaceClientPage() {
           --card-border: ${colorCardBorder};
           --nav-text: ${colorNavText};
           --text-main: ${colorTextMain};
+          --text-on-main: ${contrastText(colorTextMain)};
           --accents: ${colorAccents};
           --page-bg: ${colorPageBg};
         }
@@ -732,7 +742,7 @@ export default function EspaceClientPage() {
             <Link
               href="/reservation"
               className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)] sm:inline-flex"
-              style={{ backgroundColor: colorButtons, color: colorTextMain }}
+              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
             >
               Réserver
             </Link>
@@ -769,7 +779,7 @@ export default function EspaceClientPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[var(--text-main)] to-[var(--gold)] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(60,40,20,0.16)] transition hover:-translate-y-0.5 disabled:opacity-50"
+                className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[var(--text-main)] to-[var(--gold)] px-5 py-3 font-semibold text-[var(--text-on-main)] shadow-[0_10px_24px_rgba(60,40,20,0.16)] transition hover:-translate-y-0.5 disabled:opacity-50"
               >
                 {loading ? "Recherche..." : "Retrouvez votre rendez-vous"}
               </button>
@@ -949,8 +959,8 @@ export default function EspaceClientPage() {
                       <button
                         type="button"
                         onClick={() => setConfirmCancelId(appointment.id)}
-                        className="min-h-[48px] rounded-full px-5 py-3 font-medium text-white hover:opacity-90"
-                        style={{ backgroundColor: colorButtons }}
+                        className="min-h-[48px] rounded-full px-5 py-3 font-medium hover:opacity-90"
+                        style={{ backgroundColor: colorButtons, color: colorButtonsText }}
                       >
                         Annuler le rendez-vous
                       </button>
@@ -1086,8 +1096,8 @@ export default function EspaceClientPage() {
                   type="button"
                   onClick={handleSaveEdit}
                   disabled={savingEdit}
-                  className="min-h-[48px] rounded-full px-5 py-3 font-medium text-white hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: colorButtons }}
+                  className="min-h-[48px] rounded-full px-5 py-3 font-medium hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: colorButtons, color: colorButtonsText }}
                 >
                   {savingEdit
                     ? "Enregistrement..."

@@ -1021,6 +1021,8 @@ export default function ReservationPage() {
           --card-border: ${colorCardBorder};
           --nav-text: ${colorNavText};
           --text-main: ${colorTextMain};
+          --text-on-main: ${contrastText(colorTextMain)};
+          --text-on-accent: ${colorButtonsText};
           --accents: ${colorAccents};
           --page-bg: ${colorPageBg};
         }
@@ -1141,7 +1143,7 @@ export default function ReservationPage() {
                       }}
                       className={`rounded-[24px] border p-5 text-left shadow-sm transition-all duration-200 ease-out active:scale-[0.95] ${
                         active
-                          ? "scale-[1.015] border-[var(--text-main)] bg-[var(--text-main)] text-white shadow-[0_18px_42px_rgba(43,33,22,0.28)] ring-2 ring-[#d4af37]/35"
+                          ? "scale-[1.015] border-[var(--text-main)] bg-[var(--text-main)] text-[var(--text-on-main)] shadow-[0_18px_42px_rgba(43,33,22,0.28)] ring-2 ring-[#d4af37]/35"
                           : "border-[var(--card-border)] bg-white/86 text-[var(--text-main)] hover:-translate-y-1 hover:scale-[1.015] hover:border-[var(--gold)] hover:shadow-[0_16px_34px_rgba(90,63,30,0.10)]"
                       }`}
                     >
@@ -1149,7 +1151,7 @@ export default function ReservationPage() {
                         <div className="flex items-center gap-2">
                           <h3 className="text-xl">{service.name}</h3>
                           {active ? (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accents)] text-sm font-bold text-[var(--text-main)] shadow-sm">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accents)] text-sm font-bold text-[var(--text-on-accent)] shadow-sm">
                               ✓
                             </span>
                           ) : null}
@@ -1164,7 +1166,7 @@ export default function ReservationPage() {
                       </div>
                       <div
                         className={`text-sm ${
-                          active ? "text-white/75" : "text-[var(--text-secondary)]"
+                          active ? "text-[var(--text-on-main)]/75" : "text-[var(--text-secondary)]"
                         }`}
                       >
                         {service.duration} min • {service.category}

@@ -53,6 +53,14 @@ function blendHex(hex1: string, hex2: string, ratio: number): string {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
+function darkenHex(hex: string, factor: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16) * factor;
+  const g = parseInt(h.slice(2, 4), 16) * factor;
+  const b = parseInt(h.slice(4, 6), 16) * factor;
+  return `#${[r, g, b].map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
 function contrastText(hex: string): string {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16);
@@ -218,7 +226,7 @@ export default function GaleriePage() {
             animate="visible"
             variants={fadeUp}
             className="relative mb-10 overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-white/10 before:blur-3xl md:p-12"
-            style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, #050505 100%)` }}
+            style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, ${darkenHex(colorHeroBg, 0.3)} 100%)` }}
           >
             {/* Étoiles décoratives animées */}
             <motion.span
@@ -243,7 +251,7 @@ export default function GaleriePage() {
               <h1 className="relative z-10 mb-4 text-3xl font-black tracking-tight md:text-4xl">
                 <motion.span
                   className="inline-block bg-clip-text text-transparent [backface-visibility:hidden]"
-                  style={{ backgroundImage: `linear-gradient(to right, ${colorPageBg}, ${colorAccents}, ${colorGradientEnd})` }}
+                  style={{ backgroundImage: `linear-gradient(to right, ${contrastText(colorHeroBg)}, ${colorAccents}, ${colorGradientEnd})` }}
                   animate={{ scale: [1, 1.04, 1] }}
                   transition={{ duration: 3.2, ease: "easeInOut", repeat: Infinity }}
                 >

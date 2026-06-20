@@ -1496,9 +1496,6 @@ export default function BackOfficeGestionPage() {
           color_titles: appearanceTitles,
           color_accents: appearanceAccents,
           color_contact_bg: appearanceContactBg,
-          promo_color_from: appearanceAccents,
-          promo_color_to: appearanceTitles,
-          promo_bg_color: appearanceContactBg,
           color_page_bg: appearancePageBg,
           color_text_main: appearanceTextMain,
           color_text_secondary: appearanceTextSecondary,
@@ -1522,9 +1519,6 @@ export default function BackOfficeGestionPage() {
         color_titles: appearanceTitles,
         color_accents: appearanceAccents,
         color_contact_bg: appearanceContactBg,
-        promo_color_from: appearanceAccents,
-        promo_color_to: appearanceTitles,
-        promo_bg_color: appearanceContactBg,
         color_page_bg: appearancePageBg,
         color_text_main: appearanceTextMain,
         color_text_secondary: appearanceTextSecondary,
@@ -1932,7 +1926,7 @@ export default function BackOfficeGestionPage() {
                     style={{ background: `linear-gradient(to right, ${promoBgColorState || "#111827"}, ${promoColorStars || "#4f46e5"}, ${promoBgColorState || "#111827"})` }}
                   >
                     <span className="animate-pulse" style={{ color: promoColorStars || "#4f46e5" }}>✦</span>
-                    <span style={{ color: promoTextColor || "#ffffff" }}>
+                    <span style={{ color: promoTextColor || contrastText(promoBgColorState || "#111827") }}>
                       {settings?.promo_text?.trim() || "Aperçu du texte du bandeau"}
                     </span>
                     <span className="animate-pulse" style={{ color: promoColorStars || "#4f46e5", animationDelay: "0.75s" }}>✦</span>

@@ -120,6 +120,22 @@ function blendHex(hex1: string, hex2: string, ratio: number): string {
   return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
 }
 
+function darkenHex(hex: string, factor: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16) * factor;
+  const g = parseInt(h.slice(2, 4), 16) * factor;
+  const b = parseInt(h.slice(4, 6), 16) * factor;
+  return `#${[r, g, b].map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function contrastText(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.40 ? "#111827" : "#ffffff";
+}
+
 function formatPhoneHref(phone: string | null | undefined) {
   if (!phone) return "#";
   return `tel:${phone.replace(/\s+/g, "")}`;
@@ -306,7 +322,9 @@ useEffect(() => {
   const colorSubtitlesLight = settings?.color_subtitles || settings?.color_text_secondary || "#6b7280";
   const colorAccents = settings?.color_accents || "#4f46e5";
   const colorButtons = settings?.color_accents || "#4f46e5";
+  const colorButtonsText = contrastText(colorButtons);
   const colorHeroBg = settings?.color_hero_bg || settings?.color_contact_bg || "#111827";
+  const heroGradientTextStart = settings?.color_subtitles || contrastText(colorHeroBg);
   const colorContactBg = settings?.color_contact_bg || "#111827";
   const colorPageBg = settings?.color_page_bg || "#ffffff";
   const colorPanelBg = derivePanelBg(colorPageBg);
@@ -317,12 +335,12 @@ useEffect(() => {
   const colorCardBorder = settings?.color_card_border || "#e5e7eb";
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorFooterText = settings?.color_text_secondary || "#6b7280";
-  const colorGradientStart = colorHeroBg;
+  const colorGradientStart = colorTextMain;
   const colorGradientEnd = settings?.color_gradient_end || "#4f46e5";
   const promoGradientFrom = settings?.promo_color_from || "#4f46e5";
   const promoGradientTo = settings?.promo_color_to || "#1a1a2e";
-  const promoTextColor = settings?.promo_text_color || "#ffffff";
   const promoBgColor = settings?.promo_bg_color || colorContactBg;
+  const promoTextColor = settings?.promo_text_color || contrastText(promoBgColor);
   const instagramUrl = settings?.instagram_url || null;
   const salonEmail = settings?.email || null;
   const galleryEnabled = settings?.gallery_enabled ?? false;
@@ -429,7 +447,7 @@ useEffect(() => {
                 href="/espace-client"
                 whileHover={{ y: -2, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ backgroundColor: colorButtons, color: colorTextMain }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
                 className="hidden btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_12px_25px_rgba(17,17,17,0.16)] sm:block"
               >
                 Mes réservations
@@ -439,7 +457,7 @@ useEffect(() => {
                 whileTap={{ scale: 0.96 }}
                 animate={showReservationPulse ? { scale: [1, 1.05, 1] } : { scale: 1 }}
                 transition={showReservationPulse ? { repeat: Infinity, duration: 1.8, ease: "easeInOut" } : { duration: 0.3 }}
-                style={{ backgroundColor: colorButtons, color: colorTextMain }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
                 className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_12px_25px_rgba(17,17,17,0.16)]"
               >
                 Prendre RDV
@@ -455,7 +473,7 @@ useEffect(() => {
                 href="/espace-client"
                 whileHover={{ y: -2, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ backgroundColor: colorButtons, color: colorTextMain }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
                 className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold shadow-[0_12px_25px_rgba(17,17,17,0.16)]"
               >
                 Mes réservations
@@ -515,7 +533,7 @@ useEffect(() => {
                 whileTap={{ scale: 0.97 }}
                 animate={showReservationPulse ? { scale: [1, 1.05, 1] } : { scale: 1 }}
                 transition={showReservationPulse ? { repeat: Infinity, duration: 1.8, ease: "easeInOut" } : { duration: 0.3 }}
-                style={{ backgroundColor: colorButtons, color: colorTextMain }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
                 className="btn-shimmer rounded-full px-5 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:shadow-[0_18px_38px_rgba(17,17,17,0.24)]"
               >
                 Prendre RDV
@@ -530,7 +548,7 @@ useEffect(() => {
               <a
                 href="/espace-client"
                 className="btn-shimmer rounded-full px-3 py-2 text-center font-semibold transition active:scale-95"
-                style={{ backgroundColor: colorButtons, color: colorTextMain }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
               >
                 Mes réservations
               </a>
@@ -612,7 +630,7 @@ useEffect(() => {
           initial="hidden"
           animate="visible"
           className="relative overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-white/10 before:blur-3xl"
-          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, #050505 100%)` }}
+          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, ${darkenHex(colorHeroBg, 0.3)} 100%)` }}
         >
           {salonSubtitle && (
             <motion.div variants={fadeUp} className="relative z-10 mb-3 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorHeroAccent }}>
@@ -621,16 +639,16 @@ useEffect(() => {
           )}
           <motion.h1 variants={fadeUp} className="relative z-10 text-5xl leading-[0.95] tracking-[-0.06em] md:text-7xl">
             <span ref={heroNameRef} className="block mb-1 whitespace-nowrap" style={{ fontFamily: "var(--font-salon-name)", lineHeight: 1.05 }}>
-              <SalonNamePremium name={salonName} goldColor={colorPageBg} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
+              <SalonNamePremium name={salonName} goldColor={contrastText(colorHeroBg)} gradientMidColor={colorAccents} gradientEndColor={colorGradientEnd} />
             </span>
             {heroTagline && (
               <>
                 <span className="relative mt-3 inline-block text-3xl font-light tracking-[-0.03em] md:text-5xl">
                   <span className="invisible">{heroTagline}</span>
-                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitlesHero}, ${colorAccents}, ${colorGradientEnd})` }}>
+                  <span className="absolute inset-0 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${heroGradientTextStart}, ${colorAccents}, ${colorGradientEnd})` }}>
                     {typedTagline}
                     {typedTagline.length < heroTagline.length && (
-                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${colorSubtitlesHero}, ${colorAccents})` }}>|</span>
+                      <span className="animate-pulse ml-0.5 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(to right, ${heroGradientTextStart}, ${colorAccents})` }}>|</span>
                     )}
                   </span>
                 </span>
@@ -655,7 +673,7 @@ useEffect(() => {
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
               className="btn-shimmer rounded-full px-6 py-4 font-semibold shadow-lg shadow-black/20 transition hover:shadow-xl"
-              style={{ backgroundColor: colorButtons, color: colorTextMain }}
+              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
             >
               Réserver en ligne
             </motion.a>
@@ -876,7 +894,7 @@ useEffect(() => {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="rounded-[30px] p-8 text-white"
-          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorContactBg, 0.22)} 0%, ${colorContactBg} 50%, #050505 100%)` }}
+          style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorContactBg, 0.22)} 0%, ${colorContactBg} 50%, ${darkenHex(colorContactBg, 0.3)} 100%)` }}
         >
           <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorContactAccent, borderColor: `${colorContactAccent}40`, backgroundColor: colorPanelBg }}>
             Contact
@@ -968,7 +986,7 @@ useEffect(() => {
               <a
                 href={formatPhoneHref(salonPhone)}
                 className="rounded-full px-6 py-4 font-semibold"
-                style={{ backgroundColor: colorButtons, color: colorTextMain }}
+                style={{ backgroundColor: colorButtons, color: colorButtonsText }}
               >
                 Appeler le salon
               </a>
@@ -976,7 +994,7 @@ useEffect(() => {
             <a
               href="/reservation"
               className="btn-shimmer rounded-full px-6 py-4 font-semibold shadow-lg shadow-black/20 transition hover:shadow-xl"
-              style={{ backgroundColor: colorButtons, color: colorTextMain }}
+              style={{ backgroundColor: colorButtons, color: colorButtonsText }}
             >
               Réserver en ligne
             </a>
