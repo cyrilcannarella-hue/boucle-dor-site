@@ -242,8 +242,7 @@ const COLOR_OPTIONS = [
 ];
 
 const APPEARANCE_PALETTE: { label: string; colors: string[] }[] = [
-  { label: "Sélection", colors: ["#818f7f", "#a9b8a7", "#fefff1"] },
-  { label: "Neutres",  colors: ["#ffffff","#fafafa","#f5f5f5","#ebebeb","#e0e0e0","#d4d4d4","#c4c4c4","#b5b5b5","#9c9c9c","#878787","#737373","#636363","#595959","#484848","#404040","#333333","#2c2c2c","#262626","#1f1f1f","#1a1a1a","#111111","#0d0d0d","#0a0a0a","#000000"] },
+  { label: "Neutres",  colors: ["#818f7f","#a9b8a7","#fefff1","#ffffff","#fafafa","#f5f5f5","#ebebeb","#e0e0e0","#d4d4d4","#c4c4c4","#b5b5b5","#9c9c9c","#878787","#737373","#636363","#595959","#484848","#404040","#333333","#2c2c2c","#262626","#1f1f1f","#1a1a1a","#111111","#0d0d0d","#0a0a0a","#000000"] },
   { label: "Taupes",  colors: ["#fffdf9","#faf5ef","#f5e9dc","#ede0cf","#e8d5be","#ddc9ad","#d4c0a4","#cbb498","#c2a98c","#b99c7a","#ae8d68","#9e7b56","#8a6a45","#7b5b37","#736058","#6e655c","#5c3d2e","#4a2f22","#3d2b1a","#2a1d12","#221610","#1f1b17","#140e09","#0f0b07"] },
   { label: "Ors",     colors: ["#fffbe6","#fff8d6","#fef3c7","#feeaa8","#fde68a","#f8da70","#f3d27a","#f0c855","#f0c040","#eabb30","#e8b830","#ddb030","#d8b56d","#d4af37","#d8a646","#cea030","#c49030","#b98b3d","#ae8030","#a07530","#8b6914","#6b4f0c","#4a3608","#2a1e04"] },
   { label: "Rouges",  colors: ["#fff5f5","#ffe8e8","#fee2e2","#fecaca","#fdb5b5","#fca5a5","#f98989","#f87171","#f55555","#f24040","#ef4444","#e02e2e","#dc2626","#cf1f1f","#c51c1c","#b91c1c","#a81818","#991b1b","#871717","#7f1d1d","#6b1515","#500f0f","#350808","#1a0000"] },
@@ -1949,14 +1948,14 @@ export default function BackOfficeGestionPage() {
                     </button>
                     {openColorPicker === "promo-bg" && (
                       <div className="border-t border-[var(--card-border)] p-3">
-                        <div className="space-y-1">
+                        <div className="space-y-2.5">
                           {APPEARANCE_PALETTE.map((family) => (
-                            <div key={family.label} className="flex items-center gap-1.5">
-                              <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="flex gap-1">
+                            <div key={family.label}>
+                              <span className="text-[10px] text-[#a0927e]">{family.label}</span>
+                              <div className="mt-1 flex w-full flex-wrap gap-1.5">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoBgColorState(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-5 w-5 rounded transition-transform ${promoBgColorState === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -1984,14 +1983,14 @@ export default function BackOfficeGestionPage() {
                     </button>
                     {openColorPicker === "promo-stars" && (
                       <div className="border-t border-[var(--card-border)] p-3">
-                        <div className="space-y-1">
+                        <div className="space-y-2.5">
                           {APPEARANCE_PALETTE.map((family) => (
-                            <div key={family.label} className="flex items-center gap-1.5">
-                              <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="flex gap-1">
+                            <div key={family.label}>
+                              <span className="text-[10px] text-[#a0927e]">{family.label}</span>
+                              <div className="mt-1 flex w-full flex-wrap gap-1.5">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoColorStars(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-5 w-5 rounded transition-transform ${promoColorStars === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -2019,14 +2018,14 @@ export default function BackOfficeGestionPage() {
                     </button>
                     {openColorPicker === "promo-text" && (
                       <div className="border-t border-[var(--card-border)] p-3">
-                        <div className="space-y-1">
+                        <div className="space-y-2.5">
                           {APPEARANCE_PALETTE.map((family) => (
-                            <div key={family.label} className="flex items-center gap-1.5">
-                              <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                              <div className="flex gap-1">
+                            <div key={family.label}>
+                              <span className="text-[10px] text-[#a0927e]">{family.label}</span>
+                              <div className="mt-1 flex w-full flex-wrap gap-1.5">
                                 {family.colors.map((c) => (
                                   <button key={c} type="button" onClick={() => setPromoTextColor(c)} title={c}
-                                    className={`h-4 w-4 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                    className={`h-5 w-5 rounded transition-transform ${promoTextColor === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                     style={{ backgroundColor: c }} />
                                 ))}
                               </div>
@@ -3772,18 +3771,18 @@ export default function BackOfficeGestionPage() {
                                 </button>
                                 {openColorPicker === key && (
                                   <div className="border-t border-[var(--card-border)] p-4">
-                                    <div className="space-y-1.5">
+                                    <div className="space-y-3">
                                       {APPEARANCE_PALETTE.map((family) => (
-                                        <div key={family.label} className="flex items-center gap-1.5">
-                                          <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
-                                          <div className="flex gap-1">
+                                        <div key={family.label}>
+                                          <span className="text-[10px] text-[#a0927e]">{family.label}</span>
+                                          <div className="mt-1.5 flex w-full flex-wrap gap-1.5">
                                             {family.colors.map((c) => (
                                               <button
                                                 key={c}
                                                 type="button"
                                                 onClick={() => setter(c)}
                                                 title={c}
-                                                className={`h-5 w-5 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                                className={`h-6 w-6 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
                                                 style={{ backgroundColor: c }}
                                               />
                                             ))}

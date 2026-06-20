@@ -156,6 +156,7 @@ export default function GaleriePage() {
       --header-bg: ${colorHeaderBg};
       --accents: ${colorAccents};
       --contact-bg: ${colorContactBg};
+      --hero-edge: ${contrastText(colorHeroBg)}1a;
       --font-salon-name: '${settings.font_salon_name ?? ""}', sans-serif;
     }
   `;
@@ -225,7 +226,7 @@ export default function GaleriePage() {
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            className="relative mb-10 overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-white/10 before:blur-3xl md:p-12"
+            className="relative mb-10 overflow-hidden rounded-[36px] border border-[var(--hero-edge)] p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-[var(--hero-edge)] before:blur-3xl md:p-12"
             style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, ${darkenHex(colorHeroBg, 0.3)} 100%)` }}
           >
             {/* Étoiles décoratives animées */}

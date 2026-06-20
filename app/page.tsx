@@ -373,6 +373,7 @@ useEffect(() => {
           --gradient-start: ${colorGradientStart};
           --gradient-end: ${colorGradientEnd};
           --accent-rgb: ${hexToRgb(colorAccents)};
+          --hero-edge: ${contrastText(colorHeroBg)}1a;
         }
       `}</style>
   <motion.div
@@ -629,7 +630,7 @@ useEffect(() => {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="relative overflow-hidden rounded-[36px] border border-white/10 p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-white/10 before:blur-3xl"
+          className="relative overflow-hidden rounded-[36px] border border-[var(--hero-edge)] p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-[var(--hero-edge)] before:blur-3xl"
           style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, ${darkenHex(colorHeroBg, 0.3)} 100%)` }}
         >
           {salonSubtitle && (
