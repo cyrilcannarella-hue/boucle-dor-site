@@ -1849,8 +1849,7 @@ export default function BackOfficePage() {
 
   const accentRgb = hexToRgb(colorAccents);
   const accentRgbStr = accentRgb ? `${accentRgb.r},${accentRgb.g},${accentRgb.b}` : "216,166,70";
-  const accentLum = accentRgb ? (0.299 * accentRgb.r + 0.587 * accentRgb.g + 0.114 * accentRgb.b) / 255 : 0;
-  const colorSelectedBg = accentLum <= 0.7 ? colorAccents : "#1a1a2e";
+  const colorSelectedBg = colorAccents;
   const colorSelectedText = contrastText(colorSelectedBg);
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
 

@@ -575,8 +575,7 @@ export default function BackOfficeClientsPage() {
   const colorNavText = settings?.color_nav_text || "#111827";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const colorPanelBgSecondary = derivePanelBgSecondary(colorPageBg);
-  const accentsLumC = (() => { const h = colorAccents.replace("#", ""); return (0.299 * parseInt(h.slice(0,2),16) + 0.587 * parseInt(h.slice(2,4),16) + 0.114 * parseInt(h.slice(4,6),16)) / 255; })();
-  const colorSelectedBg = accentsLumC <= 0.7 ? colorAccents : "#1a1a2e";
+  const colorSelectedBg = colorAccents;
   const colorSelectedText = contrastText(colorSelectedBg);
   const colorAvatarText = contrastText(colorAccents);
   const salonDisplayName = (settings?.salon_name || "Votre salon").replace(/[\u0027\u2018\u2019\u201B]/g, "'");

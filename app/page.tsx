@@ -847,8 +847,8 @@ useEffect(() => {
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="rounded-[30px] p-8 text-white"
-          style={{ background: colorContactBg }}
+          className="rounded-[30px] p-8"
+          style={{ background: colorContactBg, color: colorTextSecondary }}
         >
           <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorContactAccent, borderColor: `${colorContactAccent}40`, backgroundColor: colorPanelBg }}>
             Contact
@@ -870,7 +870,7 @@ useEffect(() => {
                     <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z" clipRule="evenodd" />
                   </svg>
                 </strong>
-                <p className="mt-2 whitespace-pre-line text-white/75 group-hover:text-white/90 transition">
+                <p className="mt-2 whitespace-pre-line">
                   {salonAddress}
                 </p>
               </a>
@@ -888,7 +888,7 @@ useEffect(() => {
                     <path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 16.352V17.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" />
                   </svg>
                 </strong>
-                <p className="mt-2 text-white/75 group-hover:text-white/90 transition">{salonPhone}</p>
+                <p className="mt-2">{salonPhone}</p>
               </a>
             )}
 
@@ -905,7 +905,7 @@ useEffect(() => {
                     <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
                   </svg>
                 </strong>
-                <p className="mt-2 text-white/75 group-hover:text-white/90 transition break-all">{salonEmail}</p>
+                <p className="mt-2 break-all">{salonEmail}</p>
               </a>
             )}
 
@@ -913,7 +913,7 @@ useEffect(() => {
               <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorContactAccent}80`, boxShadow: `0 0 22px 5px ${colorContactAccent}99` }}>
                 <strong>Horaires</strong>
 
-                <div className="mt-3 grid gap-2 text-white/75">
+                <div className="mt-3 grid gap-2">
                   {([
                     ["Lundi",    "is_open_monday",    "opening_time_monday",    "closing_time_monday"],
                     ["Mardi",    "is_open_tuesday",   "opening_time_tuesday",   "closing_time_tuesday"],
