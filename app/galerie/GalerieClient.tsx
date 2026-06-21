@@ -187,9 +187,11 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
           >
             {/* Cercles concentriques décoratifs, ancrés en bas à droite */}
             <div className="pointer-events-none absolute bottom-0 right-0 h-0 w-0">
-              <div className="absolute bottom-0 right-0 h-64 w-64 translate-x-1/2 translate-y-1/2 rounded-full border" style={{ borderColor: `${colorAccents}30` }} />
-              <div className="absolute bottom-0 right-0 h-48 w-48 translate-x-1/2 translate-y-1/2 rounded-full border" style={{ borderColor: `${colorAccents}20` }} />
-              <div className="absolute bottom-0 right-0 h-32 w-32 translate-x-1/2 translate-y-1/2 rounded-full border" style={{ borderColor: `${colorAccents}10` }} />
+              <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}38`, boxShadow: `0 0 24px 4px ${colorAccents}40` }} />
+              <div className="absolute bottom-0 right-0 h-80 w-80 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}30`, boxShadow: `0 0 24px 4px ${colorAccents}40` }} />
+              <div className="absolute bottom-0 right-0 h-64 w-64 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}28`, boxShadow: `0 0 22px 4px ${colorAccents}38` }} />
+              <div className="absolute bottom-0 right-0 h-48 w-48 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}20`, boxShadow: `0 0 20px 3px ${colorAccents}33` }} />
+              <div className="absolute bottom-0 right-0 h-32 w-32 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}16`, boxShadow: `0 0 18px 3px ${colorAccents}2e` }} />
             </div>
 
             {/* Badge */}
