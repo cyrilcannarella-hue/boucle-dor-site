@@ -120,9 +120,7 @@ function derivePanelBg(hex: string): string {
   const r = parseInt(clean.substring(0, 2), 16);
   const g = parseInt(clean.substring(2, 4), 16);
   const b = parseInt(clean.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  if (luminance > 0.85) return "#ffffff";
-  const clamp = (v: number) => Math.min(255, v + 15);
+  const clamp = (v: number) => Math.min(255, v + 20);
   return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
@@ -631,7 +629,7 @@ export default function BackOfficeClientsPage() {
 
       <section className="mx-auto grid w-[min(1400px,calc(100%-24px))] gap-4 py-5 md:gap-6 md:py-8 lg:grid-cols-[310px_1fr]">
         <aside className="space-y-4 md:space-y-5">
-          <div className="overflow-hidden rounded-[24px] border border-[var(--card-border)]/90 bg-white/75 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur md:rounded-[30px]">
+          <div className="overflow-hidden rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-[0_18px_45px_rgba(80,55,25,0.07)] md:rounded-[30px]">
             <div className="p-4 md:p-6">
               <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Fiches clients
@@ -753,7 +751,7 @@ export default function BackOfficeClientsPage() {
       {selectedClient ? (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--text-main)]/45 backdrop-blur-sm md:p-6">
           <div className="flex min-h-full items-start justify-center md:items-center md:p-4">
-            <div className="w-full max-w-6xl overflow-hidden rounded-none border-0 bg-white shadow-[0_30px_90px_rgba(0,0,0,0.22)] md:rounded-[34px] md:border md:border-[var(--card-border)]">
+            <div className="w-full max-w-6xl overflow-hidden rounded-none border-0 bg-[var(--panel-bg)] shadow-[0_30px_90px_rgba(0,0,0,0.22)] md:rounded-[34px] md:border md:border-[var(--card-border)]">
               <div className="sticky top-0 z-10 border-b border-[var(--card-border)] bg-white/90 p-4 backdrop-blur-xl md:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">

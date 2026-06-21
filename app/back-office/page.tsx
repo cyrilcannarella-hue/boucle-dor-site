@@ -343,9 +343,7 @@ function derivePanelBg(hex: string): string {
   const r = parseInt(clean.substring(0, 2), 16);
   const g = parseInt(clean.substring(2, 4), 16);
   const b = parseInt(clean.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  if (luminance > 0.85) return "#ffffff";
-  const clamp = (v: number) => Math.min(255, v + 15);
+  const clamp = (v: number) => Math.min(255, v + 20);
   return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
@@ -1931,7 +1929,7 @@ export default function BackOfficePage() {
       <section className="mx-auto w-[min(1400px,calc(100%-24px))] py-5 md:py-8">
         <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[310px_1fr] lg:items-start">
         <aside className="order-1 flex flex-col gap-4 lg:order-none md:gap-6 lg:sticky lg:top-5">
-        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <div className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
             <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Navigation
             </div>
@@ -2043,7 +2041,7 @@ export default function BackOfficePage() {
             ) : null}
         </div>
 
-        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <div className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Action
             </div>
@@ -2063,7 +2061,7 @@ export default function BackOfficePage() {
             </div>
         </div>
 
-        <div className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <div className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Résumé
             </div>
@@ -2085,7 +2083,7 @@ export default function BackOfficePage() {
             </div>
         </div>
         </aside>
-        <section className="rounded-[30px] border border-[var(--card-border)]/90 bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur">
+        <section className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>

@@ -42,9 +42,7 @@ function derivePanelBg(hex: string): string {
   const r = parseInt(clean.substring(0, 2), 16);
   const g = parseInt(clean.substring(2, 4), 16);
   const b = parseInt(clean.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  if (luminance > 0.85) return "#ffffff";
-  const clamp = (v: number) => Math.min(255, v + 15);
+  const clamp = (v: number) => Math.min(255, v + 20);
   return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
@@ -263,7 +261,7 @@ const APPEARANCE_PALETTE: { label: string; colors: string[] }[] = [
   { label: "Pinks",  colors: ["#fff5f8","#fff3f6","#fff0f4","#fff1f3","#fff1f2","#ffedef","#ffe8ec","#ffe6e9","#ffe4e6","#ffdee1","#fed8dc","#fed3d8","#fecdd3","#fec6cd","#fdbfc6","#fdb2bb","#fda4af","#fd96a4","#fc8898","#fc7d8f","#fb7185","#fa667c","#f85a72","#f64d68","#f43f5e","#f23857","#f03050","#ec2c51","#e82852","#e62451","#e42050","#e31f4c","#e11d48","#dd1b44","#d81840","#d21941","#cc1a42","#c5163f","#be123c","#af123b","#9f1239","#8e1033","#7d0e2c","#5c091f","#3b0412","#2d020d","#1e0008"] },
 ];
 
-const cardClass = "rounded-[30px] border border-[var(--card-border)]/90 bg-white/75 shadow-[0_18px_45px_rgba(80,55,25,0.07)] backdrop-blur";
+const cardClass = "rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-[0_18px_45px_rgba(80,55,25,0.07)]";
 const panelClass = "rounded-[26px] border border-[var(--card-border)] bg-[var(--panel-bg)] shadow-sm";
 const fieldClass = "rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-[var(--text-main)] outline-none transition focus:border-[var(--gold)]";
 const primaryButtonClass = "rounded-2xl bg-[var(--selected-bg)] px-6 py-3 text-sm font-semibold text-[var(--selected-text)] shadow-[0_10px_22px_rgba(31,27,23,0.16)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50";
