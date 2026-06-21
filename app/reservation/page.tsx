@@ -165,9 +165,7 @@ function derivePanelBg(hex: string): string {
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  if (luminance > 0.85) return "#ffffff";
-  const offset = luminance > 0.5 ? 15 : -15;
+  const offset = 20;
   const clamp = (v: number) => Math.max(0, Math.min(255, v + offset));
   return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
