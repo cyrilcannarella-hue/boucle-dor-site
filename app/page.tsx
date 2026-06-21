@@ -852,7 +852,7 @@ useEffect(() => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}
+                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 14px 2px ${colorBadge}66` }}
               >
                 <strong className="flex items-center gap-2">
                   Adresse
@@ -871,7 +871,7 @@ useEffect(() => {
               <a
                 href={formatPhoneHref(salonPhone)}
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}
+                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 14px 2px ${colorBadge}66` }}
               >
                 <strong className="flex items-center gap-2">
                   Téléphone
@@ -887,7 +887,7 @@ useEffect(() => {
               <a
                 href={`mailto:${salonEmail}`}
                 className="group rounded-[20px] border p-5 transition hover:bg-white/5"
-                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}
+                style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 14px 2px ${colorBadge}66` }}
               >
                 <strong className="flex items-center gap-2">
                   Email
@@ -901,7 +901,7 @@ useEffect(() => {
             )}
 
             {hasAnyOpenDay && (
-              <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 22px 5px ${colorBadge}99` }}>
+              <div className="rounded-[20px] border p-5" style={{ borderColor: `${colorBadge}80`, boxShadow: `0 0 14px 2px ${colorBadge}66` }}>
                 <strong>Horaires</strong>
 
                 <div className="mt-3 grid gap-2">

@@ -118,6 +118,18 @@ function hexToRgb(hex: string): string {
   return `${r},${g},${b}`;
 }
 
+function derivePanelBg(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (luminance > 0.85) return "#ffffff";
+  const offset = luminance > 0.5 ? 15 : -15;
+  const clamp = (v: number) => Math.max(0, Math.min(255, v + offset));
+  return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
+}
+
 function contrastText(hex: string): string {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16);
@@ -673,6 +685,7 @@ export default function EspaceClientPage() {
   const colorButtons = settings?.color_accents || "#4f46e5";
   const colorButtonsText = contrastText(colorButtons);
   const colorPageBg = settings?.color_page_bg || "#ffffff";
+  const colorPanelBg = derivePanelBg(colorPageBg);
   const bgPatternLayer = getPatternBgLayer(settings?.bg_pattern, colorPageBg);
   const colorHeaderBg = settings?.color_header_bg || "#ffffff";
   const colorTextMain = settings?.color_text_main || "#111827";
@@ -698,9 +711,9 @@ export default function EspaceClientPage() {
           --card-border: ${colorCardBorder};
           --nav-text: ${colorNavText};
           --text-main: ${colorTextMain};
-          --text-on-main: ${contrastText(colorTextMain)};
           --accents: ${colorAccents};
           --page-bg: ${colorPageBg};
+          --panel-bg: ${colorPanelBg};
         }
       `}</style>
       <div className="pointer-events-none fixed -left-28 top-16 h-56 w-56 sm:h-72 sm:w-72 rounded-full bg-[var(--accents)]/20 blur-3xl" />
@@ -735,7 +748,7 @@ export default function EspaceClientPage() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
               href="/"
-              className="rounded-full border border-[var(--card-border)]/70 bg-white/50 px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
+              className="rounded-full border border-[var(--card-border)]/70 bg-[var(--panel-bg)]/50 px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)] hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
             >
               Accueil
             </Link>
@@ -752,7 +765,7 @@ export default function EspaceClientPage() {
 
       <section className="mx-auto grid w-[min(1200px,calc(100%-20px))] gap-4 py-4 sm:w-[min(1200px,calc(100%-28px))] sm:gap-6 sm:py-10 lg:grid-cols-[0.78fr_1.22fr]">
         <aside className="contents lg:grid lg:gap-5">
-          <div className="order-1 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
+          <div className="order-1 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Recherche
             </div>
@@ -772,15 +785,15 @@ export default function EspaceClientPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="06 00 00 00 00"
-                  className="min-h-[48px] rounded-2xl border border-[var(--card-border)] bg-white/80 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--gold)] focus:ring-4 focus:ring-[#d4af37]/15"
+                  className="min-h-[48px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)]/80 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--gold)] focus:ring-4 focus:ring-[#d4af37]/15"
                 />
               </label>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-[48px] rounded-2xl bg-gradient-to-br from-[var(--text-main)] to-[var(--gold)] px-5 py-3 font-semibold text-[var(--text-on-main)] transition hover:-translate-y-0.5 disabled:opacity-50"
-                style={{ boxShadow: `0 10px 24px rgba(60,40,20,0.16), 0 0 28px 6px ${colorTextMain}b3` }}
+                className="min-h-[48px] rounded-2xl px-5 py-3 font-semibold transition hover:-translate-y-0.5 disabled:opacity-50"
+                style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 10px 24px rgba(60,40,20,0.16), 0 0 28px 6px ${colorButtons}b3` }}
               >
                 {loading ? "Recherche..." : "Retrouvez votre rendez-vous"}
               </button>
@@ -793,7 +806,7 @@ export default function EspaceClientPage() {
             ) : null}
           </div>
 
-          <div className="order-3 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
+          <div className="order-3 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Information
             </div>
@@ -821,7 +834,7 @@ export default function EspaceClientPage() {
           </div>
         </aside>
 
-        <section className="order-2 rounded-[24px] border border-white/60 bg-white/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
+        <section className="order-2 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
@@ -834,7 +847,7 @@ export default function EspaceClientPage() {
           </div>
 
           {visibleAppointments.length === 0 ? (
-            <div className="rounded-[20px] border border-dashed border-[var(--card-border)] bg-white px-4 py-8 sm:px-6 sm:py-10 text-center text-[var(--text-secondary)]">
+            <div className="rounded-[20px] border border-dashed border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-8 sm:px-6 sm:py-10 text-center text-[var(--text-secondary)]">
               Aucun rendez-vous à venir affiché pour le moment.
             </div>
           ) : (
@@ -842,7 +855,7 @@ export default function EspaceClientPage() {
               {visibleAppointments.map((appointment) => (
                 <article
                   key={appointment.id}
-                  className="rounded-[22px] border border-[var(--card-border)] bg-white/86 p-4 shadow-sm sm:rounded-[24px] sm:p-5"
+                  className="rounded-[22px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 p-4 shadow-sm sm:rounded-[24px] sm:p-5"
                 >
                   <div className="mb-4 grid gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-between">
                     <div>
@@ -951,7 +964,7 @@ export default function EspaceClientPage() {
                         <button
                           type="button"
                           onClick={() => setConfirmCancelId(null)}
-                          className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium hover:bg-white"
+                          className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium hover:bg-[var(--panel-bg)]"
                         >
                           Non
                         </button>
@@ -977,7 +990,7 @@ export default function EspaceClientPage() {
       {editingAppointment ? (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-3 sm:p-5 backdrop-blur-sm">
           <div className="flex min-h-full items-center justify-center">
-            <div className="w-full max-w-4xl rounded-[24px] border border-white/50 bg-white/90 p-4 sm:rounded-[30px] sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.14)] backdrop-blur-xl">
+            <div className="w-full max-w-4xl rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/90 p-4 sm:rounded-[30px] sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.14)] backdrop-blur-xl">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Modifier le rendez-vous
               </div>
@@ -1039,7 +1052,7 @@ export default function EspaceClientPage() {
                                   ? "cursor-not-allowed border-[var(--card-border)] bg-[var(--page-bg)] text-[var(--text-secondary)]"
                                   : active
                                     ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[inset_0_0_0_1px_var(--gold)]"
-                                    : "border-[var(--card-border)] bg-white hover:-translate-y-[1px]"
+                                    : "border-[var(--card-border)] bg-[var(--panel-bg)] hover:-translate-y-[1px]"
                               }`}
                             >
                               <div className="font-bold">{date.getDate()}</div>
@@ -1062,7 +1075,7 @@ export default function EspaceClientPage() {
                     className={`min-h-[48px] rounded-[16px] border px-3 py-3 text-center font-semibold ${
                       selectedTime === slot.label
                         ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[inset_0_0_0_1px_var(--gold)]"
-                        : "border-[var(--card-border)] bg-white"
+                        : "border-[var(--card-border)] bg-[var(--panel-bg)]"
                     } ${!selectedDateKey || !slot.available ? "cursor-not-allowed opacity-40" : ""}`}
                   >
                     {slot.label}
@@ -1089,7 +1102,7 @@ export default function EspaceClientPage() {
                 <button
                   type="button"
                   onClick={closeEdit}
-                  className="min-h-[48px] rounded-full border border-black/10 px-5 py-3 font-medium hover:bg-white"
+                  className="min-h-[48px] rounded-full border border-black/10 px-5 py-3 font-medium hover:bg-[var(--panel-bg)]"
                 >
                   Fermer
                 </button>
