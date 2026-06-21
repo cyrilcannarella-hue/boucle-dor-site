@@ -187,12 +187,12 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
           >
             {/* Formes organiques décoratives en fond de carte */}
             <div
-              className="pointer-events-none absolute -left-16 -top-20 h-72 w-72 blur-3xl"
-              style={{ backgroundColor: `${colorAccents}22`, borderRadius: "42% 58% 70% 30% / 45% 45% 55% 55%" }}
+              className="pointer-events-none absolute -left-16 -top-20 h-72 w-72 blur-2xl"
+              style={{ backgroundColor: `${colorAccents}55`, borderRadius: "42% 58% 70% 30% / 45% 45% 55% 55%" }}
             />
             <div
-              className="pointer-events-none absolute -bottom-24 left-1/4 h-56 w-56 blur-3xl"
-              style={{ backgroundColor: `${colorAccents}18`, borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }}
+              className="pointer-events-none absolute -bottom-24 left-1/4 h-56 w-56 blur-2xl"
+              style={{ backgroundColor: `${colorAccents}45`, borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }}
             />
 
             {/* Cercles concentriques décoratifs, ancrés en bas à droite */}
