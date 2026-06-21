@@ -37,23 +37,6 @@ function derivePanelBg(hex: string): string {
   return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
-function blendHex(hex1: string, hex2: string, ratio: number): string {
-  const h1 = hex1.replace("#", "");
-  const h2 = hex2.replace("#", "");
-  const r = Math.round(parseInt(h1.slice(0, 2), 16) * ratio + parseInt(h2.slice(0, 2), 16) * (1 - ratio));
-  const g = Math.round(parseInt(h1.slice(2, 4), 16) * ratio + parseInt(h2.slice(2, 4), 16) * (1 - ratio));
-  const b = Math.round(parseInt(h1.slice(4, 6), 16) * ratio + parseInt(h2.slice(4, 6), 16) * (1 - ratio));
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-}
-
-function darkenHex(hex: string, factor: number): string {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.slice(0, 2), 16) * factor;
-  const g = parseInt(h.slice(2, 4), 16) * factor;
-  const b = parseInt(h.slice(4, 6), 16) * factor;
-  return `#${[r, g, b].map((c) => Math.round(c).toString(16).padStart(2, "0")).join("")}`;
-}
-
 function contrastText(hex: string): string {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16);
@@ -104,7 +87,6 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
 
   const colorAccents = settings.color_accents || "#4f46e5";
   const colorContactBg = settings.color_contact_bg || "#111827";
-  const colorHeroBg = settings.color_hero_bg || settings.color_contact_bg || "#111827";
   const colorPageBg = settings.color_page_bg || "#ffffff";
   const colorPanelBg = derivePanelBg(colorPageBg);
   const bgPatternLayer = getPatternBgLayer(settings.bg_pattern, colorPageBg);
@@ -133,7 +115,6 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
       --header-bg: ${colorHeaderBg};
       --accents: ${colorAccents};
       --contact-bg: ${colorContactBg};
-      --hero-edge: ${contrastText(colorHeroBg)}1a;
       --font-salon-name: '${settings.font_salon_name ?? ""}', sans-serif;
     }
   `;
@@ -201,25 +182,18 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            className="relative mb-10 overflow-hidden rounded-[36px] border border-[var(--hero-edge)] p-8 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] before:absolute before:right-[-90px] before:top-[-90px] before:h-64 before:w-64 before:rounded-full before:bg-[var(--hero-edge)] before:blur-3xl md:p-12"
-            style={{ background: `linear-gradient(145deg, ${blendHex(colorAccents, colorHeroBg, 0.28)} 0%, ${colorHeroBg} 50%, ${darkenHex(colorHeroBg, 0.3)} 100%)` }}
+            className="relative mb-10 overflow-hidden rounded-[36px] border p-8 shadow-[0_24px_70px_rgba(0,0,0,0.10)] md:p-12"
+            style={{ background: colorPanelBg, borderColor: colorCardBorder }}
           >
-            {/* Étoiles décoratives animées */}
-            <motion.span
-              className="pointer-events-none absolute left-8 bottom-8 z-0 text-2xl"
-              style={{ color: colorAccents }}
-              animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-              transition={{ duration: 2.4, ease: "easeInOut", repeat: Infinity }}
-            >✦</motion.span>
-            <motion.span
-              className="pointer-events-none absolute right-32 top-10 z-0 text-lg"
-              style={{ color: colorAccents }}
-              animate={{ opacity: [0.2, 0.8, 0.2], scale: [0.9, 1.15, 0.9] }}
-              transition={{ duration: 2.0, ease: "easeInOut", repeat: Infinity, delay: 1.1 }}
-            >✦</motion.span>
+            {/* Cercles concentriques décoratifs, ancrés en bas à droite */}
+            <div className="pointer-events-none absolute bottom-0 right-0 h-0 w-0">
+              <div className="absolute bottom-0 right-0 h-64 w-64 translate-x-1/2 translate-y-1/2 rounded-full border" style={{ borderColor: `${colorAccents}30` }} />
+              <div className="absolute bottom-0 right-0 h-48 w-48 translate-x-1/2 translate-y-1/2 rounded-full border" style={{ borderColor: `${colorAccents}20` }} />
+              <div className="absolute bottom-0 right-0 h-32 w-32 translate-x-1/2 translate-y-1/2 rounded-full border" style={{ borderColor: `${colorAccents}10` }} />
+            </div>
 
             {/* Badge */}
-            <div className="relative z-10 mb-4 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur" style={{ color: colorAccents }}>
+            <div className="relative z-10 mb-4 inline-flex rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Galerie
             </div>
 
@@ -227,7 +201,7 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
               <h1 className="relative z-10 mb-4 text-3xl font-black tracking-tight md:text-4xl">
                 <motion.span
                   className="inline-block [backface-visibility:hidden]"
-                  style={{ color: contrastText(colorHeroBg) }}
+                  style={{ color: colorTextMain }}
                   animate={{ scale: [1, 1.04, 1] }}
                   transition={{ duration: 3.2, ease: "easeInOut", repeat: Infinity }}
                 >
@@ -240,7 +214,7 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
                 <span className="invisible">{gallery.text}</span>
                 <span
                   className="absolute inset-0 [backface-visibility:hidden]"
-                  style={{ color: colorSubtitles || colorPageBg }}
+                  style={{ color: colorSubtitles || colorTextSecondary }}
                 >
                   {typedText}
                   {typedText.length < gallery.text.length && (
