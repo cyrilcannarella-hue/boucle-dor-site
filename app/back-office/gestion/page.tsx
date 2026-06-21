@@ -1414,7 +1414,7 @@ export default function BackOfficeGestionPage() {
       setUploadingGalleryIndex(index);
       setStatusMessage("");
       const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `gallery-${salonId}-${index}-${Date.now()}.${ext}`;
+      const path = `${salonId}/gallery-${index}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("site-images")
         .upload(path, file, { upsert: true, contentType: file.type });
@@ -1587,7 +1587,7 @@ export default function BackOfficeGestionPage() {
       setUploading(true);
       setStatusMessage("");
       const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${type}-${Date.now()}.${ext}`;
+      const path = `${salonId}/${type}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("site-images")
         .upload(path, file, { upsert: true, contentType: file.type });
