@@ -1071,7 +1071,7 @@ export default function ReservationPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="rounded-full border border-[var(--card-border)]/70 bg-[var(--panel-bg)]/50 px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)] hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
+              className="rounded-full border border-[var(--card-border)]/70 bg-[var(--panel-bg)] px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)] hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
             >
               Accueil
             </Link>
@@ -1089,7 +1089,7 @@ export default function ReservationPage() {
       <section className="mx-auto grid w-[min(860px,calc(100%-28px))] gap-6 py-8 sm:py-10">
 
         {/* Catégories */}
-        <section className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+        <section className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
           <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
             1 • Catégorie
           </div>
@@ -1108,7 +1108,7 @@ export default function ReservationPage() {
                 className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 ${
                   categoryFilter === cat
                     ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_10px_22px_rgba(185,139,61,0.18)] text-[var(--text-main)]"
-                    : "border-[var(--card-border)] bg-[var(--panel-bg)]/80 text-[var(--text-main)] hover:border-[var(--gold)]"
+                    : "border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--text-main)] hover:border-[var(--gold)]"
                 }`}
               >
                 {cat}
@@ -1118,7 +1118,7 @@ export default function ReservationPage() {
         </section>
 
         <div className="grid gap-5">
-          <section ref={serviceSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+          <section ref={serviceSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
             <div className="mb-4">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 2 • Prestations
@@ -1156,7 +1156,7 @@ export default function ReservationPage() {
                       className={`rounded-[24px] border p-5 text-left shadow-sm transition-all duration-200 ease-out active:scale-[0.95] ${
                         active
                           ? "scale-[1.015] border-[var(--text-main)] bg-[var(--text-main)] text-[var(--text-on-main)] shadow-[0_18px_42px_rgba(43,33,22,0.28)] ring-2 ring-[#d4af37]/35"
-                          : "border-[var(--card-border)] bg-[var(--panel-bg)]/86 text-[var(--text-main)] hover:-translate-y-1 hover:scale-[1.015] hover:border-[var(--gold)] hover:shadow-[0_16px_34px_rgba(90,63,30,0.10)]"
+                          : "border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--text-main)] hover:-translate-y-1 hover:scale-[1.015] hover:border-[var(--gold)] hover:shadow-[0_16px_34px_rgba(90,63,30,0.10)]"
                       }`}
                     >
                       <div className="mb-3 flex items-start justify-between gap-3">
@@ -1191,7 +1191,7 @@ export default function ReservationPage() {
           </section>
 
           {staff.length > 1 && (
-            <section ref={staffSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+            <section ref={staffSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
               <div className="mb-5">
                 <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                   3 • Prestataire
@@ -1212,7 +1212,7 @@ export default function ReservationPage() {
                   className={`rounded-[22px] border p-4 text-left shadow-sm transition-all duration-200 active:scale-[0.98] ${
                     selectedStaffId === ""
                       ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16)]"
-                      : "border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)]"
+                      : "border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)]"
                   }`}
                 >
                   <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-[var(--page-bg)] to-[var(--page-bg)] text-lg">
@@ -1234,7 +1234,7 @@ export default function ReservationPage() {
                     className={`rounded-[22px] border p-4 text-left shadow-sm transition-all duration-200 active:scale-[0.98] ${
                       selectedStaffId === member.id
                         ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16)]"
-                        : "border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)]"
+                        : "border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)]"
                     }`}
                   >
                     <div className="font-semibold">{member.first_name}</div>
@@ -1244,7 +1244,7 @@ export default function ReservationPage() {
             </section>
           )}
 
-          <section ref={dateSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+          <section ref={dateSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
@@ -1264,8 +1264,8 @@ export default function ReservationPage() {
                 disabled={!canGoPrev}
                 className={`flex h-9 w-9 items-center justify-center rounded-full border transition duration-200 ${
                   canGoPrev
-                    ? "border-[var(--card-border)] bg-[var(--panel-bg)]/80 text-[var(--text-main)] hover:border-[var(--gold)] hover:shadow-md active:scale-95"
-                    : "cursor-not-allowed border-[var(--card-border)] bg-[var(--panel-bg)]/40 text-[var(--text-secondary)]"
+                    ? "border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--text-main)] hover:border-[var(--gold)] hover:shadow-md active:scale-95"
+                    : "cursor-not-allowed border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--text-secondary)]"
                 }`}
                 aria-label="Mois précédent"
               >
@@ -1279,7 +1279,7 @@ export default function ReservationPage() {
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)]/80 text-[var(--text-main)] transition duration-200 hover:border-[var(--gold)] hover:shadow-md active:scale-95"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-[var(--text-main)] transition duration-200 hover:border-[var(--gold)] hover:shadow-md active:scale-95"
                 aria-label="Mois suivant"
               >
                 ›
@@ -1307,7 +1307,7 @@ export default function ReservationPage() {
                     {Array.from({ length: startPadding }).map((_, index) => (
                       <div
                         key={`pad-${index}`}
-                        className="aspect-square min-h-[40px] rounded-2xl bg-[var(--panel-bg)]/40 opacity-50 sm:min-h-[56px]"
+                        className="aspect-square min-h-[40px] rounded-2xl bg-[var(--panel-bg)] opacity-50 sm:min-h-[56px]"
                       />
                     ))}
 
@@ -1334,7 +1334,7 @@ export default function ReservationPage() {
                               ? "cursor-not-allowed border-[var(--card-border)] bg-[var(--page-bg)]/80 text-[var(--text-secondary)]"
                               : active
                                 ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16),inset_0_0_0_1px_var(--gold)]"
-                                : "border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.10)]"
+                                : "border-[var(--card-border)] bg-[var(--panel-bg)] hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.10)]"
                           }`}
                         >
                           <div className="flex h-full items-center justify-center text-sm font-bold sm:text-base">
@@ -1352,7 +1352,7 @@ export default function ReservationPage() {
             </div>
           </section>
 
-          <section ref={slotSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+          <section ref={slotSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
@@ -1382,7 +1382,7 @@ export default function ReservationPage() {
                   className={`rounded-2xl border px-4 py-3 text-center font-semibold shadow-sm transition duration-200 active:scale-95 ${
                     selectedTime === slot.label
                       ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16),inset_0_0_0_1px_var(--gold)]"
-                      : "border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)]"
+                      : "border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)]"
                   } ${!selectedDateKey || !slot.available ? "cursor-not-allowed opacity-40" : ""}`}
                 >
                   {slot.label}
@@ -1391,7 +1391,7 @@ export default function ReservationPage() {
             </div>
           </section>
 
-          <section ref={contactSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6">
+          <section ref={contactSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
@@ -1415,7 +1415,7 @@ export default function ReservationPage() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                 </label>
 
@@ -1426,7 +1426,7 @@ export default function ReservationPage() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                 </label>
               </div>
@@ -1440,7 +1440,7 @@ export default function ReservationPage() {
                     onChange={(e) => void handlePhoneChange(e.target.value)}
                     required
                     placeholder="06 00 00 00 00"
-                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                   {phone.length === 10 ? (
                     <span
@@ -1460,7 +1460,7 @@ export default function ReservationPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="votreadresse@email.com"
-                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
+                    className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                   />
                 </label>
               </div>
@@ -1471,12 +1471,12 @@ export default function ReservationPage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Une précision sur votre rendez-vous..."
-                  className="min-h-[110px] rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
+                  className="min-h-[110px] rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] px-4 py-3 text-[var(--text-main)] outline-none"
                 />
               </label>
 
               {questions.length > 0 && (
-                <div className="grid gap-4 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/60 p-5">
+                <div className="grid gap-4 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5">
                   <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">Questionnaire</div>
                   {questions.map((q) => (
                     <label key={q.id} className="grid gap-2 text-sm text-[var(--text-secondary)]">
@@ -1488,7 +1488,7 @@ export default function ReservationPage() {
                         value={answers[q.id] ?? ""}
                         onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                         placeholder="Votre réponse..."
-                        className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
+                        className="rounded-[16px] border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--gold)]"
                       />
                     </label>
                   ))}
@@ -1528,7 +1528,7 @@ export default function ReservationPage() {
 
       {showConfirmation && selectedService ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/45 p-5 backdrop-blur-md sm:items-center">
-          <div className="my-auto w-full max-w-3xl rounded-[32px] border border-[var(--card-border)] bg-[var(--panel-bg)]/95 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.16)] backdrop-blur-xl sm:p-8">
+          <div className="my-auto w-full max-w-3xl rounded-[32px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.16)] sm:p-8">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Rendez-vous confirmé
             </div>
@@ -1541,45 +1541,45 @@ export default function ReservationPage() {
             </p>
 
             <div className="mt-6 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Cliente / client</strong>
                 <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {firstName} {lastName}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Téléphone</strong>
                 <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {phone}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Prestation</strong>
                 <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {selectedService.name}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Date et heure</strong>
                 <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {selectedDateLabel} à {selectedTime}
                 </span>
               </div>
-              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Tarif</strong>
                 <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {selectedService.price}
                 </span>
               </div>
               {selectedStaffId && staff.find((m) => m.id === selectedStaffId) ? (
-                <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+                <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                   <strong>Prestataire</strong>
                   <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                     {(() => { const m = staff.find((s) => s.id === selectedStaffId); return m ? m.first_name : ""; })()}
                   </span>
                 </div>
               ) : null}
-              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
+              <div className="rounded-[18px] border border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)] p-4">
                 <strong>Salon</strong>
                 <span className="mt-2 block text-sm text-[var(--text-secondary)]">
                   {settings?.salon_name || "Votre salon"}
@@ -1590,7 +1590,7 @@ export default function ReservationPage() {
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <a
                 href="/espace-client"
-                className="rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)]/60 px-5 py-3 font-semibold transition hover:bg-[var(--panel-bg)] hover:shadow-md"
+                className="rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold transition hover:bg-[var(--panel-bg)] hover:shadow-md"
               >
                 Gérer mon rendez-vous
               </a>

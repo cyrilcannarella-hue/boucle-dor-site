@@ -746,7 +746,7 @@ export default function EspaceClientPage() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
               href="/"
-              className="rounded-full border border-[var(--card-border)]/70 bg-[var(--panel-bg)]/50 px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)] hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
+              className="rounded-full border border-[var(--card-border)]/70 bg-[var(--panel-bg)] px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-[var(--nav-text)] transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)] hover:shadow-[0_10px_24px_rgba(80,56,32,0.08)]"
             >
               Accueil
             </Link>
@@ -763,7 +763,7 @@ export default function EspaceClientPage() {
 
       <section className="mx-auto grid w-[min(1200px,calc(100%-20px))] gap-4 py-4 sm:w-[min(1200px,calc(100%-28px))] sm:gap-6 sm:py-10 lg:grid-cols-[0.78fr_1.22fr]">
         <aside className="contents lg:grid lg:gap-5">
-          <div className="order-1 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
+          <div className="order-1 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6 lg:order-none">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Recherche
             </div>
@@ -783,7 +783,7 @@ export default function EspaceClientPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="06 00 00 00 00"
-                  className="min-h-[48px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)]/80 px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--gold)] focus:ring-4 focus:ring-[#d4af37]/15"
+                  className="min-h-[48px] rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--gold)] focus:ring-4 focus:ring-[#d4af37]/15"
                 />
               </label>
 
@@ -804,7 +804,7 @@ export default function EspaceClientPage() {
             ) : null}
           </div>
 
-          <div className="order-3 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
+          <div className="order-3 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6 lg:order-none">
             <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
               Information
             </div>
@@ -832,7 +832,7 @@ export default function EspaceClientPage() {
           </div>
         </aside>
 
-        <section className="order-2 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/62 p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] backdrop-blur-xl sm:p-6 lg:order-none">
+        <section className="order-2 rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-4 sm:rounded-[30px] sm:p-6 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6 lg:order-none">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
@@ -853,7 +853,7 @@ export default function EspaceClientPage() {
               {visibleAppointments.map((appointment) => (
                 <article
                   key={appointment.id}
-                  className="rounded-[22px] border border-[var(--card-border)] bg-[var(--panel-bg)]/86 p-4 shadow-sm sm:rounded-[24px] sm:p-5"
+                  className="rounded-[22px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-4 shadow-sm sm:rounded-[24px] sm:p-5"
                 >
                   <div className="mb-4 grid gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-between">
                     <div>
@@ -988,7 +988,7 @@ export default function EspaceClientPage() {
       {editingAppointment ? (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-3 sm:p-5 backdrop-blur-sm">
           <div className="flex min-h-full items-center justify-center">
-            <div className="w-full max-w-4xl rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)]/90 p-4 sm:rounded-[30px] sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.14)] backdrop-blur-xl">
+            <div className="w-full max-w-4xl rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-4 sm:rounded-[30px] sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.14)]">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Modifier le rendez-vous
               </div>
