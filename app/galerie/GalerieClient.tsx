@@ -185,6 +185,16 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
             className="relative mb-10 overflow-hidden rounded-[36px] border p-8 shadow-[0_24px_70px_rgba(0,0,0,0.10)] md:p-12"
             style={{ background: colorPanelBg, borderColor: colorCardBorder }}
           >
+            {/* Formes organiques décoratives en fond de carte */}
+            <div
+              className="pointer-events-none absolute -left-16 -top-20 h-72 w-72 blur-3xl"
+              style={{ backgroundColor: `${colorAccents}22`, borderRadius: "42% 58% 70% 30% / 45% 45% 55% 55%" }}
+            />
+            <div
+              className="pointer-events-none absolute -bottom-24 left-1/4 h-56 w-56 blur-3xl"
+              style={{ backgroundColor: `${colorAccents}18`, borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }}
+            />
+
             {/* Cercles concentriques décoratifs, ancrés en bas à droite */}
             <div className="pointer-events-none absolute bottom-0 right-0 h-0 w-0">
               <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}38`, boxShadow: `0 0 24px 4px ${colorAccents}40` }} />
