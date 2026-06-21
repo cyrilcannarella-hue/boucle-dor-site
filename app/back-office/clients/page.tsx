@@ -120,7 +120,7 @@ function derivePanelBg(hex: string): string {
   const r = parseInt(clean.substring(0, 2), 16);
   const g = parseInt(clean.substring(2, 4), 16);
   const b = parseInt(clean.substring(4, 6), 16);
-  const clamp = (v: number) => Math.min(255, v + 20);
+  const clamp = (v: number) => Math.min(255, v + 30);
   return `#${[r, g, b].map((c) => clamp(c).toString(16).padStart(2, "0")).join("")}`;
 }
 
