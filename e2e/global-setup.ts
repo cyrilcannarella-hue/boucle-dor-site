@@ -2,7 +2,7 @@ import "./load-env";
 import fs from "fs";
 import path from "path";
 import { chromium } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient, getSalonTestId } from "./admin-client";
 import { BASE_URL } from "./env";
 
 const STORAGE_STATE_PATH = path.resolve(__dirname, ".auth/salon-test.json");
@@ -11,28 +11,13 @@ const STORAGE_STATE_PATH = path.resolve(__dirname, ".auth/salon-test.json");
 // en réutilisant le même mécanisme que le salon démo public
 // (app/api/demo-access/route.ts) : un magic link généré côté service role.
 export default async function globalSetup() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont requis pour les tests e2e (voir .env.local)."
-    );
-  }
-  const admin = createClient(supabaseUrl, serviceRoleKey);
-
-  const { data: salon, error: salonError } = await admin
-    .from("salons")
-    .select("id")
-    .eq("slug", "salon-test")
-    .maybeSingle();
-  if (salonError || !salon) {
-    throw new Error(`Salon "salon-test" introuvable : ${salonError?.message ?? "aucune ligne"}`);
-  }
+  const admin = createAdminClient();
+  const salonId = await getSalonTestId(admin);
 
   const { data: member, error: memberError } = await admin
     .from("salon_members")
     .select("user_id")
-    .eq("salon_id", salon.id)
+    .eq("salon_id", salonId)
     .eq("role", "owner")
     .limit(1)
     .maybeSingle();
