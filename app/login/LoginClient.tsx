@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { SiteFont } from "@/components/SiteFont";
@@ -46,6 +46,12 @@ export function LoginClient({ initialSettings }: { initialSettings: SalonSetting
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("error") === "salon_access_denied") {
+      setStatus("Ce compte n'a pas accès à ce salon. Connectez-vous avec le compte associé à ce salon.");
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

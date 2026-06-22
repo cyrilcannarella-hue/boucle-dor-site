@@ -11,8 +11,25 @@ export type Salon = {
   is_test: boolean;
 };
 
-const DEFAULT_SALON_SLUG = "boucle-dor";
+export const DEFAULT_SALON_SLUG = "boucle-dor";
 export const PREVIEW_SALON_COOKIE = "preview_salon";
+
+const SAAS_DOMAINS = ["agenda-plus", "monsaas"];
+
+/**
+ * Dérive le slug du salon à partir du hostname de la requête, sans dépendre
+ * de next/headers — réutilisable depuis proxy.ts (qui n'a pas accès à cookies()/headers()).
+ */
+export function slugFromHostname(hostname: string): string {
+  const parts = hostname.split(".");
+
+  // {slug}.agenda-plus.fr ou {slug}.monsaas.fr -> on prend le sous-domaine comme slug
+  if (parts.length >= 3 && SAAS_DOMAINS.includes(parts[parts.length - 2]) && parts[0] !== "www") {
+    return parts[0];
+  }
+
+  return DEFAULT_SALON_SLUG;
+}
 
 async function resolveSalonSlug(): Promise<string> {
   const cookieStore = await cookies();
@@ -48,15 +65,7 @@ async function resolveSalonSlug(): Promise<string> {
   const headersList = await headers();
   const host = headersList.get("host") ?? "";
   const hostname = host.split(":")[0];
-  const parts = hostname.split(".");
-
-  // {slug}.agenda-plus.fr ou {slug}.monsaas.fr -> on prend le sous-domaine comme slug
-  const SAAS_DOMAINS = ["agenda-plus", "monsaas"];
-  if (parts.length >= 3 && SAAS_DOMAINS.includes(parts[parts.length - 2]) && parts[0] !== "www") {
-    return parts[0];
-  }
-
-  return DEFAULT_SALON_SLUG;
+  return slugFromHostname(hostname);
 }
 
 /**
