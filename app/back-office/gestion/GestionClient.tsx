@@ -1417,11 +1417,8 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       const path = `${salonId}/gallery-${index}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("site-images")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (uploadError) {
-        const { data: { session } } = await supabase.auth.getSession();
-        throw new Error(`${uploadError.message} [debug: session_user=${session?.user?.id ?? "aucune session"} salonId=${salonId} expires_at=${session?.expires_at ?? "n/a"}]`);
-      }
+        .upload(path, file, { contentType: file.type });
+      if (uploadError) throw new Error(uploadError.message);
       const { data: urlData } = supabase.storage.from("site-images").getPublicUrl(path);
       const oldUrl = galleryPhotos[index]?.url;
       setGalleryPhotos((prev) => prev.map((p, i) => i === index ? { ...p, url: urlData.publicUrl } : p));
@@ -1593,7 +1590,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       const path = `${salonId}/${type}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("site-images")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, file, { contentType: file.type });
       if (uploadError) throw new Error(uploadError.message);
       const { data: urlData } = supabase.storage.from("site-images").getPublicUrl(path);
       const publicUrl = urlData.publicUrl;
