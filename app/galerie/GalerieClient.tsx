@@ -208,9 +208,9 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
               <div className="absolute bottom-0 right-0 h-32 w-32 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}16`, boxShadow: `0 0 18px 3px ${colorAccents}2e` }} />
             </div>
 
-            {/* Filigrane typographique */}
+            {/* Filigrane typographique — ancré en bas à droite, à l'écart du titre/texte alignés à gauche */}
             <span
-              className="pointer-events-none absolute -top-2 left-6 select-none text-[5rem] font-black uppercase leading-none tracking-tight opacity-[0.07] md:text-[7rem]"
+              className="pointer-events-none absolute -bottom-8 right-6 select-none text-[5rem] font-black uppercase leading-none tracking-tight opacity-[0.07] md:text-[7rem]"
               style={{ color: colorAccents }}
             >
               Galerie
