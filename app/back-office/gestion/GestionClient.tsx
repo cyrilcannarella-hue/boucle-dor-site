@@ -3413,11 +3413,12 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                               />
                             </label>
                           )}
+                          <label className="mb-1 block text-sm font-semibold text-[var(--nav-text)]">Description</label>
                           <textarea
                             rows={3}
                             value={photo.caption}
                             onChange={(e) => setGalleryPhotos((prev) => prev.map((p, idx) => idx === i ? { ...p, caption: e.target.value } : p))}
-                            className={fieldClass + " resize-none text-sm"}
+                            className={fieldClass + " w-full resize-none text-sm"}
                           />
                         </div>
                       ))}

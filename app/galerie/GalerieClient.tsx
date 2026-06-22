@@ -309,7 +309,7 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
                     style={{ background: `linear-gradient(to right, ${colorAccents}, transparent)` }}
                   />
                   <p
-                    className="relative z-10 text-base font-medium leading-[1.8] [backface-visibility:hidden]"
+                    className="relative z-10 whitespace-pre-line text-base font-medium leading-[1.8] [backface-visibility:hidden]"
                     style={{ color: colorTextMain }}
                   >
                     {photo.caption || ""}
