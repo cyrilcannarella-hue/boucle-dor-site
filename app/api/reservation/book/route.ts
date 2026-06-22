@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSalon } from "@/lib/salon";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin-client";
+import { formatTime, getServiceSegments, parseTime, serviceDurationsFromRow } from "@/lib/availability";
+import { validateAppointmentSlot } from "@/lib/availability-server";
 
 type AnswerInput = { questionId: string; questionText: string; answer: string };
 
@@ -16,21 +18,57 @@ export async function POST(req: NextRequest) {
   const email = String(body.email ?? "").trim();
   const message = String(body.message ?? "").trim();
   const serviceId = String(body.serviceId ?? "");
-  const priceCents = Number(body.priceCents ?? 0);
   const appointmentDate = String(body.appointmentDate ?? "");
   const startTime = String(body.startTime ?? "");
-  const endTime = String(body.endTime ?? "");
-  const breakStartTime = body.breakStartTime ? String(body.breakStartTime) : null;
-  const breakEndTime = body.breakEndTime ? String(body.breakEndTime) : null;
   const staffId = body.staffId ? String(body.staffId) : null;
   const answers: AnswerInput[] = Array.isArray(body.answers) ? body.answers : [];
 
-  if (phone.length !== 10 || !firstName || !lastName || !serviceId || !appointmentDate || !startTime || !endTime) {
+  if (
+    phone.length !== 10 ||
+    !firstName ||
+    !lastName ||
+    !serviceId ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate) ||
+    !/^\d{2}:\d{2}/.test(startTime)
+  ) {
     return NextResponse.json({ error: "Informations manquantes ou invalides." }, { status: 400 });
   }
 
   const salon = await getCurrentSalon();
   const supabase = createAdminSupabaseClient();
+
+  const { data: serviceRow, error: serviceError } = await supabase
+    .from("services")
+    .select("duration_minutes, duration_before_break, break_duration, duration_after_break, price_cents")
+    .eq("id", serviceId)
+    .eq("salon_id", salon.id)
+    .maybeSingle();
+
+  if (serviceError || !serviceRow) {
+    return NextResponse.json({ error: "Prestation introuvable." }, { status: 404 });
+  }
+
+  // Recalculées côté serveur à partir de la prestation réelle — on ne fait
+  // jamais confiance aux durées/heures envoyées par le client.
+  const durations = serviceDurationsFromRow(serviceRow);
+  const startMinutes = parseTime(startTime);
+  const segments = getServiceSegments(durations, startMinutes);
+
+  const validation = await validateAppointmentSlot(supabase, salon.id, {
+    appointmentDate,
+    startMinutes,
+    durations,
+    staffId,
+  });
+
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.message }, { status: 409 });
+  }
+
+  const startTimePg = `${formatTime(startMinutes)}:00`;
+  const endTimePg = `${formatTime(segments.totalEnd)}:00`;
+  const breakStartTime = segments.pause > 0 ? `${formatTime(segments.breakStart)}:00` : null;
+  const breakEndTime = segments.pause > 0 ? `${formatTime(segments.breakEnd)}:00` : null;
 
   let clientId: string;
 
@@ -75,7 +113,7 @@ export async function POST(req: NextRequest) {
     .eq("salon_id", salon.id)
     .eq("client_id", clientId)
     .eq("appointment_date", appointmentDate)
-    .eq("start_time", startTime)
+    .eq("start_time", startTimePg)
     .eq("status", "confirmed")
     .maybeSingle();
 
@@ -90,14 +128,14 @@ export async function POST(req: NextRequest) {
       client_id: clientId,
       service_id: serviceId,
       appointment_date: appointmentDate,
-      start_time: startTime,
-      end_time: endTime,
+      start_time: startTimePg,
+      end_time: endTimePg,
       break_start_time: breakStartTime,
       break_end_time: breakEndTime,
       status: "confirmed",
       source: "web",
       client_message: message || null,
-      price_cents: priceCents,
+      price_cents: serviceRow.price_cents,
       staff_id: staffId,
     })
     .select("id")

@@ -3,10 +3,19 @@
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
+import {
+  formatTime,
+  getServiceSegments,
+  isOpenDayFromSettings,
+  isSlotAvailable,
+  parseTime,
+  type BusyAppointment,
+  type ExceptionClosure,
+  type StaffSchedule,
+} from "@/lib/availability";
 
 type Service = {
   id: string;
@@ -29,30 +38,6 @@ type ServiceRow = {
   break_duration: number | null;
   duration_after_break: number | null;
   categories: { name: string } | { name: string }[] | null;
-};
-
-type RealtimePayload = {
-  new?: { appointment_date?: string };
-  old?: { appointment_date?: string };
-};
-
-type BusyAppointment = {
-  id: string;
-  start_time: string;
-  end_time: string;
-  break_start_time: string | null;
-  break_end_time: string | null;
-  status: "confirmed" | "cancelled" | "completed";
-  staff_id: string | null;
-};
-
-type ExceptionClosure = {
-  id: string;
-  closure_date: string;
-  start_time: string | null;
-  end_time: string | null;
-  is_all_day: boolean;
-  reason: string | null;
 };
 
 type Slot = {
@@ -106,18 +91,6 @@ type StaffRow = {
   first_name: string;
   last_name: string;
   color: string;
-};
-
-type StaffSchedule = {
-  id: string;
-  staff_id: string;
-  day_of_week: number;
-  is_open: boolean;
-  opening_time: string;
-  closing_time: string;
-  has_break: boolean;
-  break_start: string | null;
-  break_end: string | null;
 };
 
 type QuestionRow = {
@@ -188,18 +161,6 @@ function toKey(date: Date) {
   ).padStart(2, "0")}`;
 }
 
-function parseTime(str: string) {
-  const clean = str.slice(0, 5);
-  const [h, m] = clean.split(":").map(Number);
-  return h * 60 + m;
-}
-
-function formatTime(min: number) {
-  const h = String(Math.floor(min / 60)).padStart(2, "0");
-  const m = String(min % 60).padStart(2, "0");
-  return `${h}:${m}`;
-}
-
 function formatPgTimeFromLabel(str: string) {
   return `${str}:00`;
 }
@@ -221,10 +182,6 @@ function getDaysInMonth(year: number, monthIndex: number) {
   return arr;
 }
 
-function overlaps(startA: number, endA: number, startB: number, endB: number) {
-  return startA < endB && endA > startB;
-}
-
 function getAllSlots(
   duration: number,
   openingMinutes: number,
@@ -237,90 +194,6 @@ function getAllSlots(
   return slots;
 }
 
-function isOpenDayFromSettings(date: Date, settings: SalonSettings | null) {
-  if (!settings) return false;
-
-  const day = date.getDay();
-
-  if (day === 1) return settings.is_open_monday;
-  if (day === 2) return settings.is_open_tuesday;
-  if (day === 3) return settings.is_open_wednesday;
-  if (day === 4) return settings.is_open_thursday;
-  if (day === 5) return settings.is_open_friday;
-  if (day === 6) return settings.is_open_saturday;
-  return settings.is_open_sunday;
-}
-
-function getServiceDurations(service: Service | null) {
-  const pause = service?.breakDuration ?? 0;
-  const after = service?.durationAfterBreak ?? 0;
-  const before = service?.durationBeforeBreak ?? Math.max(0, (service?.duration ?? 0) - pause - after);
-  const total = before + pause + after;
-
-  return {
-    before,
-    pause,
-    after,
-    total,
-  };
-}
-
-function getServiceSegments(service: Service | null, slotStart: number) {
-  const { before, pause, after, total } = getServiceDurations(service);
-
-  const segment1Start = slotStart;
-  const segment1End = segment1Start + before;
-
-  const breakStart = segment1End;
-  const breakEnd = breakStart + pause;
-
-  const segment2Start = breakEnd;
-  const segment2End = segment2Start + after;
-
-  return {
-    before,
-    pause,
-    after,
-    total,
-    segment1Start,
-    segment1End,
-    breakStart,
-    breakEnd,
-    segment2Start,
-    segment2End,
-    totalEnd: segment2End,
-  };
-}
-
-function getAppointmentBusySegments(appointment: BusyAppointment) {
-  const start = parseTime(appointment.start_time);
-  const end = parseTime(appointment.end_time);
-
-  const hasBreak = appointment.break_start_time && appointment.break_end_time;
-
-  if (!hasBreak) {
-    return [
-      {
-        start,
-        end,
-      },
-    ];
-  }
-
-  const breakStart = parseTime(appointment.break_start_time!);
-  const breakEnd = parseTime(appointment.break_end_time!);
-
-  return [
-    {
-      start,
-      end: breakStart,
-    },
-    {
-      start: breakEnd,
-      end,
-    },
-  ];
-}
 
 export function ReservationClient({ initialSettings }: { initialSettings: SalonSettings | null }) {
   const { id: salonId } = useSalon();
@@ -378,48 +251,22 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
   useEffect(() => {
     const loadInitialData = async () => {
-      const supabase = createClient();
+      const res = await fetch("/api/public/booking-options");
+      const json = await res.json();
 
-      const { data: categoriesData } = await supabase
-        .from("categories")
-        .select("name, display_order")
-        .eq("salon_id", salonId)
-        .order("display_order", { ascending: true })
-        .order("name", { ascending: true });
-      if (categoriesData) {
-        const names = categoriesData.map((c: { name: string }) => c.name);
-        setOrderedCategories(names);
-        if (names.length > 0) setCategoryFilter(names[0]);
-      }
-
-      const { data, error } = await supabase
-        .from("services")
-        .select(
-          `
-          id,
-          name,
-          price_cents,
-          duration_minutes,
-          duration_before_break,
-          break_duration,
-          duration_after_break,
-          categories (
-            name
-          )
-        `,
-        )
-        .eq("salon_id", salonId)
-        .eq("is_visible", true)
-        .order("display_order", { ascending: true });
-
-      if (error) {
-        setServicesError((error as Error).message);
+      if (!res.ok) {
+        setServicesError(json.error ?? "Impossible de charger les prestations.");
         setLoadingServices(false);
         return;
       }
 
+      const categoriesData = (json.categories ?? []) as { name: string }[];
+      const names = categoriesData.map((c) => c.name);
+      setOrderedCategories(names);
+      if (names.length > 0) setCategoryFilter(names[0]);
+
       const mapped: Service[] =
-        data?.map((item: ServiceRow) => {
+        (json.services as ServiceRow[] | undefined)?.map((item) => {
           const durationBeforeBreak =
             item.duration_before_break ?? item.duration_minutes ?? 0;
           const breakDuration = item.break_duration ?? 0;
@@ -448,67 +295,16 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
       setLoadingServices(false);
 
-      const { data: staffData } = await supabase
-        .from("staff")
-        .select("id, first_name, last_name, color")
-        .eq("salon_id", salonId)
-        .eq("is_active", true)
-        .order("last_name", { ascending: true });
-
-      const staffList = (staffData ?? []) as StaffRow[];
+      const staffList = (json.staff ?? []) as StaffRow[];
       setStaff(staffList);
       if (staffList.length === 1) setSelectedStaffId(staffList[0].id);
 
-      const { data: schedulesData } = await supabase
-        .from("staff_schedules")
-        .select("*")
-        .eq("salon_id", salonId)
-        .order("day_of_week", { ascending: true });
-
-      setStaffSchedules((schedulesData ?? []) as StaffSchedule[]);
-
-      const { data: questionsData } = await supabase
-        .from("questionnaire_questions")
-        .select("id, question, display_order")
-        .eq("salon_id", salonId)
-        .eq("is_active", true)
-        .order("display_order", { ascending: true })
-        .order("created_at", { ascending: true });
-      setQuestions((questionsData ?? []) as QuestionRow[]);
+      setStaffSchedules((json.staffSchedules ?? []) as StaffSchedule[]);
+      setQuestions((json.questions ?? []) as QuestionRow[]);
     };
 
     loadInitialData();
   }, [salonId]);
-
-  useEffect(() => {
-    if (!selectedDateKey) return;
-
-    const supabase = createClient();
-
-    const channel = supabase
-      .channel(`slots-${selectedDateKey}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'appointments',
-        },
-        (payload: RealtimePayload) => {
-          const date =
-            payload?.new?.appointment_date ||
-            payload?.old?.appointment_date;
-          if (!date || date === selectedDateKey) {
-            loadBusyAppointmentsForDay(selectedDateKey).catch(() => {});
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedDateKey]);
 
   const openingMinutes = useMemo(() => {
     if (!settings) return parseTime("09:00");
@@ -567,7 +363,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     }
   };
 
-  const loadBusyAppointmentsForDay = async (appointmentDate: string) => {
+  const loadDayData = async (appointmentDate: string) => {
     const res = await fetch(`/api/public/busy-appointments?date=${appointmentDate}`);
     const json = await res.json();
 
@@ -576,85 +372,12 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     }
 
     const rows = (json.appointments ?? []) as BusyAppointment[];
+    const closures = (json.closures ?? []) as ExceptionClosure[];
     setBusyAppointments(rows);
-    return rows;
+    setExceptionClosures(closures);
+    return [rows, closures] as const;
   };
 
-  const loadClosuresForDay = async (appointmentDate: string) => {
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-      .from("exception_closures")
-      .select("id, closure_date, start_time, end_time, is_all_day, reason")
-      .eq("salon_id", salonId)
-      .eq("closure_date", appointmentDate)
-      .order("start_time", { ascending: true });
-
-    if (error) {
-      throw new Error((error as Error).message);
-    }
-
-    const rows = (data ?? []) as ExceptionClosure[];
-    setExceptionClosures(rows);
-    return rows;
-  };
-
-  const isBlockedByExceptionalClosure = (
-    slotStart: number,
-    slotEnd: number,
-    closures: ExceptionClosure[],
-  ) => {
-    return closures.some((closure) => {
-      if (closure.is_all_day) return true;
-      if (!closure.start_time || !closure.end_time) return false;
-
-      const closureStart = parseTime(closure.start_time);
-      const closureEnd = parseTime(closure.end_time);
-
-      return overlaps(slotStart, slotEnd, closureStart, closureEnd);
-    });
-  };
-
-  const isSlotAvailable = (
-    slotStart: number,
-    service: Service | null,
-    appointments: BusyAppointment[],
-    closures: ExceptionClosure[],
-    staffClosingMinutes?: number,
-    staffSchedule?: StaffSchedule | null,
-  ) => {
-    const segments = getServiceSegments(service, slotStart);
-    const effectiveClosing = staffClosingMinutes ?? closingMinutes;
-
-    if (segments.totalEnd > effectiveClosing) return false;
-
-    // Bloquer si créneau pendant la pause de la prestataire
-    if (staffSchedule?.has_break && staffSchedule.break_start && staffSchedule.break_end) {
-      const bStart = parseTime(staffSchedule.break_start.slice(0, 5));
-      const bEnd = parseTime(staffSchedule.break_end.slice(0, 5));
-      if (segments.segment1Start < bEnd && segments.totalEnd > bStart) return false;
-    }
-
-    // Filtrer les RDV selon la prestataire sélectionnée
-    const relevantAppointments = selectedStaffId
-      ? appointments.filter((a) => a.staff_id === selectedStaffId || a.staff_id === null)
-      : appointments;
-
-    const blockedByAppointments = relevantAppointments.some((appointment) => {
-      const busySegments = getAppointmentBusySegments(appointment);
-      return busySegments.some((busySegment) => {
-        const overlapSegment1 = overlaps(segments.segment1Start, segments.segment1End, busySegment.start, busySegment.end);
-        const overlapSegment2 = segments.after > 0 && overlaps(segments.segment2Start, segments.segment2End, busySegment.start, busySegment.end);
-        return overlapSegment1 || overlapSegment2;
-      });
-    });
-
-    const blockedByClosures =
-      isBlockedByExceptionalClosure(segments.segment1Start, segments.segment1End, closures) ||
-      (segments.after > 0 && isBlockedByExceptionalClosure(segments.segment2Start, segments.segment2End, closures));
-
-    return !blockedByAppointments && !blockedByClosures;
-  };
 
   const selectedStaffMember = useMemo(
     () => staff.find((m) => m.id === selectedStaffId) ?? null,
@@ -706,7 +429,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
           const segs = getServiceSegments(selectedService, slotStart);
           if (segs.totalEnd > memberClose || slotStart < memberOpen) return false;
           const memberAppts = busyAppointments.filter((a) => a.staff_id === member.id || a.staff_id === null);
-          return isSlotAvailable(slotStart, selectedService, memberAppts, exceptionClosures, memberClose, sched);
+          return isSlotAvailable(slotStart, selectedService, memberAppts, exceptionClosures, memberClose, sched, null);
         });
       } else {
         available = !isPast && isSlotAvailable(
@@ -716,6 +439,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
           exceptionClosures,
           effectiveClosingMinutes,
           selectedStaffSchedule,
+          selectedStaffId || null,
         );
       }
 
@@ -742,10 +466,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     scrollToSection(slotSectionRef);
 
     try {
-      const [rows, closures] = await Promise.all([
-        loadBusyAppointmentsForDay(key),
-        loadClosuresForDay(key),
-      ]);
+      const [rows, closures] = await loadDayData(key);
 
       const duration = selectedService?.duration ?? 30;
       const allSlots = getAllSlots(duration, effectiveOpeningMinutes, effectiveClosingMinutes);
@@ -757,7 +478,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
       const firstAvailable = allSlots.find((slot) => {
         const slotStart = parseTime(slot.label);
         if (isToday && slotStart <= currentMinutes) return false;
-        return isSlotAvailable(slotStart, selectedService, rows, closures, effectiveClosingMinutes, getStaffScheduleForDate(selectedStaffId, key));
+        return isSlotAvailable(slotStart, selectedService, rows, closures, effectiveClosingMinutes, getStaffScheduleForDate(selectedStaffId, key), selectedStaffId || null);
       });
 
       setSelectedTime(firstAvailable ? firstAvailable.label : "--:--");
@@ -842,10 +563,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
       const startMinutes = parseTime(selectedTime);
       const segments = getServiceSegments(selectedService, startMinutes);
 
-      const [rows, closures] = await Promise.all([
-        loadBusyAppointmentsForDay(appointmentDate),
-        loadClosuresForDay(appointmentDate),
-      ]);
+      const [rows, closures] = await loadDayData(appointmentDate);
 
       const stillAvailable = isSlotAvailable(
         startMinutes,
@@ -854,6 +572,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
         closures,
         effectiveClosingMinutes,
         getStaffScheduleForDate(selectedStaffId, appointmentDate),
+        selectedStaffId || null,
       );
 
       if (!stillAvailable) {
@@ -892,7 +611,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             if (startMinutes < bEnd && segments.totalEnd > bStart) return false;
           }
           const memberRows = rows.filter((r) => r.staff_id === member.id);
-          return isSlotAvailable(startMinutes, selectedService, memberRows, closures, memberCloseMin, sched);
+          return isSlotAvailable(startMinutes, selectedService, memberRows, closures, memberCloseMin, sched, null);
         });
 
         if (availableStaff.length > 0) {
@@ -973,10 +692,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
         }),
       }).catch(() => {});
 
-      await Promise.all([
-        loadBusyAppointmentsForDay(appointmentDate),
-        loadClosuresForDay(appointmentDate),
-      ]);
+      await loadDayData(appointmentDate);
     } catch (error: unknown) {
       setStatus(
         `Erreur : ${(error as Error).message ?? "Impossible d'enregistrer le rendez-vous."}`,
@@ -1131,10 +847,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
                         setSelectedService(service);
                         scrollToSection(staff.length > 1 ? staffSectionRef : dateSectionRef);
                         if (selectedDateKey) {
-                          Promise.all([
-                            loadBusyAppointmentsForDay(selectedDateKey),
-                            loadClosuresForDay(selectedDateKey),
-                          ]).catch(() => {});
+                          loadDayData(selectedDateKey).catch(() => {});
                         }
                       }}
                       className={`rounded-[24px] border p-5 text-left shadow-sm transition-all duration-200 ease-out active:scale-[0.95] ${

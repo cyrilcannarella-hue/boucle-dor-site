@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { SalonNameGradient } from "@/components/SalonNameGradient";
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 
@@ -293,7 +291,6 @@ function isBlockedByExceptionalClosure(
 }
 
 export function EspaceClientPageClient({ initialSettings }: { initialSettings: SalonSettings | null }) {
-  const { id: salonId } = useSalon();
   const settings = initialSettings;
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState("");
@@ -365,27 +362,10 @@ export function EspaceClientPageClient({ initialSettings }: { initialSettings: S
     const rows = ((json.appointments ?? []) as BusyRow[]).filter(
       (item) => item.id !== appointmentIdToIgnore,
     );
+    const closures = (json.closures ?? []) as ExceptionClosure[];
     setBusyRows(rows);
-    return rows;
-  };
-
-  const loadClosuresForDay = async (appointmentDate: string) => {
-    const supabase = createClient();
-
-    const { data, error } = await supabase
-      .from("exception_closures")
-      .select("id, closure_date, start_time, end_time, is_all_day, reason")
-      .eq("salon_id", salonId)
-      .eq("closure_date", appointmentDate)
-      .order("start_time", { ascending: true });
-
-    if (error) {
-      throw new Error((error as Error).message);
-    }
-
-    const rows = (data ?? []) as ExceptionClosure[];
-    setExceptionClosures(rows);
-    return rows;
+    setExceptionClosures(closures);
+    return [rows, closures] as const;
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -457,10 +437,7 @@ export function EspaceClientPageClient({ initialSettings }: { initialSettings: S
       setSelectedTime(formatFrenchTime(appointment.start_time));
       setStatus("");
 
-      await Promise.all([
-        loadBusyRowsForDay(appointment.appointment_date, appointment.id),
-        loadClosuresForDay(appointment.appointment_date),
-      ]);
+      await loadBusyRowsForDay(appointment.appointment_date, appointment.id);
     } catch (error: unknown) {
       setStatus(
         `Erreur : ${(error as Error).message ?? "Impossible de préparer la modification."}`,
@@ -530,10 +507,7 @@ export function EspaceClientPageClient({ initialSettings }: { initialSettings: S
     if (!editingAppointment) return;
 
     try {
-      const [rows, closures] = await Promise.all([
-        loadBusyRowsForDay(key, editingAppointment.id),
-        loadClosuresForDay(key),
-      ]);
+      const [rows, closures] = await loadBusyRowsForDay(key, editingAppointment.id);
 
       const duration = editingAppointment.services?.duration_minutes ?? 30;
       const allSlots = getAllSlots(duration, openingMinutes, closingMinutes);
@@ -600,10 +574,7 @@ export function EspaceClientPageClient({ initialSettings }: { initialSettings: S
         return;
       }
 
-      const [rows, closures] = await Promise.all([
-        loadBusyRowsForDay(selectedDateKey, editingAppointment.id),
-        loadClosuresForDay(selectedDateKey),
-      ]);
+      const [rows, closures] = await loadBusyRowsForDay(selectedDateKey, editingAppointment.id);
 
       const blockedByBusy = rows.some((row) => {
         const existingStart = parseTime(row.start_time);
