@@ -194,6 +194,10 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
               className="pointer-events-none absolute -bottom-24 left-1/4 h-56 w-56 blur-2xl"
               style={{ backgroundColor: `${colorAccents}45`, borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }}
             />
+            <div
+              className="pointer-events-none absolute -top-16 left-3/4 h-60 w-60 blur-2xl"
+              style={{ backgroundColor: `${colorAccents}40`, borderRadius: "55% 45% 35% 65% / 50% 60% 40% 50%" }}
+            />
 
             {/* Cercles concentriques décoratifs, ancrés en bas à droite */}
             <div className="pointer-events-none absolute bottom-0 right-0 h-0 w-0">
@@ -204,10 +208,13 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
               <div className="absolute bottom-0 right-0 h-32 w-32 translate-x-1/2 translate-y-1/2 rounded-full border-2" style={{ borderColor: `${colorAccents}16`, boxShadow: `0 0 18px 3px ${colorAccents}2e` }} />
             </div>
 
-            {/* Badge */}
-            <div className="relative z-10 mb-4 inline-flex rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
+            {/* Filigrane typographique */}
+            <span
+              className="pointer-events-none absolute -top-2 left-6 select-none text-[5rem] font-black uppercase leading-none tracking-tight opacity-[0.07] md:text-[7rem]"
+              style={{ color: colorAccents }}
+            >
               Galerie
-            </div>
+            </span>
 
             {gallery.title && (
               <h1 className="relative z-10 mb-4 text-3xl font-black tracking-tight md:text-4xl">
