@@ -325,11 +325,21 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     return parseTime(t);
   }, [settings, selectedDateKey]);
 
+  const displayedCategories = useMemo(() => {
+    return orderedCategories.length > 0
+      ? orderedCategories.filter((cat) => services.some((s) => s.category === cat))
+      : [...new Set(services.map((s) => s.category))];
+  }, [orderedCategories, services]);
+
+  // S'il n'y a qu'une seule catégorie (ou aucune), inutile de faire choisir —
+  // on va directement aux prestations, sans filtrer par catégorie.
+  const showCategoryStep = displayedCategories.length > 1;
+  const stepCategory = showCategoryStep ? 1 : 0;
+
   const filteredServices = useMemo(() => {
-    return categoryFilter === "all"
-      ? services
-      : services.filter((service) => service.category === categoryFilter);
-  }, [categoryFilter, services]);
+    if (!showCategoryStep || categoryFilter === "all") return services;
+    return services.filter((service) => service.category === categoryFilter);
+  }, [categoryFilter, services, showCategoryStep]);
 
   const now = new Date();
   const todayKey = toKey(makeLocalDate(now.getFullYear(), now.getMonth(), now.getDate()));
@@ -789,6 +799,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
       <section className="mx-auto grid w-[min(860px,calc(100%-28px))] gap-6 py-8 sm:py-10">
 
         {/* Catégories */}
+        {showCategoryStep && (
         <section className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
           <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
             1 • Catégorie
@@ -797,10 +808,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             Choisissez une catégorie
           </h2>
           <div className="flex flex-wrap gap-3">
-            {(orderedCategories.length > 0
-              ? orderedCategories.filter((cat) => services.some((s) => s.category === cat))
-              : [...new Set(services.map((s) => s.category))]
-            ).map((cat) => (
+            {displayedCategories.map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -816,12 +824,13 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             ))}
           </div>
         </section>
+        )}
 
         <div className="grid gap-5">
           <section ref={serviceSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
             <div className="mb-4">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-                2 • Prestations
+                {stepCategory + 1} • Prestations
               </div>
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 Choisissez votre service
@@ -891,7 +900,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             <section ref={staffSectionRef} className="scroll-mt-28 rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_18px_45px_rgba(90,63,30,0.08)] sm:p-6">
               <div className="mb-5">
                 <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-                  3 • Prestataire
+                  {stepCategory + 2} • Prestataire
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   Choisissez votre prestataire
@@ -945,7 +954,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-                  {staff.length > 1 ? "4 • Date" : "3 • Date"}
+                  {stepCategory + (staff.length > 1 ? 1 : 0) + 2} • Date
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   Choisissez votre date
@@ -1053,7 +1062,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-                  {staff.length > 1 ? "5 • Créneau" : "4 • Créneau"}
+                  {stepCategory + (staff.length > 1 ? 1 : 0) + 3} • Créneau
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   Choisissez votre moment
@@ -1092,7 +1101,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <div className="mb-2 inline-flex whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-                  {staff.length > 1 ? "6 • Coordonnées" : "5 • Coordonnées"}
+                  {stepCategory + (staff.length > 1 ? 1 : 0) + 4} • Coordonnées
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   Confirmez votre rendez-vous
