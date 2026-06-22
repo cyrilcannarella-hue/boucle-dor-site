@@ -210,7 +210,7 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
 
             {/* Filigrane typographique — ancré en bas à droite, à l'écart du titre/texte alignés à gauche */}
             <span
-              className="pointer-events-none absolute -bottom-8 right-6 select-none text-[5rem] font-black uppercase leading-none tracking-tight opacity-[0.07] md:text-[7rem]"
+              className="pointer-events-none absolute bottom-4 right-48 select-none text-[5rem] font-black uppercase leading-none tracking-tight opacity-[0.07] md:text-[7rem]"
               style={{ color: colorAccents }}
             >
               Galerie
