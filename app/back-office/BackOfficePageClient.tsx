@@ -2067,7 +2067,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
         </div>
         </aside>
         <section className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
                 Agenda
