@@ -638,9 +638,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setSavingSettings(true);
       setStatusMessage("");
 
-      const { data: oldData } = await supabase.from("salon_settings").select("*").eq("id", settings.id).eq("salon_id", salonId).single();
-      const oldSettings = oldData as SalonSettings | null;
-
       const { data, error } = await supabase
         .from("salon_settings")
         .update({
@@ -679,44 +676,48 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       if (error) throw new Error((error as Error).message);
       setSettings(data as SalonSettings);
 
-      if (oldSettings) {
+      {
         const DAYS = [
-          { slug: "sunday",    dow: 0 },
-          { slug: "monday",    dow: 1 },
-          { slug: "tuesday",   dow: 2 },
-          { slug: "wednesday", dow: 3 },
-          { slug: "thursday",  dow: 4 },
-          { slug: "friday",    dow: 5 },
-          { slug: "saturday",  dow: 6 },
+          { slug: "sunday",    dow: 0, isOpenKey: "is_open_sunday" },
+          { slug: "monday",    dow: 1, isOpenKey: "is_open_monday" },
+          { slug: "tuesday",   dow: 2, isOpenKey: "is_open_tuesday" },
+          { slug: "wednesday", dow: 3, isOpenKey: "is_open_wednesday" },
+          { slug: "thursday",  dow: 4, isOpenKey: "is_open_thursday" },
+          { slug: "friday",    dow: 5, isOpenKey: "is_open_friday" },
+          { slug: "saturday",  dow: 6, isOpenKey: "is_open_saturday" },
         ] as const;
 
+        const solo = staff.length === 1;
         let schedulesChanged = false;
 
-        for (const { slug, dow } of DAYS) {
-          const oldOpen  = (oldSettings[`opening_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5) ?? oldSettings.opening_time?.slice(0, 5) ?? "09:00";
-          const oldClose = (oldSettings[`closing_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5) ?? oldSettings.closing_time?.slice(0, 5) ?? "19:00";
-          const newOpen  = (settings[`opening_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5) ?? settings.opening_time?.slice(0, 5) ?? "09:00";
-          const newClose = (settings[`closing_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5) ?? settings.closing_time?.slice(0, 5) ?? "19:00";
-
-          if (oldOpen === newOpen && oldClose === newClose) continue;
+        for (const { slug, dow, isOpenKey } of DAYS) {
+          const newOpen   = (settings[`opening_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5) ?? settings.opening_time?.slice(0, 5) ?? "09:00";
+          const newClose  = (settings[`closing_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5) ?? settings.closing_time?.slice(0, 5) ?? "19:00";
+          const newIsOpen = Boolean(settings[isOpenKey]);
 
           for (const sched of staffSchedules.filter((s) => s.day_of_week === dow)) {
             const staffOpen  = sched.opening_time?.slice(0, 5) ?? "09:00";
             const staffClose = sched.closing_time?.slice(0, 5) ?? "19:00";
 
-            let adjOpen  = staffOpen;
-            let adjClose = staffClose;
+            let adjIsOpen = sched.is_open;
+            let adjOpen   = staffOpen;
+            let adjClose  = staffClose;
 
-            if (staffOpen === oldOpen) adjOpen = newOpen;
-            else if (staffOpen < newOpen) adjOpen = newOpen;
+            if (solo) {
+              // Seul prestataire : ses horaires sont ceux du salon, dans les deux sens.
+              adjIsOpen = newIsOpen;
+              adjOpen = newOpen;
+              adjClose = newClose;
+            } else {
+              // Plusieurs prestataires : ne suit le salon que pour rétrécir, jamais pour élargir.
+              adjIsOpen = sched.is_open && newIsOpen;
+              if (staffOpen < newOpen) adjOpen = newOpen;
+              if (staffClose > newClose) adjClose = newClose;
+              if (adjOpen >= adjClose) { adjOpen = newOpen; adjClose = newClose; }
+            }
 
-            if (staffClose === oldClose) adjClose = newClose;
-            else if (staffClose > newClose) adjClose = newClose;
-
-            if (adjOpen >= adjClose) { adjOpen = newOpen; adjClose = newClose; }
-
-            if (adjOpen !== staffOpen || adjClose !== staffClose) {
-              await supabase.from("staff_schedules").update({ opening_time: adjOpen, closing_time: adjClose }).eq("id", sched.id).eq("salon_id", salonId);
+            if (adjIsOpen !== sched.is_open || adjOpen !== staffOpen || adjClose !== staffClose) {
+              await supabase.from("staff_schedules").update({ is_open: adjIsOpen, opening_time: adjOpen, closing_time: adjClose }).eq("id", sched.id).eq("salon_id", salonId);
               schedulesChanged = true;
             }
           }
