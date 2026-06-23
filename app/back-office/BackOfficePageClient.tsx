@@ -2954,9 +2954,13 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
                     <div className="rounded-[18px] border border-[var(--card-border)] bg-white p-4">
                       <strong>Téléphone</strong>
-                      <span className="mt-2 block text-sm text-[var(--nav-text)]">
-                        {selectedAppointment.clients?.phone ?? "—"}
-                      </span>
+                      {selectedAppointment.clients?.phone ? (
+                        <a href={`tel:${selectedAppointment.clients.phone}`} className="mt-2 block text-sm text-[var(--nav-text)] underline decoration-[var(--gold)] underline-offset-4">
+                          {selectedAppointment.clients.phone}
+                        </a>
+                      ) : (
+                        <span className="mt-2 block text-sm text-[var(--nav-text)]">—</span>
+                      )}
                     </div>
 
                     <div className="rounded-[18px] border border-[var(--card-border)] bg-white p-4">
