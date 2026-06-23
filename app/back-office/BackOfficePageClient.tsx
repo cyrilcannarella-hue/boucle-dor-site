@@ -202,6 +202,7 @@ const MONTH_NAMES = [
 const SLOT_STEP = 15;
 const PX_PER_MINUTE = 3;
 const PX_PER_MINUTE_WEEK = 2;
+const AGENDA_BUFFER_MINUTES = 60;
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -598,22 +599,22 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   }, [hasSmsConfigured]);
 
   const dayStart = useMemo(() => {
-    if (!settings) return parseTimeToMinutes("09:00");
+    if (!settings) return Math.max(0, parseTimeToMinutes("09:00") - AGENDA_BUFFER_MINUTES);
     const dow = selectedDate ? new Date(selectedDate + "T12:00:00").getDay() : 1;
     const slug = DAY_SLUGS[dow];
     const t = (settings[`opening_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
       ?? settings.opening_time?.slice(0, 5)
       ?? "09:00";
-    return parseTimeToMinutes(t);
+    return Math.max(0, parseTimeToMinutes(t) - AGENDA_BUFFER_MINUTES);
   }, [settings, selectedDate]);
   const dayEnd = useMemo(() => {
-    if (!settings) return parseTimeToMinutes("19:00");
+    if (!settings) return Math.min(24 * 60, parseTimeToMinutes("19:00") + AGENDA_BUFFER_MINUTES);
     const dow = selectedDate ? new Date(selectedDate + "T12:00:00").getDay() : 1;
     const slug = DAY_SLUGS[dow];
     const t = (settings[`closing_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
       ?? settings.closing_time?.slice(0, 5)
       ?? "19:00";
-    return parseTimeToMinutes(t);
+    return Math.min(24 * 60, parseTimeToMinutes(t) + AGENDA_BUFFER_MINUTES);
   }, [settings, selectedDate]);
   const dayHeight = (dayEnd - dayStart) * PX_PER_MINUTE;
 
@@ -981,15 +982,10 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     return staffSchedules.find((s) => s.staff_id === selectedStaffId && s.day_of_week === dow) ?? null;
   }, [selectedStaffId, selectedDate, staffSchedules]);
 
-  const createDayStart = useMemo(() => {
-    if (!createStaffSchedule) return dayStart;
-    return Math.max(dayStart, parseTimeToMinutes(createStaffSchedule.opening_time.slice(0, 5)));
-  }, [createStaffSchedule, dayStart]);
-
-  const createDayEnd = useMemo(() => {
-    if (!createStaffSchedule) return dayEnd;
-    return Math.min(dayEnd, parseTimeToMinutes(createStaffSchedule.closing_time.slice(0, 5)));
-  }, [createStaffSchedule, dayEnd]);
+  // Bornées sur les horaires (élargis) du salon uniquement : la création manuelle
+  // est une exception volontaire, pas soumise au planning normal du prestataire.
+  const createDayStart = dayStart;
+  const createDayEnd = dayEnd;
 
   const createDateClosures = useMemo(
     () => createDate === selectedDate
@@ -1673,29 +1669,31 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   useEffect(() => { weekDaysRef.current = weekDays; }, [weekDays]);
 
   const weekGlobalStart = useMemo(() => {
-    if (!settings) return parseTimeToMinutes("09:00");
+    if (!settings) return Math.max(0, parseTimeToMinutes("09:00") - AGENDA_BUFFER_MINUTES);
     const openDays = weekDays.filter((dk) => isOpenDayFromSettings(dk, settings));
-    if (openDays.length === 0) return parseTimeToMinutes(settings.opening_time?.slice(0, 5) ?? "09:00");
-    return openDays.reduce((min, dk) => {
+    if (openDays.length === 0) return Math.max(0, parseTimeToMinutes(settings.opening_time?.slice(0, 5) ?? "09:00") - AGENDA_BUFFER_MINUTES);
+    const minOpen = openDays.reduce((min, dk) => {
       const dow = new Date(dk + "T12:00:00").getDay();
       const slug = DAY_SLUGS[dow];
       const t = (settings[`opening_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
         ?? settings.opening_time?.slice(0, 5) ?? "09:00";
       return Math.min(min, parseTimeToMinutes(t));
     }, parseTimeToMinutes(settings.opening_time?.slice(0, 5) ?? "09:00"));
+    return Math.max(0, minOpen - AGENDA_BUFFER_MINUTES);
   }, [settings, weekDays]);
 
   const weekGlobalEnd = useMemo(() => {
-    if (!settings) return parseTimeToMinutes("19:00");
+    if (!settings) return Math.min(24 * 60, parseTimeToMinutes("19:00") + AGENDA_BUFFER_MINUTES);
     const openDays = weekDays.filter((dk) => isOpenDayFromSettings(dk, settings));
-    if (openDays.length === 0) return parseTimeToMinutes(settings.closing_time?.slice(0, 5) ?? "19:00");
-    return openDays.reduce((max, dk) => {
+    if (openDays.length === 0) return Math.min(24 * 60, parseTimeToMinutes(settings.closing_time?.slice(0, 5) ?? "19:00") + AGENDA_BUFFER_MINUTES);
+    const maxClose = openDays.reduce((max, dk) => {
       const dow = new Date(dk + "T12:00:00").getDay();
       const slug = DAY_SLUGS[dow];
       const t = (settings[`closing_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
         ?? settings.closing_time?.slice(0, 5) ?? "19:00";
       return Math.max(max, parseTimeToMinutes(t));
     }, parseTimeToMinutes(settings.closing_time?.slice(0, 5) ?? "19:00"));
+    return Math.min(24 * 60, maxClose + AGENDA_BUFFER_MINUTES);
   }, [settings, weekDays]);
 
   const pxPerMinuteWeek = PX_PER_MINUTE_WEEK;
