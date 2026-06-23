@@ -3163,7 +3163,10 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">Fiche client</div>
                   <h2 className="text-4xl">{selectedClient.first_name} {selectedClient.last_name}</h2>
                   <p className="mt-3 text-[var(--nav-text)]">
-                    {selectedClient.phone}{selectedClient.email ? ` • ${selectedClient.email}` : ""}
+                    <a href={`tel:${selectedClient.phone}`} className="underline decoration-[var(--gold)] underline-offset-4">
+                      {selectedClient.phone}
+                    </a>
+                    {selectedClient.email ? ` • ${selectedClient.email}` : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3">

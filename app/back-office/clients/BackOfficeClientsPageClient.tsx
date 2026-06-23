@@ -857,7 +857,9 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
                   <div className="mt-3 grid grid-cols-3 gap-3 md:mt-4">
                     <div className="rounded-2xl bg-white p-3 md:p-4">
                       <div className="text-xs text-[var(--nav-text)]">Téléphone</div>
-                      <div className="mt-1 font-semibold text-sm md:text-base">{selectedClient.phone}</div>
+                      <a href={`tel:${selectedClient.phone}`} className="mt-1 block font-semibold text-sm underline decoration-[var(--gold)] underline-offset-4 md:text-base">
+                        {selectedClient.phone}
+                      </a>
                     </div>
                     <div className="rounded-2xl bg-white p-3 md:p-4">
                       <div className="text-xs text-[var(--nav-text)]">Email</div>
