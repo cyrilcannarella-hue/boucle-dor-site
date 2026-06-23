@@ -5,6 +5,34 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin-client";
 // Recherche des rendez-vous à venir d'un client par téléphone, scopée au
 // salon résolu côté serveur (le numéro de téléphone fait office
 // d'identifiant — modèle existant, on ne change que la portée par salon).
+
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMIT_MAX_ATTEMPTS = 8;
+const rateLimitAttempts = new Map<string, { count: number; resetAt: number }>();
+
+// En mémoire par instance de fonction : avec Fluid Compute (instances
+// réutilisées), ça freine déjà bien un balayage automatique de numéros,
+// même si ce n'est pas un compteur partagé entre toutes les instances.
+function isRateLimited(key: string) {
+  const now = Date.now();
+
+  if (rateLimitAttempts.size > 5000) {
+    for (const [storedKey, entry] of rateLimitAttempts) {
+      if (now > entry.resetAt) rateLimitAttempts.delete(storedKey);
+    }
+  }
+
+  const entry = rateLimitAttempts.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitAttempts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  entry.count += 1;
+  return entry.count > RATE_LIMIT_MAX_ATTEMPTS;
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const phone = String(body?.phone ?? "").replace(/\D/g, "");
@@ -14,6 +42,12 @@ export async function POST(req: NextRequest) {
   }
 
   const salon = await getCurrentSalon();
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
+  if (isRateLimited(`${salon.id}:${ip}`)) {
+    return NextResponse.json({ error: "Trop de tentatives. Réessayez dans quelques minutes." }, { status: 429 });
+  }
+
   const supabase = createAdminSupabaseClient();
 
   const { data: clientRows, error: clientError } = await supabase
