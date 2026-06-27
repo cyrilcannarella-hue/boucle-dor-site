@@ -15,12 +15,12 @@ type RealtimePayload = {
   old?: { appointment_date?: string };
 };
 
-type AppointmentNotification = {
-  uid: string;
+type WebBookingEntry = {
+  id: string;
   clientName: string;
   serviceName: string;
-  dateLabel: string;
-  time: string;
+  appointmentDate: string;
+  startTime: string;
 };
 
 type AppointmentRow = {
@@ -571,40 +571,46 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
 
-  const [appointmentNotifications, setAppointmentNotifications] = useState<AppointmentNotification[]>([]);
+  const [webBookingsToday, setWebBookingsToday] = useState<WebBookingEntry[]>([]);
 
-  const dismissNotification = (uid: string) => {
-    setAppointmentNotifications((prev) => prev.filter((n) => n.uid !== uid));
+  const getDismissedKey = () => `dismissed_web_bookings_${getTodayKey()}`;
+  const getDismissedIds = (): string[] => {
+    try { return JSON.parse(localStorage.getItem(getDismissedKey()) ?? "[]"); } catch { return []; }
   };
 
-  const fetchAndNotify = async (appointmentId: string) => {
+  const dismissWebBooking = (id: string) => {
+    const dismissed = getDismissedIds();
+    if (!dismissed.includes(id)) {
+      localStorage.setItem(getDismissedKey(), JSON.stringify([...dismissed, id]));
+    }
+    setWebBookingsToday((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const loadWebBookingsToday = async () => {
+    const since = new Date(getTodayKey()).toISOString();
     const { data } = await supabase
       .from("appointments")
       .select("id, appointment_date, start_time, clients(first_name, last_name), services(name)")
-      .eq("id", appointmentId)
-      .maybeSingle();
-
+      .eq("source", "web")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false });
     if (!data) return;
-
-    const [year, month, day] = (data.appointment_date as string).split("-").map(Number);
-    const d = new Date(year, month - 1, day);
-    const DAY_SHORT = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
-    const MONTH_SHORT = ["janv.", "fév.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
-    const dateLabel = `${DAY_SHORT[d.getDay()]} ${day} ${MONTH_SHORT[month - 1]}`;
-
-    const clientsData = data.clients as unknown as { first_name: string; last_name: string } | null;
-    const servicesData = data.services as unknown as { name: string } | null;
-
-    const notif: AppointmentNotification = {
-      uid: `${appointmentId}-${Date.now()}`,
-      clientName: clientsData ? `${clientsData.first_name} ${clientsData.last_name}` : "Client",
-      serviceName: servicesData?.name ?? "Prestation",
-      dateLabel,
-      time: (data.start_time as string).slice(0, 5),
-    };
-
-    setAppointmentNotifications((prev) => [...prev, notif]);
-    setTimeout(() => dismissNotification(notif.uid), 900000);
+    const dismissed = getDismissedIds();
+    setWebBookingsToday(
+      data
+        .filter((row) => !dismissed.includes(row.id as string))
+        .map((row) => {
+          const c = row.clients as unknown as { first_name: string; last_name: string } | null;
+          const s = row.services as unknown as { name: string } | null;
+          return {
+            id: row.id as string,
+            clientName: c ? `${c.first_name} ${c.last_name}` : "Client",
+            serviceName: s?.name ?? "Prestation",
+            appointmentDate: row.appointment_date as string,
+            startTime: (row.start_time as string).slice(0, 5),
+          };
+        })
+    );
   };
 
   const [staff, setStaff] = useState<StaffRow[]>([]);
@@ -870,8 +876,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
               loadWeekData(wd[0], wd[6]);
             }
           }
-          if (payload.eventType === "INSERT" && payload.new?.source === "web" && payload.new?.id) {
-            fetchAndNotify(payload.new.id);
+          if (payload.eventType === "INSERT" && payload.new?.source === "web") {
+            loadWebBookingsToday();
           }
         }
       )
@@ -915,6 +921,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setSelectedDate(today);
     setCreateDate(today);
     loadInitialData();
+    loadWebBookingsToday();
 
     const clientsChannel = supabase
       .channel('clients-changes')
@@ -1957,11 +1964,9 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
       <section className="mx-auto w-[min(1400px,calc(100%-24px))] py-5 md:py-8">
         <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[310px_1fr] lg:items-start">
-        <aside className="order-1 flex flex-col gap-4 lg:order-none md:gap-6 lg:sticky lg:top-5">
+        <aside className="order-1 flex flex-col gap-4 lg:order-none md:gap-6 lg:sticky lg:top-5 lg:self-start">
         <div className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
-            <div className="mb-3 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-              Navigation
-            </div>
+            <div className="mb-3 flex justify-center"><div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>Navigation</div></div>
 
             <div className="flex items-center justify-between gap-2 mb-4">
               <button
@@ -2038,15 +2043,18 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
               {"Aujourd’hui"}
             </button>
 
-            <p className="mt-3 text-sm text-[var(--nav-text)]">{selectedDate ? formatFrenchDate(selectedDate) : ""}</p>
-            <p className="mt-1 text-sm text-[var(--nav-text)]">
-              Horaires : {settings?.opening_time?.slice(0, 5) || "09:00"} {"->"}{" "}
-              {settings?.closing_time?.slice(0, 5) || "19:00"}
-            </p>
+            <button
+              type="button"
+              disabled={dayHasAllDayClosure}
+              onClick={() => openCreateModal(selectedDate, "")}
+              className="mt-2 w-full rounded-2xl bg-[var(--selected-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Ajouter un rendez-vous
+            </button>
 
-            {staff.length > 0 && (
+            {staff.length > 1 && (
               <div className="mt-4">
-                <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>Prestataire</div>
+                <div className="mb-2 flex justify-center"><div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>Prestataire</div></div>
                 <div className="flex flex-wrap gap-2">
                   {staff.map((member) => (
                     <button
@@ -2071,30 +2079,34 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
         </div>
 
         <div className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
-            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-              Action
-            </div>
-            <h2 className="text-3xl">Ajout rapide</h2>
-
-            <div className="mt-5 grid gap-3">
-              <button
-                type="button"
-                disabled={dayHasAllDayClosure}
-                onClick={() =>
-                  openCreateModal(selectedDate, "")
-                }
-                className="rounded-2xl bg-[var(--selected-bg)] px-4 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Ajouter un rendez-vous
-              </button>
-            </div>
+            <div className="mb-2 flex justify-center"><div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>Notifications</div></div>
+            {webBookingsToday.length === 0 ? (
+              <p className="mt-4 text-sm text-[var(--nav-text)]">Aucune réservation en ligne aujourd'hui.</p>
+            ) : (
+              <div className="mt-4 flex max-h-96 flex-col gap-2 overflow-y-auto">
+                {webBookingsToday.map((b) => (
+                  <div key={b.id} className="flex items-start gap-2 rounded-xl border p-3" style={{ borderColor: `${colorAccents}40` }}>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[var(--text-main)]">{b.clientName}</p>
+                      <p className="text-xs text-[var(--nav-text)]">{b.serviceName}</p>
+                      <p className="text-xs text-[var(--nav-text)]">{formatFrenchDate(b.appointmentDate)} à {b.startTime}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => dismissWebBooking(b.id)}
+                      className="shrink-0 text-lg leading-none opacity-30 transition hover:opacity-70"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
 
         <div className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
-            <div className="mb-2 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
-              Résumé
-            </div>
-            <h2 className="text-3xl">RDV du jour</h2>
+            <div className="mb-2 flex justify-center"><div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>RDV du jour</div></div>
 
             <div className="mt-5 grid gap-3">
               <div className="flex justify-between gap-4 border-b border-[var(--card-border)] pb-3 text-[var(--nav-text)]">
@@ -3323,43 +3335,6 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
           </div>
         </div>
       ) : null}
-      {appointmentNotifications.length > 0 && (
-        <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-3">
-          {appointmentNotifications.map((notif) => (
-            <div
-              key={notif.uid}
-              className="flex w-80 items-start gap-3 rounded-[20px] border p-4 shadow-[0_8px_32px_rgba(0,0,0,0.14)] backdrop-blur-sm"
-              style={{ borderColor: `${colorAccents}50`, backgroundColor: colorPanelBg }}
-            >
-              <div
-                className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
-                style={{ backgroundColor: `${colorAccents}20`, color: colorAccents }}
-              >
-                📅
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-wide" style={{ color: colorAccents }}>
-                  Nouveau rendez-vous en ligne
-                </p>
-                <p className="mt-0.5 truncate font-semibold" style={{ color: colorTextMain }}>
-                  {notif.clientName}
-                </p>
-                <p className="text-sm" style={{ color: colorTextMain, opacity: 0.7 }}>
-                  {notif.serviceName} — {notif.dateLabel} à {notif.time}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => dismissNotification(notif.uid)}
-                className="shrink-0 text-lg leading-none opacity-40 hover:opacity-80 transition"
-                style={{ color: colorTextMain }}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </main>
   );
 }
