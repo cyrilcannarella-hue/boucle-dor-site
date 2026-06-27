@@ -99,6 +99,12 @@ type QuestionRow = {
   display_order: number;
 };
 
+type BookedAppointmentSummary = {
+  serviceName: string;
+  dateLabel: string;
+  time: string;
+};
+
 const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const DAY_SLUGS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 const dayNamesFull = [
@@ -233,6 +239,8 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  const [bookedAppointments, setBookedAppointments] = useState<BookedAppointmentSummary[]>([]);
 
   const serviceSectionRef = useRef<HTMLElement | null>(null);
   const dateSectionRef = useRef<HTMLElement | null>(null);
@@ -678,6 +686,10 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
       setStatus("Rendez-vous confirmé ✅");
       setShowConfirmation(true);
+      setBookedAppointments((prev) => [
+        ...prev,
+        { serviceName: selectedService.name, dateLabel: selectedDateLabel, time: selectedTime },
+      ]);
 
       const phoneDigits = phone.replace(/\D/g, "");
       let toPhone: string;
@@ -711,6 +723,19 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleBookAnother = () => {
+    setShowConfirmation(false);
+    setStatus("");
+    setSelectedService(null);
+    setSelectedDateKey("");
+    setSelectedDateLabel("--");
+    setSelectedTime("--:--");
+    setSelectedStaffId(staff.length === 1 ? staff[0].id : "");
+    setMessage("");
+    setAnswers({});
+    scrollToSection(serviceSectionRef);
   };
 
   const colorButtons = settings?.color_accents || "#4f46e5";
@@ -795,6 +820,37 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
           </div>
         </div>
       </header>
+
+      {bookedAppointments.length > 0 && (
+        <div className="mx-auto w-[min(860px,calc(100%-28px))] pt-5">
+          <div className="rounded-[24px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-[0_8px_24px_rgba(90,63,30,0.08)]">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>
+                Rendez-vous réservés dans cette session
+              </div>
+              <button
+                type="button"
+                onClick={() => { window.location.href = "/"; }}
+                className="rounded-full border border-[var(--card-border)] bg-[var(--page-bg)] px-4 py-2 text-sm font-semibold transition hover:shadow-md"
+              >
+                Terminer
+              </button>
+            </div>
+            <div className="grid gap-2">
+              {bookedAppointments.map((rdv, i) => (
+                <div key={i} className="flex flex-wrap items-center gap-2 rounded-[14px] border border-[var(--card-border)] bg-[var(--page-bg)] px-4 py-3 text-sm">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: `${colorAccents}20`, color: colorAccents }}>
+                    {i + 1}
+                  </span>
+                  <span className="font-semibold text-[var(--text-main)]">{rdv.serviceName}</span>
+                  <span className="text-[var(--text-secondary)]">·</span>
+                  <span className="text-[var(--text-secondary)]">{rdv.dateLabel} à {rdv.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="mx-auto grid w-[min(860px,calc(100%-28px))] gap-6 py-8 sm:py-10">
 
@@ -1294,6 +1350,13 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
             </div>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleBookAnother}
+                className="rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold transition hover:bg-[var(--panel-bg)] hover:shadow-md"
+              >
+                Prendre un autre rendez-vous
+              </button>
               <a
                 href="/espace-client"
                 className="rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold transition hover:bg-[var(--panel-bg)] hover:shadow-md"
