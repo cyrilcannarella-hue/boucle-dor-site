@@ -10,8 +10,17 @@ import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
 
 type RealtimePayload = {
-  new?: { appointment_date?: string };
+  eventType?: "INSERT" | "UPDATE" | "DELETE";
+  new?: { id?: string; appointment_date?: string; start_time?: string; source?: string };
   old?: { appointment_date?: string };
+};
+
+type AppointmentNotification = {
+  uid: string;
+  clientName: string;
+  serviceName: string;
+  dateLabel: string;
+  time: string;
 };
 
 type AppointmentRow = {
@@ -562,6 +571,42 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
 
+  const [appointmentNotifications, setAppointmentNotifications] = useState<AppointmentNotification[]>([]);
+
+  const dismissNotification = (uid: string) => {
+    setAppointmentNotifications((prev) => prev.filter((n) => n.uid !== uid));
+  };
+
+  const fetchAndNotify = async (appointmentId: string) => {
+    const { data } = await supabase
+      .from("appointments")
+      .select("id, appointment_date, start_time, clients(first_name, last_name), services(name)")
+      .eq("id", appointmentId)
+      .maybeSingle();
+
+    if (!data) return;
+
+    const [year, month, day] = (data.appointment_date as string).split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+    const DAY_SHORT = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+    const MONTH_SHORT = ["janv.", "fév.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+    const dateLabel = `${DAY_SHORT[d.getDay()]} ${day} ${MONTH_SHORT[month - 1]}`;
+
+    const clientsData = data.clients as unknown as { first_name: string; last_name: string } | null;
+    const servicesData = data.services as unknown as { name: string } | null;
+
+    const notif: AppointmentNotification = {
+      uid: `${appointmentId}-${Date.now()}`,
+      clientName: clientsData ? `${clientsData.first_name} ${clientsData.last_name}` : "Client",
+      serviceName: servicesData?.name ?? "Prestation",
+      dateLabel,
+      time: (data.start_time as string).slice(0, 5),
+    };
+
+    setAppointmentNotifications((prev) => [...prev, notif]);
+    setTimeout(() => dismissNotification(notif.uid), 900000);
+  };
+
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
@@ -824,6 +869,9 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
             if (!date || (date >= wd[0] && date <= wd[6])) {
               loadWeekData(wd[0], wd[6]);
             }
+          }
+          if (payload.eventType === "INSERT" && payload.new?.source === "web" && payload.new?.id) {
+            fetchAndNotify(payload.new.id);
           }
         }
       )
@@ -3275,6 +3323,43 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
           </div>
         </div>
       ) : null}
+      {appointmentNotifications.length > 0 && (
+        <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-3">
+          {appointmentNotifications.map((notif) => (
+            <div
+              key={notif.uid}
+              className="flex w-80 items-start gap-3 rounded-[20px] border p-4 shadow-[0_8px_32px_rgba(0,0,0,0.14)] backdrop-blur-sm"
+              style={{ borderColor: `${colorAccents}50`, backgroundColor: colorPanelBg }}
+            >
+              <div
+                className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
+                style={{ backgroundColor: `${colorAccents}20`, color: colorAccents }}
+              >
+                📅
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-wide" style={{ color: colorAccents }}>
+                  Nouveau rendez-vous en ligne
+                </p>
+                <p className="mt-0.5 truncate font-semibold" style={{ color: colorTextMain }}>
+                  {notif.clientName}
+                </p>
+                <p className="text-sm" style={{ color: colorTextMain, opacity: 0.7 }}>
+                  {notif.serviceName} — {notif.dateLabel} à {notif.time}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => dismissNotification(notif.uid)}
+                className="shrink-0 text-lg leading-none opacity-40 hover:opacity-80 transition"
+                style={{ color: colorTextMain }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

@@ -484,22 +484,8 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     scrollToSection(slotSectionRef);
 
     try {
-      const [rows, closures] = await loadDayData(key);
-
-      const duration = selectedService?.duration ?? 30;
-      const allSlots = getAllSlots(duration, effectiveOpeningMinutes, effectiveClosingMinutes);
-
-      const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const isToday = key === todayKey;
-
-      const firstAvailable = allSlots.find((slot) => {
-        const slotStart = parseTime(slot.label);
-        if (isToday && slotStart <= currentMinutes) return false;
-        return isSlotAvailable(slotStart, selectedService, rows, closures, effectiveClosingMinutes, getStaffScheduleForDate(selectedStaffId, key), selectedStaffId || null);
-      });
-
-      setSelectedTime(firstAvailable ? firstAvailable.label : "--:--");
+      await loadDayData(key);
+      setSelectedTime("--:--");
     } catch (error: unknown) {
       setStatus(
         `Erreur : ${(error as Error).message ?? "Impossible de charger les créneaux."}`,
@@ -1145,7 +1131,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
                     selectedTime === slot.label
                       ? "border-[var(--gold)] bg-[var(--page-bg)] shadow-[0_16px_34px_rgba(185,139,61,0.16),inset_0_0_0_1px_var(--gold)]"
                       : "border-[var(--card-border)] bg-[var(--panel-bg)] hover:border-[var(--gold)] hover:shadow-[0_12px_26px_rgba(90,63,30,0.08)]"
-                  } ${!selectedDateKey || !slot.available ? "cursor-not-allowed opacity-40" : ""}`}
+                  } ${!selectedDateKey || !slot.available ? "cursor-not-allowed opacity-40" : ""} ${selectedDateKey && !slot.available ? "line-through" : ""}`}
                 >
                   {slot.label}
                 </button>
