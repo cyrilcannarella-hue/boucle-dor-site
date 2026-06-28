@@ -12,7 +12,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }
 
-  const phone = String(body.phone ?? "").replace(/\D/g, "");
+  const rawPhone = String(body.phone ?? "").replace(/\D/g, "");
+  const phone = rawPhone.startsWith("0033") && rawPhone.length === 13 ? "0" + rawPhone.slice(4)
+    : rawPhone.startsWith("33") && rawPhone.length === 11 ? "0" + rawPhone.slice(2)
+    : rawPhone;
   const firstName = String(body.firstName ?? "").trim();
   const lastName = String(body.lastName ?? "").trim();
   const email = String(body.email ?? "").trim();

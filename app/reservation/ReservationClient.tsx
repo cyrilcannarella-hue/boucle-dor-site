@@ -175,7 +175,10 @@ function formatPgTimeFromLabel(str: string) {
 }
 
 function normalizePhoneInput(value: string) {
-  return value.replace(/\D/g, "").slice(0, 10);
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("0033") && digits.length >= 13) return ("0" + digits.slice(4)).slice(0, 10);
+  if (digits.startsWith("33") && digits.length >= 11) return ("0" + digits.slice(2)).slice(0, 10);
+  return digits.slice(0, 10);
 }
 
 function formatDateLabel(date: Date) {

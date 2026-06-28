@@ -6,7 +6,10 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin-client";
 // (recherche par téléphone), scopé au salon résolu côté serveur.
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const phone = String(body?.phone ?? "").replace(/\D/g, "");
+  const rawDigits = String(body?.phone ?? "").replace(/\D/g, "");
+  const phone = rawDigits.startsWith("0033") && rawDigits.length === 13 ? "0" + rawDigits.slice(4)
+    : rawDigits.startsWith("33") && rawDigits.length === 11 ? "0" + rawDigits.slice(2)
+    : rawDigits;
 
   if (phone.length !== 10) {
     return NextResponse.json({ exists: false });
