@@ -606,7 +606,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   };
 
   const loadWebBookingsToday = async () => {
-    const since = new Date(getTodayKey()).toISOString();
+    // new Date("YYYY-MM-DD") parse en UTC minuit — on veut minuit heure locale
+    const since = new Date(`${getTodayKey()}T00:00:00`).toISOString();
     const { data } = await supabase
       .from("appointments")
       .select("id, appointment_date, start_time, clients(first_name, last_name), services(name)")
