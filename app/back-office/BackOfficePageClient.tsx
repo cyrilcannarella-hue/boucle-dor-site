@@ -154,6 +154,7 @@ type ExceptionClosure = {
   end_time: string | null;
   is_all_day: boolean;
   reason: string | null;
+  staff_id?: string | null;
 };
 
 type ExceptionOpening = {
@@ -162,6 +163,7 @@ type ExceptionOpening = {
   opening_time: string;
   closing_time: string;
   reason: string | null;
+  staff_id?: string | null;
 };
 
 type BusySegment = {
@@ -764,7 +766,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const loadClosuresForDay = async (dateValue: string) => {
     const { data, error } = await supabase
       .from("exception_closures")
-      .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .select("id, closure_date, start_time, end_time, is_all_day, reason, staff_id")
       .eq("salon_id", salonId)
       .eq("closure_date", dateValue)
       .order("start_time", { ascending: true });
@@ -799,7 +801,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const loadWeekClosures = async (weekStart: string, weekEnd: string) => {
     const { data } = await supabase
       .from("exception_closures")
-      .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .select("id, closure_date, start_time, end_time, is_all_day, reason, staff_id")
       .eq("salon_id", salonId)
       .gte("closure_date", weekStart)
       .lte("closure_date", weekEnd)
@@ -872,7 +874,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     const todayStr = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
     const { data: openingsData } = await supabase
       .from("exception_openings")
-      .select("id, opening_date, opening_time, closing_time, reason")
+      .select("id, opening_date, opening_time, closing_time, reason, staff_id")
       .eq("salon_id", salonId)
       .gte("opening_date", todayStr)
       .order("opening_date", { ascending: true });
@@ -1073,12 +1075,14 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const createDayStart = dayStart;
   const createDayEnd = dayEnd;
 
-  const createDateClosures = useMemo(
-    () => createDate === selectedDate
+  const createDateClosures = useMemo(() => {
+    const raw = createDate === selectedDate
       ? exceptionClosures
-      : weekExceptionClosures.filter((c) => c.closure_date === createDate),
-    [createDate, selectedDate, exceptionClosures, weekExceptionClosures]
-  );
+      : weekExceptionClosures.filter((c) => c.closure_date === createDate);
+    return createStaffId
+      ? raw.filter((c) => !c.staff_id || c.staff_id === createStaffId)
+      : raw.filter((c) => !c.staff_id);
+  }, [createDate, selectedDate, exceptionClosures, weekExceptionClosures, createStaffId]);
 
   const allKnownAppointmentsForCreate = useMemo(
     () => [
@@ -1130,7 +1134,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   }, [dayStart, dayEnd]);
 
   const dayHasAllDayClosure = useMemo(() => {
-    return exceptionClosures.some((closure) => closure.is_all_day);
+    return exceptionClosures.some((closure) => closure.is_all_day && !closure.staff_id);
   }, [exceptionClosures]);
 
   const openAppointmentModal = (appointment: AppointmentRow) => {
@@ -1547,9 +1551,13 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       return;
     }
 
-    const editDateClosures = editAppointmentDate === selectedDate
+    const editDateClosuresRaw = editAppointmentDate === selectedDate
       ? exceptionClosures
       : weekExceptionClosures.filter((c) => c.closure_date === editAppointmentDate);
+    const editStaffId = selectedAppointment?.staff_id;
+    const editDateClosures = editStaffId
+      ? editDateClosuresRaw.filter((c) => !c.staff_id || c.staff_id === editStaffId)
+      : editDateClosuresRaw.filter((c) => !c.staff_id);
 
     const allKnownAppointments = [
       ...appointments,
@@ -2238,7 +2246,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                       const isToday = dk === getTodayKey();
                       const isSelected = dk === selectedDate;
                       const dayClosures = weekExceptionClosures.filter(c => c.closure_date === dk);
-                      const hasAllDayClosure = dayClosures.some(c => c.is_all_day);
+                      const hasAllDayClosure = dayClosures.some(c => c.is_all_day && !c.staff_id);
                       return (
                         <button
                           key={dk}
@@ -2279,6 +2287,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                       const segs = getWeekDaySegments(dk);
                       const slotPx = SLOT_STEP * pxPerMinuteWeek;
                       const dayClosures = weekExceptionClosures.filter(c => c.closure_date === dk);
+                      const salonWideClosures = dayClosures.filter(c => !c.staff_id);
                       return (
                         <div
                           key={dk}
@@ -2289,7 +2298,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                           {weekHourSlots.map((slot) => {
                             if (slot === weekGlobalEnd) return null;
                             const top = (slot - weekGlobalStart) * pxPerMinuteWeek;
-                            const slotBlocked = isBlockedByExceptionalClosure(slot, slot + SLOT_STEP, dayClosures);
+                            const slotBlocked = isBlockedByExceptionalClosure(slot, slot + SLOT_STEP, salonWideClosures);
                             return (
                               <button
                                 key={slot}
@@ -2424,7 +2433,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                         const slotStart = slot;
                         const slotEnd = slot + SLOT_STEP;
                         const top = (slot - dayStart) * PX_PER_MINUTE;
-                        const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures)
+                        const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures.filter(c => !c.staff_id))
                           || (staffBreakBlock !== null && selectedStaffScheduleToday?.has_break && selectedStaffScheduleToday.break_start && selectedStaffScheduleToday.break_end
                             ? slotStart < parseTimeToMinutes(selectedStaffScheduleToday.break_end.slice(0,5)) && slotEnd > parseTimeToMinutes(selectedStaffScheduleToday.break_start.slice(0,5))
                             : false);

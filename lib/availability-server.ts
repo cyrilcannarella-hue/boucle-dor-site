@@ -131,7 +131,11 @@ export async function validateAppointmentSlot(
   const appointments = ((appointmentsData ?? []) as BusyAppointment[]).filter(
     (a) => a.id !== excludeAppointmentId,
   );
-  const closures = (closuresData ?? []) as ExceptionClosure[];
+  // Closures applicables : salon entier (staff_id null) + spécifiques à cette prestataire
+  const allClosures = (closuresData ?? []) as ExceptionClosure[];
+  const closures = staffId
+    ? allClosures.filter((c) => !c.staff_id || c.staff_id === staffId)
+    : allClosures.filter((c) => !c.staff_id);
 
   const available = isSlotAvailable(
     startMinutes,

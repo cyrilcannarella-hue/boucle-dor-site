@@ -57,7 +57,7 @@ export async function GET() {
       .order("created_at", { ascending: true }),
     supabase
       .from("exception_openings")
-      .select("id, opening_date, opening_time, closing_time, reason")
+      .select("id, opening_date, opening_time, closing_time, reason, staff_id")
       .eq("salon_id", salon.id)
       .gte("opening_date", today)
       .order("opening_date", { ascending: true }),

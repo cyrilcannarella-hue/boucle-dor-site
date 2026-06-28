@@ -180,6 +180,7 @@ type ClosureRow = {
   end_time: string;
   is_all_day: boolean;
   reason: string | null;
+  staff_id: string | null;
 };
 
 type ExceptionOpeningRow = {
@@ -188,6 +189,7 @@ type ExceptionOpeningRow = {
   opening_time: string;
   closing_time: string;
   reason: string | null;
+  staff_id: string | null;
 };
 
 type CategoryRow = {
@@ -358,6 +360,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [newClosureStartTime, setNewClosureStartTime] = useState("09:00");
   const [newClosureEndTime, setNewClosureEndTime] = useState("18:00");
   const [newClosureReason, setNewClosureReason] = useState("");
+  const [newClosureStaffId, setNewClosureStaffId] = useState<string>("");
   const [savingClosure, setSavingClosure] = useState(false);
   const [deletingClosureId, setDeletingClosureId] = useState<string | null>(null);
 
@@ -366,6 +369,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [newOpeningTime, setNewOpeningTime] = useState("09:00");
   const [newOpeningClosingTime, setNewOpeningClosingTime] = useState("18:00");
   const [newOpeningReason, setNewOpeningReason] = useState("");
+  const [newOpeningStaffId, setNewOpeningStaffId] = useState<string>("");
   const [savingOpening, setSavingOpening] = useState(false);
   const [deletingOpeningId, setDeletingOpeningId] = useState<string | null>(null);
 
@@ -550,7 +554,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       const [settingsRes, closuresRes, openingsRes, categoriesRes, servicesRes, clientsRes, staffRes, schedulesRes, questionsRes] = await Promise.all([
         supabase.from("salon_settings").select("*").eq("salon_id", salonId).limit(1).maybeSingle(),
         supabase.from("exception_closures").select("*").eq("salon_id", salonId).order("closure_date", { ascending: true }),
-        supabase.from("exception_openings").select("id, opening_date, opening_time, closing_time, reason").eq("salon_id", salonId).order("opening_date", { ascending: true }),
+        supabase.from("exception_openings").select("id, opening_date, opening_time, closing_time, reason, staff_id").eq("salon_id", salonId).order("opening_date", { ascending: true }),
         supabase.from("categories").select("id, name, color, display_order").eq("salon_id", salonId).order("display_order", { ascending: true }).order("name", { ascending: true }),
         supabase
           .from("services")
@@ -771,6 +775,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         start_time: newClosureAllDay ? "00:00" : newClosureStartTime,
         end_time: newClosureAllDay ? "23:59" : newClosureEndTime,
         reason: newClosureReason.trim() || null,
+        staff_id: newClosureStaffId || null,
       });
       if (error) throw new Error((error as Error).message);
       setNewClosureDate("");
@@ -778,6 +783,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setNewClosureStartTime("09:00");
       setNewClosureEndTime("18:00");
       setNewClosureReason("");
+      setNewClosureStaffId("");
       setStatusMessage("Fermeture ajoutée ✅");
       await loadGestionData();
     } catch (error: unknown) {
@@ -816,12 +822,14 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         opening_time: newOpeningTime,
         closing_time: newOpeningClosingTime,
         reason: newOpeningReason.trim() || null,
+        staff_id: newOpeningStaffId || null,
       });
       if (error) throw new Error((error as Error).message);
       setNewOpeningDate("");
       setNewOpeningTime("09:00");
       setNewOpeningClosingTime("18:00");
       setNewOpeningReason("");
+      setNewOpeningStaffId("");
       setStatusMessage("Ouverture ajoutée ✅");
       await loadGestionData();
     } catch (error: unknown) {
@@ -1930,6 +1938,22 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                           className={fieldClass}
                         />
                       </label>
+
+                      {staff.filter((s) => s.is_active).length > 1 && (
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Concerne
+                          <select
+                            value={newClosureStaffId}
+                            onChange={(e) => setNewClosureStaffId(e.target.value)}
+                            className={fieldClass}
+                          >
+                            <option value="">Tout le salon</option>
+                            {staff.filter((s) => s.is_active).map((s) => (
+                              <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
                     </div>
 
                     <div className="mt-5 flex justify-end">
@@ -1970,6 +1994,11 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                                     ? "Fermé toute la journée"
                                     : `Fermé de ${formatTime(closure.start_time)} à ${formatTime(closure.end_time)}`}
                                 </div>
+                                {closure.staff_id ? (
+                                  <div className="mt-1 text-sm font-semibold text-[var(--gold)]">
+                                    {staff.find((s) => s.id === closure.staff_id)?.first_name ?? "Prestataire"} uniquement
+                                  </div>
+                                ) : null}
                                 {closure.reason ? (
                                   <div className="mt-1 text-sm text-[var(--nav-text)]">Motif : {closure.reason}</div>
                                 ) : null}
@@ -2057,6 +2086,22 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                           className={fieldClass}
                         />
                       </label>
+
+                      {staff.filter((s) => s.is_active).length > 1 && (
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Concerne
+                          <select
+                            value={newOpeningStaffId}
+                            onChange={(e) => setNewOpeningStaffId(e.target.value)}
+                            className={fieldClass}
+                          >
+                            <option value="">Tout le salon</option>
+                            {staff.filter((s) => s.is_active).map((s) => (
+                              <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
                     </div>
 
                     <div className="mt-5 flex justify-end">
@@ -2095,6 +2140,11 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                                   <div className="mt-1 text-sm text-[var(--nav-text)]">
                                     Ouvert de {formatTime(opening.opening_time)} à {formatTime(opening.closing_time)}
                                   </div>
+                                  {opening.staff_id ? (
+                                    <div className="mt-1 text-sm font-semibold text-[var(--gold)]">
+                                      {staff.find((s) => s.id === opening.staff_id)?.first_name ?? "Prestataire"} uniquement
+                                    </div>
+                                  ) : null}
                                   {opening.reason ? (
                                     <div className="mt-1 text-sm text-[var(--nav-text)]">Motif : {opening.reason}</div>
                                   ) : null}

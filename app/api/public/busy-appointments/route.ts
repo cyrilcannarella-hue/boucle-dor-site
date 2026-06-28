@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       .order("start_time", { ascending: true }),
     supabase
       .from("exception_closures")
-      .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .select("id, closure_date, start_time, end_time, is_all_day, reason, staff_id")
       .eq("salon_id", salon.id)
       .eq("closure_date", date)
       .order("start_time", { ascending: true }),

@@ -35,6 +35,7 @@ export type ExceptionClosure = {
   end_time: string | null;
   is_all_day: boolean;
   reason: string | null;
+  staff_id?: string | null;
 };
 
 export type ExceptionOpening = {
@@ -43,10 +44,22 @@ export type ExceptionOpening = {
   opening_time: string;
   closing_time: string;
   reason: string | null;
+  staff_id?: string | null;
 };
 
-export function getExceptionalOpening(dateKey: string, openings: ExceptionOpening[]): ExceptionOpening | null {
-  return openings.find((o) => o.opening_date === dateKey) ?? null;
+// Ouverture effective pour une date et un staff donné.
+// Priorité : ouverture spécifique au staff → ouverture salon entier → null.
+export function getExceptionalOpening(dateKey: string, openings: ExceptionOpening[], staffId?: string | null): ExceptionOpening | null {
+  if (staffId) {
+    const staffOpening = openings.find((o) => o.opening_date === dateKey && o.staff_id === staffId);
+    if (staffOpening) return staffOpening;
+  }
+  return openings.find((o) => o.opening_date === dateKey && !o.staff_id) ?? null;
+}
+
+// Pour l'affichage du calendrier : y a-t-il une ouverture pour ce jour, pour n'importe qui ?
+export function hasOpeningForDate(dateKey: string, openings: ExceptionOpening[]): boolean {
+  return openings.some((o) => o.opening_date === dateKey);
 }
 
 export type StaffSchedule = {
