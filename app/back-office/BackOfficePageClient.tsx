@@ -156,6 +156,14 @@ type ExceptionClosure = {
   reason: string | null;
 };
 
+type ExceptionOpening = {
+  id: string;
+  opening_date: string;
+  opening_time: string;
+  closing_time: string;
+  reason: string | null;
+};
+
 type BusySegment = {
   start: number;
   end: number;
@@ -425,6 +433,14 @@ function isOpenDayFromSettings(dateStr: string, settings: SalonSettings | null) 
   return settings.is_open_sunday;
 }
 
+function getExceptionalOpening(dateStr: string, openings: ExceptionOpening[]): ExceptionOpening | null {
+  return openings.find((o) => o.opening_date === dateStr) ?? null;
+}
+
+function isOpenDay(dateStr: string, settings: SalonSettings | null, openings: ExceptionOpening[]): boolean {
+  return isOpenDayFromSettings(dateStr, settings) || !!getExceptionalOpening(dateStr, openings);
+}
+
 function isBlockedByExceptionalClosure(
   startMinutes: number,
   endMinutes: number,
@@ -528,6 +544,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const [services, setServices] = useState<ServiceRow[]>([]);
   const settings = initialSettings;
   const [exceptionClosures, setExceptionClosures] = useState<ExceptionClosure[]>([]);
+  const [allFutureOpenings, setAllFutureOpenings] = useState<ExceptionOpening[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
@@ -650,6 +667,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   }, [hasSmsConfigured]);
 
   const dayStart = useMemo(() => {
+    const exOpening = selectedDate ? getExceptionalOpening(selectedDate, allFutureOpenings) : null;
+    if (exOpening) return Math.max(0, parseTimeToMinutes(exOpening.opening_time.slice(0, 5)) - AGENDA_BUFFER_MINUTES);
     if (!settings) return Math.max(0, parseTimeToMinutes("09:00") - AGENDA_BUFFER_MINUTES);
     const dow = selectedDate ? new Date(selectedDate + "T12:00:00").getDay() : 1;
     const slug = DAY_SLUGS[dow];
@@ -657,8 +676,10 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       ?? settings.opening_time?.slice(0, 5)
       ?? "09:00";
     return Math.max(0, parseTimeToMinutes(t) - AGENDA_BUFFER_MINUTES);
-  }, [settings, selectedDate]);
+  }, [settings, selectedDate, allFutureOpenings]);
   const dayEnd = useMemo(() => {
+    const exOpening = selectedDate ? getExceptionalOpening(selectedDate, allFutureOpenings) : null;
+    if (exOpening) return Math.min(24 * 60, parseTimeToMinutes(exOpening.closing_time.slice(0, 5)) + AGENDA_BUFFER_MINUTES);
     if (!settings) return Math.min(24 * 60, parseTimeToMinutes("19:00") + AGENDA_BUFFER_MINUTES);
     const dow = selectedDate ? new Date(selectedDate + "T12:00:00").getDay() : 1;
     const slug = DAY_SLUGS[dow];
@@ -666,7 +687,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       ?? settings.closing_time?.slice(0, 5)
       ?? "19:00";
     return Math.min(24 * 60, parseTimeToMinutes(t) + AGENDA_BUFFER_MINUTES);
-  }, [settings, selectedDate]);
+  }, [settings, selectedDate, allFutureOpenings]);
   const dayHeight = (dayEnd - dayStart) * PX_PER_MINUTE;
 
   useEffect(() => {
@@ -846,6 +867,16 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       .order("day_of_week", { ascending: true });
 
     setStaffSchedules((schedulesData ?? []) as StaffSchedule[]);
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
+    const { data: openingsData } = await supabase
+      .from("exception_openings")
+      .select("id, opening_date, opening_time, closing_time, reason")
+      .eq("salon_id", salonId)
+      .gte("opening_date", todayStr)
+      .order("opening_date", { ascending: true });
+    setAllFutureOpenings((openingsData ?? []) as ExceptionOpening[]);
   };
 
   useEffect(() => {
@@ -1296,7 +1327,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       return;
     }
 
-    if (!isOpenDayFromSettings(createDate, settings)) {
+    if (!isOpenDay(createDate, settings, allFutureOpenings)) {
       setCreateModalError("Le salon est fermé ce jour-là.");
       return;
     }
@@ -1497,7 +1528,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       return;
     }
 
-    if (!isOpenDayFromSettings(editAppointmentDate, settings)) {
+    if (!isOpenDay(editAppointmentDate, settings, allFutureOpenings)) {
       setStatusMessage("Le salon est fermé ce jour-là.");
       return;
     }
@@ -1725,9 +1756,11 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
   const weekGlobalStart = useMemo(() => {
     if (!settings) return Math.max(0, parseTimeToMinutes("09:00") - AGENDA_BUFFER_MINUTES);
-    const openDays = weekDays.filter((dk) => isOpenDayFromSettings(dk, settings));
+    const openDays = weekDays.filter((dk) => isOpenDay(dk, settings, allFutureOpenings));
     if (openDays.length === 0) return Math.max(0, parseTimeToMinutes(settings.opening_time?.slice(0, 5) ?? "09:00") - AGENDA_BUFFER_MINUTES);
     const minOpen = openDays.reduce((min, dk) => {
+      const exOpening = getExceptionalOpening(dk, allFutureOpenings);
+      if (exOpening) return Math.min(min, parseTimeToMinutes(exOpening.opening_time.slice(0, 5)));
       const dow = new Date(dk + "T12:00:00").getDay();
       const slug = DAY_SLUGS[dow];
       const t = (settings[`opening_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
@@ -1735,13 +1768,15 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       return Math.min(min, parseTimeToMinutes(t));
     }, parseTimeToMinutes(settings.opening_time?.slice(0, 5) ?? "09:00"));
     return Math.max(0, minOpen - AGENDA_BUFFER_MINUTES);
-  }, [settings, weekDays]);
+  }, [settings, weekDays, allFutureOpenings]);
 
   const weekGlobalEnd = useMemo(() => {
     if (!settings) return Math.min(24 * 60, parseTimeToMinutes("19:00") + AGENDA_BUFFER_MINUTES);
-    const openDays = weekDays.filter((dk) => isOpenDayFromSettings(dk, settings));
+    const openDays = weekDays.filter((dk) => isOpenDay(dk, settings, allFutureOpenings));
     if (openDays.length === 0) return Math.min(24 * 60, parseTimeToMinutes(settings.closing_time?.slice(0, 5) ?? "19:00") + AGENDA_BUFFER_MINUTES);
     const maxClose = openDays.reduce((max, dk) => {
+      const exOpening = getExceptionalOpening(dk, allFutureOpenings);
+      if (exOpening) return Math.max(max, parseTimeToMinutes(exOpening.closing_time.slice(0, 5)));
       const dow = new Date(dk + "T12:00:00").getDay();
       const slug = DAY_SLUGS[dow];
       const t = (settings[`closing_time_${slug}` as keyof SalonSettings] as string | null)?.slice(0, 5)
@@ -1749,7 +1784,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       return Math.max(max, parseTimeToMinutes(t));
     }, parseTimeToMinutes(settings.closing_time?.slice(0, 5) ?? "19:00"));
     return Math.min(24 * 60, maxClose + AGENDA_BUFFER_MINUTES);
-  }, [settings, weekDays]);
+  }, [settings, weekDays, allFutureOpenings]);
 
   const pxPerMinuteWeek = PX_PER_MINUTE_WEEK;
   const weekHeight = (weekGlobalEnd - weekGlobalStart) * PX_PER_MINUTE_WEEK;
@@ -2004,7 +2039,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                 const dayNum = Number(dateKey.split("-")[2]);
                 const isSelected = selectedDate === dateKey;
                 const isToday = dateKey === getTodayKey();
-                const isClosed = !isOpenDayFromSettings(dateKey, settings);
+                const isClosed = !isOpenDay(dateKey, settings, allFutureOpenings);
 
                 return (
                   <button
@@ -2190,7 +2225,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
               ) : (
                 <div style={{ minWidth: 320 }}>
                   {(() => {
-                    const openDays = weekDays.filter((dk) => isOpenDayFromSettings(dk, settings));
+                    const openDays = weekDays.filter((dk) => isOpenDay(dk, settings, allFutureOpenings));
                     const cols = `64px repeat(${openDays.length}, 1fr)`;
                     const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
                     return (
@@ -2341,7 +2376,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                 </div>
               )}
             </div>
-          ) : !isOpenDayFromSettings(selectedDate, settings) ? (
+          ) : !isOpenDay(selectedDate, settings, allFutureOpenings) ? (
             <div className="rounded-[24px] border border-dashed border-[#d7cabb] bg-white px-6 py-12 text-center text-[var(--nav-text)]">
               Le salon est fermé ce jour-là.
             </div>
@@ -2826,7 +2861,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                         const now2 = new Date();
                         const todayStr = `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,"0")}-${String(now2.getDate()).padStart(2,"0")}`;
                         const isToday = dk === todayStr;
-                        const isClosed = !isOpenDayFromSettings(dk, settings);
+                        const isClosed = !isOpenDay(dk, settings, allFutureOpenings);
                         return (
                           <button key={dk} type="button" onClick={() => setCreateDate(dk)}
                             className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition ${isSelected ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : isClosed ? "text-[#c4b8a8] line-through" : isToday ? "border border-[var(--gold)] text-[var(--gold)]" : "hover:bg-[var(--page-bg)] text-[var(--text-main)]"}`}>
