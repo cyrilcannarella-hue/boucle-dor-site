@@ -483,6 +483,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     selectedService,
     busyAppointments,
     exceptionClosures,
+    exceptionOpenings,
     effectiveOpeningMinutes,
     effectiveClosingMinutes,
     selectedDateKey,
@@ -585,11 +586,15 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
       const [rows, closures] = await loadDayData(appointmentDate);
 
+      const closuresForSelectedStaff = selectedStaffId
+        ? closures.filter((c) => !c.staff_id || c.staff_id === selectedStaffId)
+        : closures.filter((c) => !c.staff_id);
+
       const stillAvailable = isSlotAvailable(
         startMinutes,
         selectedService,
         rows,
-        closures,
+        closuresForSelectedStaff,
         effectiveClosingMinutes,
         getStaffScheduleForDate(selectedStaffId, appointmentDate),
         selectedStaffId || null,
@@ -620,18 +625,24 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
       if (!assignedStaffId && staff.length > 0) {
         const availableStaff = staff.filter((member) => {
           const sched = getStaffScheduleForDate(member.id, appointmentDate);
-          if (!sched || !sched.is_open) return false;
-          const memberOpenMin = parseTime(sched.opening_time.slice(0, 5));
-          const memberCloseMin = parseTime(sched.closing_time.slice(0, 5));
+          const memberExOpening = getExceptionalOpening(appointmentDate, exceptionOpenings, member.id);
+          if (!memberExOpening && (!sched || !sched.is_open)) return false;
+          const memberOpenMin = memberExOpening
+            ? parseTime(memberExOpening.opening_time.slice(0, 5))
+            : parseTime(sched!.opening_time.slice(0, 5));
+          const memberCloseMin = memberExOpening
+            ? parseTime(memberExOpening.closing_time.slice(0, 5))
+            : parseTime(sched!.closing_time.slice(0, 5));
           if (startMinutes < memberOpenMin || segments.totalEnd > memberCloseMin) return false;
-          // Bloquer si pendant la pause
-          if (sched.has_break && sched.break_start && sched.break_end) {
-            const bStart = parseTime(sched.break_start.slice(0, 5));
-            const bEnd = parseTime(sched.break_end.slice(0, 5));
+          // Bloquer si pendant la pause (uniquement si pas d'ouverture exceptionnelle)
+          if (!memberExOpening && sched!.has_break && sched!.break_start && sched!.break_end) {
+            const bStart = parseTime(sched!.break_start.slice(0, 5));
+            const bEnd = parseTime(sched!.break_end.slice(0, 5));
             if (startMinutes < bEnd && segments.totalEnd > bStart) return false;
           }
           const memberRows = rows.filter((r) => r.staff_id === member.id);
-          return isSlotAvailable(startMinutes, selectedService, memberRows, closures, memberCloseMin, sched, null);
+          const memberClosures = closures.filter((c) => !c.staff_id || c.staff_id === member.id);
+          return isSlotAvailable(startMinutes, selectedService, memberRows, memberClosures, memberCloseMin, memberExOpening ? null : sched, null);
         });
 
         if (availableStaff.length > 0) {

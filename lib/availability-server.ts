@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  getExceptionalOpening,
   isOpenDayFromSettings,
   isSlotAvailable,
   parseTime,
@@ -68,17 +69,18 @@ export async function validateAppointmentSlot(
       .in("status", ["confirmed", "completed"]),
     supabase
       .from("exception_closures")
-      .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .select("id, closure_date, start_time, end_time, is_all_day, reason, staff_id")
       .eq("salon_id", salonId)
       .eq("closure_date", appointmentDate),
     supabase
       .from("exception_openings")
-      .select("id, opening_date, opening_time, closing_time, reason")
+      .select("id, opening_date, opening_time, closing_time, reason, staff_id")
       .eq("salon_id", salonId)
       .eq("opening_date", appointmentDate),
   ]);
 
-  const exceptionalOpening = ((openingsData ?? []) as ExceptionOpening[])[0] ?? null;
+  const allOpenings = (openingsData ?? []) as ExceptionOpening[];
+  const exceptionalOpening = getExceptionalOpening(appointmentDate, allOpenings, staffId);
 
   if (!settings || (!dayNormallyOpen && !exceptionalOpening)) {
     return { ok: false, message: "Le salon est fermé ce jour-là." };
