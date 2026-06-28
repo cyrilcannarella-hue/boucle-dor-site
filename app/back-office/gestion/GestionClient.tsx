@@ -765,6 +765,10 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setStatusMessage("Choisis une date pour la fermeture.");
       return;
     }
+    if (!newClosureAllDay && newClosureStartTime >= newClosureEndTime) {
+      setStatusMessage("L'heure de début doit être avant l'heure de fin.");
+      return;
+    }
     try {
       setSavingClosure(true);
       setStatusMessage("");
@@ -811,6 +815,10 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const handleCreateOpening = async () => {
     if (!newOpeningDate) {
       setStatusMessage("Choisis une date pour l'ouverture.");
+      return;
+    }
+    if (newOpeningTime >= newOpeningClosingTime) {
+      setStatusMessage("L'heure d'ouverture doit être avant l'heure de fermeture.");
       return;
     }
     try {

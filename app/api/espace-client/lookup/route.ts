@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       staff_id,
       staff ( first_name, last_name ),
       services ( id, name, duration_minutes, categories ( name ) ),
-      clients ( id, first_name, last_name, phone, email )
+      clients ( first_name, last_name, phone, email )
     `
     )
     .eq("salon_id", salon.id)

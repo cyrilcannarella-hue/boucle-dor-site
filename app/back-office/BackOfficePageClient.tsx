@@ -610,6 +610,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     const { data } = await supabase
       .from("appointments")
       .select("id, appointment_date, start_time, clients(first_name, last_name), services(name)")
+      .eq("salon_id", salonId)
       .eq("source", "web")
       .gte("created_at", since)
       .order("created_at", { ascending: false });
