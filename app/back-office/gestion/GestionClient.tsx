@@ -2203,7 +2203,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                   {/* Aperçu */}
                   <div
                     className="flex items-center justify-center gap-2 px-4 py-3 text-lg font-semibold"
-                    style={{ background: `linear-gradient(to right, ${promoBgColorState || "#111827"}, ${promoColorStars || "#4f46e5"}, ${promoBgColorState || "#111827"})` }}
+                    style={{ background: promoBgColorState || "#111827" }}
                   >
                     <span className="animate-pulse" style={{ color: promoColorStars || "#4f46e5" }}>✦</span>
                     <span style={{ color: promoTextColor || contrastText(promoBgColorState || "#111827") }}>

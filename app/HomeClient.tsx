@@ -554,12 +554,10 @@ useEffect(() => {
       </motion.header>
 
       {settings?.promo_text?.trim() ? (
-        <div className="relative z-40 overflow-hidden px-4 py-3.5" style={{ background: `linear-gradient(to right, ${promoBgColor}, ${promoGradientFrom}55, ${promoBgColor})` }}>
+        <div className="relative z-40 overflow-hidden px-4 py-3.5" style={{ background: promoBgColor }}>
           {/* Lignes haut et bas */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent opacity-70" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent opacity-40" />
-          {/* Halo central */}
-          <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${promoGradientFrom}22, transparent 65%)` }} />
           {/* Balayage lumineux */}
           <motion.div
             className="pointer-events-none absolute inset-y-0 w-1/3 -skew-x-12"
