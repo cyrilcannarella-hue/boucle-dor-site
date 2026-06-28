@@ -105,13 +105,23 @@ export async function validateAppointmentSlot(
       .eq("day_of_week", dayOfWeek)
       .maybeSingle<StaffSchedule>();
 
-    if (!schedule || !schedule.is_open) {
-      return { ok: false, message: "Cette prestataire ne travaille pas ce jour-là." };
+    if (exceptionalOpening) {
+      // Ouverture exceptionnelle : le planning jour-de-semaine du staff ne bloque pas.
+      // Si la prestataire a quand même un planning actif ce jour, on l'intersecte ;
+      // sinon on utilise directement les horaires de l'ouverture exceptionnelle.
+      if (schedule && schedule.is_open) {
+        staffSchedule = schedule;
+        effectiveOpening = Math.max(salonOpening, parseTime(schedule.opening_time.slice(0, 5)));
+        effectiveClosing = Math.min(salonClosing, parseTime(schedule.closing_time.slice(0, 5)));
+      }
+    } else {
+      if (!schedule || !schedule.is_open) {
+        return { ok: false, message: "Cette prestataire ne travaille pas ce jour-là." };
+      }
+      staffSchedule = schedule;
+      effectiveOpening = Math.max(salonOpening, parseTime(schedule.opening_time.slice(0, 5)));
+      effectiveClosing = Math.min(salonClosing, parseTime(schedule.closing_time.slice(0, 5)));
     }
-
-    staffSchedule = schedule;
-    effectiveOpening = Math.max(salonOpening, parseTime(schedule.opening_time.slice(0, 5)));
-    effectiveClosing = Math.min(salonClosing, parseTime(schedule.closing_time.slice(0, 5)));
   }
 
   if (startMinutes < effectiveOpening) {

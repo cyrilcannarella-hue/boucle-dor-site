@@ -414,11 +414,14 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     return staffSchedules.find((s) => s.staff_id === staffId && s.day_of_week === dow) ?? null;
   };
 
-  // Schedule de la prestataire sélectionnée pour la date choisie
+  // Schedule de la prestataire sélectionnée pour la date choisie.
+  // Ignoré sur un jour d'ouverture exceptionnelle : le planning jour-de-semaine
+  // ne s'applique pas, les horaires de l'ouverture servent directement.
   const selectedStaffSchedule = useMemo(() => {
     if (!selectedStaffId || !selectedDateKey) return null;
+    if (getExceptionalOpening(selectedDateKey, exceptionOpenings)) return null;
     return getStaffScheduleForDate(selectedStaffId, selectedDateKey);
-  }, [selectedStaffId, selectedDateKey, staffSchedules]);
+  }, [selectedStaffId, selectedDateKey, staffSchedules, exceptionOpenings]);
 
   const effectiveOpeningMinutes = useMemo(() => {
     if (!selectedStaffSchedule) return openingMinutes;
@@ -444,16 +447,18 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
       let available: boolean;
 
+      const exOpening = getExceptionalOpening(selectedDateKey, exceptionOpenings);
       if (!selectedStaffId && staff.length > 1) {
         available = !isPast && staff.some((member) => {
           const sched = getStaffScheduleForDate(member.id, selectedDateKey);
-          if (!sched || !sched.is_open) return false;
-          const memberOpen = parseTime(sched.opening_time.slice(0, 5));
-          const memberClose = parseTime(sched.closing_time.slice(0, 5));
+          // Ouverture exceptionnelle : le planning jour-de-semaine n'empêche pas le staff de travailler.
+          if (!exOpening && (!sched || !sched.is_open)) return false;
+          const memberOpen = exOpening ? parseTime(exOpening.opening_time.slice(0, 5)) : parseTime(sched!.opening_time.slice(0, 5));
+          const memberClose = exOpening ? parseTime(exOpening.closing_time.slice(0, 5)) : parseTime(sched!.closing_time.slice(0, 5));
           const segs = getServiceSegments(selectedService, slotStart);
           if (segs.totalEnd > memberClose || slotStart < memberOpen) return false;
           const memberAppts = busyAppointments.filter((a) => a.staff_id === member.id || a.staff_id === null);
-          return isSlotAvailable(slotStart, selectedService, memberAppts, exceptionClosures, memberClose, sched, null);
+          return isSlotAvailable(slotStart, selectedService, memberAppts, exceptionClosures, memberClose, exOpening ? null : sched, null);
         });
       } else {
         available = !isPast && isSlotAvailable(
@@ -1068,11 +1073,14 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
                     {calendarDays.map((date) => {
                       const key = toKey(date);
                       const isPast = key < todayKey;
-                      const closed = !isOpenDayFromSettings(date, settings) && !getExceptionalOpening(key, exceptionOpenings);
-                      const staffClosed = selectedStaffMember ? (() => {
+                      const hasExOpening = !!getExceptionalOpening(key, exceptionOpenings);
+                      const closed = !isOpenDayFromSettings(date, settings) && !hasExOpening;
+                      // Sur un jour d'ouverture exceptionnelle, le planning jour-de-semaine du staff
+                      // ne s'applique pas — le salon a explicitement décidé d'ouvrir ce jour-là.
+                      const staffClosed = hasExOpening ? false : (selectedStaffMember ? (() => {
                         const sched = getStaffScheduleForDate(selectedStaffMember.id, key);
                         return sched ? !sched.is_open : true;
-                      })() : false;
+                      })() : false);
                       const active = selectedDateKey === key;
                       const isToday = key === todayKey;
                       const disabled = isPast || closed || staffClosed;
