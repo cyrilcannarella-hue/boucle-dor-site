@@ -182,6 +182,14 @@ type ClosureRow = {
   reason: string | null;
 };
 
+type ExceptionOpeningRow = {
+  id: string;
+  opening_date: string;
+  opening_time: string;
+  closing_time: string;
+  reason: string | null;
+};
+
 type CategoryRow = {
   id: string;
   name: string;
@@ -353,6 +361,14 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [savingClosure, setSavingClosure] = useState(false);
   const [deletingClosureId, setDeletingClosureId] = useState<string | null>(null);
 
+  const [exceptionOpenings, setExceptionOpenings] = useState<ExceptionOpeningRow[]>([]);
+  const [newOpeningDate, setNewOpeningDate] = useState("");
+  const [newOpeningTime, setNewOpeningTime] = useState("09:00");
+  const [newOpeningClosingTime, setNewOpeningClosingTime] = useState("18:00");
+  const [newOpeningReason, setNewOpeningReason] = useState("");
+  const [savingOpening, setSavingOpening] = useState(false);
+  const [deletingOpeningId, setDeletingOpeningId] = useState<string | null>(null);
+
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -392,7 +408,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"closures" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence" | "agendaplus">("closures");
+  const [activeTab, setActiveTab] = useState<"closures" | "openings" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence" | "agendaplus">("closures");
   const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "police" | "couleurs" | "hero" | "logos" | "photos" | "prestations" | "apropos" | "avis">("nom");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("");
@@ -531,9 +547,10 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setLoading(true);
       setStatusMessage("");
 
-      const [settingsRes, closuresRes, categoriesRes, servicesRes, clientsRes, staffRes, schedulesRes, questionsRes] = await Promise.all([
+      const [settingsRes, closuresRes, openingsRes, categoriesRes, servicesRes, clientsRes, staffRes, schedulesRes, questionsRes] = await Promise.all([
         supabase.from("salon_settings").select("*").eq("salon_id", salonId).limit(1).maybeSingle(),
         supabase.from("exception_closures").select("*").eq("salon_id", salonId).order("closure_date", { ascending: true }),
+        supabase.from("exception_openings").select("id, opening_date, opening_time, closing_time, reason").eq("salon_id", salonId).order("opening_date", { ascending: true }),
         supabase.from("categories").select("id, name, color, display_order").eq("salon_id", salonId).order("display_order", { ascending: true }).order("name", { ascending: true }),
         supabase
           .from("services")
@@ -554,6 +571,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
 
       if (settingsRes.error) throw new Error(settingsRes.error.message);
       if (closuresRes.error) throw new Error(closuresRes.error.message);
+      if (openingsRes.error) throw new Error(openingsRes.error.message);
       if (categoriesRes.error) throw new Error(categoriesRes.error.message);
       if (servicesRes.error) throw new Error(servicesRes.error.message);
       if (clientsRes.error) throw new Error(clientsRes.error.message);
@@ -619,6 +637,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setAppearanceAvisBg(loadedSettings?.color_avis_bg ?? "");
       setAppearanceAvisName(loadedSettings?.color_avis_name ?? "");
       setClosures((closuresRes.data ?? []) as ClosureRow[]);
+      setExceptionOpenings((openingsRes.data ?? []) as ExceptionOpeningRow[]);
       setCategories((categoriesRes.data ?? []) as CategoryRow[]);
       setServices((servicesRes.data ?? []) as unknown as ServiceRow[]);
       setClients((clientsRes.data ?? []) as ClientRow[]);
@@ -780,6 +799,50 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible de supprimer la fermeture."}`);
     } finally {
       setDeletingClosureId(null);
+    }
+  };
+
+  const handleCreateOpening = async () => {
+    if (!newOpeningDate) {
+      setStatusMessage("Choisis une date pour l'ouverture.");
+      return;
+    }
+    try {
+      setSavingOpening(true);
+      setStatusMessage("");
+      const { error } = await supabase.from("exception_openings").insert({
+        salon_id: salonId,
+        opening_date: newOpeningDate,
+        opening_time: newOpeningTime,
+        closing_time: newOpeningClosingTime,
+        reason: newOpeningReason.trim() || null,
+      });
+      if (error) throw new Error((error as Error).message);
+      setNewOpeningDate("");
+      setNewOpeningTime("09:00");
+      setNewOpeningClosingTime("18:00");
+      setNewOpeningReason("");
+      setStatusMessage("Ouverture ajoutée ✅");
+      await loadGestionData();
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible d'ajouter l'ouverture."}`);
+    } finally {
+      setSavingOpening(false);
+    }
+  };
+
+  const handleDeleteOpening = async (id: string) => {
+    try {
+      setDeletingOpeningId(id);
+      setStatusMessage("");
+      const { error } = await supabase.from("exception_openings").delete().eq("id", id).eq("salon_id", salonId);
+      if (error) throw new Error((error as Error).message);
+      setExceptionOpenings((prev) => prev.filter((o) => o.id !== id));
+      setStatusMessage("Ouverture supprimée ✅");
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible de supprimer l'ouverture."}`);
+    } finally {
+      setDeletingOpeningId(null);
     }
   };
 
@@ -1767,6 +1830,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
               <nav className="flex flex-col gap-1.5 md:sticky md:top-[76px] md:w-44 md:shrink-0">
                 {([
                   { id: "closures" as const, label: "Fermetures", icon: "📆" },
+                  { id: "openings" as const, label: "Ouvertures", icon: "🔓" },
                   { id: "promotions" as const, label: "Promotions", icon: "🎁" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
                   { id: "sms" as const, label: "SMS", icon: "💬" },
@@ -1923,6 +1987,131 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                           </div>
                         ))
                       );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </section>
+              )}
+              {activeTab === "openings" && (
+              <section className={cardClass + " p-5 md:p-7"}>
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                      <span className="text-xl">🔓</span>
+                      Planning
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight">
+                      Ouvertures exceptionnelles
+                    </h2>
+                    <p className="mt-2 text-sm text-[var(--nav-text)]">
+                      Si un jour normalement fermé est ajouté ici, l&apos;agenda l&apos;affichera comme ouvert.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+                  <div className={panelClass + " p-5"}>
+                    <div className="mb-4 text-lg font-black">Ajouter une ouverture</div>
+
+                    <div className="grid gap-4">
+                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                        Date
+                        <input
+                          type="date"
+                          value={newOpeningDate}
+                          onChange={(e) => setNewOpeningDate(e.target.value)}
+                          className={fieldClass}
+                        />
+                      </label>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Ouverture
+                          <input
+                            type="time"
+                            value={newOpeningTime}
+                            onChange={(e) => setNewOpeningTime(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Fermeture
+                          <input
+                            type="time"
+                            value={newOpeningClosingTime}
+                            onChange={(e) => setNewOpeningClosingTime(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+                      </div>
+
+                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                        Motif
+                        <input
+                          type="text"
+                          value={newOpeningReason}
+                          onChange={(e) => setNewOpeningReason(e.target.value)}
+                          placeholder="Journée portes ouvertes, rattrapage, événement..."
+                          className={fieldClass}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="mt-5 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleCreateOpening}
+                        disabled={savingOpening}
+                        className={primaryButtonClass}
+                      >
+                        {savingOpening ? "Ajout..." : "Ajouter l'ouverture"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={panelClass + " p-5"}>
+                    <div className="mb-4 text-lg font-black">Ouvertures enregistrées</div>
+
+                    <div className="grid gap-3">
+                      {(() => {
+                        const now = new Date();
+                        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+                        const upcomingOpenings = exceptionOpenings.filter((o) => o.opening_date >= today);
+                        return upcomingOpenings.length === 0 ? (
+                          <div className="rounded-[24px] border border-dashed border-[#dccdbb] bg-white/70 px-4 py-5 text-sm text-[var(--nav-text)]">
+                            Aucune ouverture exceptionnelle.
+                          </div>
+                        ) : (
+                          upcomingOpenings.map((opening) => (
+                            <div
+                              key={opening.id}
+                              className="rounded-2xl border border-[var(--card-border)] bg-white p-4 shadow-sm"
+                            >
+                              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <div>
+                                  <div className="font-black">{formatFrenchDate(opening.opening_date)}</div>
+                                  <div className="mt-1 text-sm text-[var(--nav-text)]">
+                                    Ouvert de {formatTime(opening.opening_time)} à {formatTime(opening.closing_time)}
+                                  </div>
+                                  {opening.reason ? (
+                                    <div className="mt-1 text-sm text-[var(--nav-text)]">Motif : {opening.reason}</div>
+                                  ) : null}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteOpening(opening.id)}
+                                  disabled={deletingOpeningId === opening.id}
+                                  className={dangerButtonClass}
+                                >
+                                  {deletingOpeningId === opening.id ? "Suppression..." : "Supprimer"}
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        );
                       })()}
                     </div>
                   </div>

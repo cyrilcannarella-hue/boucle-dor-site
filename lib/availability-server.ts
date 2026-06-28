@@ -6,6 +6,7 @@ import {
   type BusyAppointment,
   type DayFlagsSettings,
   type ExceptionClosure,
+  type ExceptionOpening,
   type ServiceDurations,
   type StaffSchedule,
 } from "@/lib/availability";
@@ -56,13 +57,40 @@ export async function validateAppointmentSlot(
     .eq("salon_id", salonId)
     .maybeSingle<HoursSettings>();
 
-  if (!settings || !isOpenDayFromSettings(date, settings)) {
+  const dayNormallyOpen = !!settings && isOpenDayFromSettings(date, settings);
+
+  const [{ data: appointmentsData }, { data: closuresData }, { data: openingsData }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("id, start_time, end_time, break_start_time, break_end_time, status, staff_id")
+      .eq("salon_id", salonId)
+      .eq("appointment_date", appointmentDate)
+      .in("status", ["confirmed", "completed"]),
+    supabase
+      .from("exception_closures")
+      .select("id, closure_date, start_time, end_time, is_all_day, reason")
+      .eq("salon_id", salonId)
+      .eq("closure_date", appointmentDate),
+    supabase
+      .from("exception_openings")
+      .select("id, opening_date, opening_time, closing_time, reason")
+      .eq("salon_id", salonId)
+      .eq("opening_date", appointmentDate),
+  ]);
+
+  const exceptionalOpening = ((openingsData ?? []) as ExceptionOpening[])[0] ?? null;
+
+  if (!settings || (!dayNormallyOpen && !exceptionalOpening)) {
     return { ok: false, message: "Le salon est fermé ce jour-là." };
   }
 
   const slug = DAY_SLUGS[dayOfWeek];
-  const salonOpening = parseTime((settings[`opening_time_${slug}`] ?? settings.opening_time ?? "09:00").slice(0, 5));
-  const salonClosing = parseTime((settings[`closing_time_${slug}`] ?? settings.closing_time ?? "19:00").slice(0, 5));
+  const salonOpening = exceptionalOpening
+    ? parseTime(exceptionalOpening.opening_time.slice(0, 5))
+    : parseTime((settings[`opening_time_${slug}`] ?? settings.opening_time ?? "09:00").slice(0, 5));
+  const salonClosing = exceptionalOpening
+    ? parseTime(exceptionalOpening.closing_time.slice(0, 5))
+    : parseTime((settings[`closing_time_${slug}`] ?? settings.closing_time ?? "19:00").slice(0, 5));
 
   let staffSchedule: StaffSchedule | null = null;
   let effectiveClosing = salonClosing;
@@ -89,20 +117,6 @@ export async function validateAppointmentSlot(
   if (startMinutes < effectiveOpening) {
     return { ok: false, message: "Ce créneau est hors des horaires d'ouverture." };
   }
-
-  const [{ data: appointmentsData }, { data: closuresData }] = await Promise.all([
-    supabase
-      .from("appointments")
-      .select("id, start_time, end_time, break_start_time, break_end_time, status, staff_id")
-      .eq("salon_id", salonId)
-      .eq("appointment_date", appointmentDate)
-      .in("status", ["confirmed", "completed"]),
-    supabase
-      .from("exception_closures")
-      .select("id, closure_date, start_time, end_time, is_all_day, reason")
-      .eq("salon_id", salonId)
-      .eq("closure_date", appointmentDate),
-  ]);
 
   const appointments = ((appointmentsData ?? []) as BusyAppointment[]).filter(
     (a) => a.id !== excludeAppointmentId,

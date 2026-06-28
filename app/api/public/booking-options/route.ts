@@ -11,8 +11,9 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin-client";
 export async function GET() {
   const salon = await getCurrentSalon();
   const supabase = createAdminSupabaseClient();
+  const today = new Date().toISOString().slice(0, 10);
 
-  const [categoriesRes, servicesRes, staffRes, staffSchedulesRes, questionsRes] = await Promise.all([
+  const [categoriesRes, servicesRes, staffRes, staffSchedulesRes, questionsRes, exceptionOpeningsRes] = await Promise.all([
     supabase
       .from("categories")
       .select("name, display_order")
@@ -54,6 +55,12 @@ export async function GET() {
       .eq("is_active", true)
       .order("display_order", { ascending: true })
       .order("created_at", { ascending: true }),
+    supabase
+      .from("exception_openings")
+      .select("id, opening_date, opening_time, closing_time, reason")
+      .eq("salon_id", salon.id)
+      .gte("opening_date", today)
+      .order("opening_date", { ascending: true }),
   ]);
 
   return NextResponse.json({
@@ -62,5 +69,6 @@ export async function GET() {
     staff: staffRes.data ?? [],
     staffSchedules: staffSchedulesRes.data ?? [],
     questions: questionsRes.data ?? [],
+    exceptionOpenings: exceptionOpeningsRes.data ?? [],
   });
 }

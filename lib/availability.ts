@@ -37,6 +37,18 @@ export type ExceptionClosure = {
   reason: string | null;
 };
 
+export type ExceptionOpening = {
+  id: string;
+  opening_date: string;
+  opening_time: string;
+  closing_time: string;
+  reason: string | null;
+};
+
+export function getExceptionalOpening(dateKey: string, openings: ExceptionOpening[]): ExceptionOpening | null {
+  return openings.find((o) => o.opening_date === dateKey) ?? null;
+}
+
 export type StaffSchedule = {
   id: string;
   staff_id: string;

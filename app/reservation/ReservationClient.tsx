@@ -8,12 +8,14 @@ import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
 import {
   formatTime,
+  getExceptionalOpening,
   getServiceSegments,
   isOpenDayFromSettings,
   isSlotAvailable,
   parseTime,
   type BusyAppointment,
   type ExceptionClosure,
+  type ExceptionOpening,
   type StaffSchedule,
 } from "@/lib/availability";
 
@@ -222,9 +224,8 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
   const [busyAppointments, setBusyAppointments] = useState<BusyAppointment[]>(
     [],
   );
-  const [exceptionClosures, setExceptionClosures] = useState<
-    ExceptionClosure[]
-  >([]);
+  const [exceptionClosures, setExceptionClosures] = useState<ExceptionClosure[]>([]);
+  const [exceptionOpenings, setExceptionOpenings] = useState<ExceptionOpening[]>([]);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -309,12 +310,15 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
       setStaffSchedules((json.staffSchedules ?? []) as StaffSchedule[]);
       setQuestions((json.questions ?? []) as QuestionRow[]);
+      setExceptionOpenings((json.exceptionOpenings ?? []) as ExceptionOpening[]);
     };
 
     loadInitialData();
   }, [salonId]);
 
   const openingMinutes = useMemo(() => {
+    const exOpening = getExceptionalOpening(selectedDateKey, exceptionOpenings);
+    if (exOpening) return parseTime(exOpening.opening_time.slice(0, 5));
     if (!settings) return parseTime("09:00");
     const dow = selectedDateKey ? new Date(selectedDateKey + "T12:00:00").getDay() : 1;
     const slug = DAY_SLUGS[dow];
@@ -322,8 +326,10 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
       ?? settings.opening_time?.slice(0, 5)
       ?? "09:00";
     return parseTime(t);
-  }, [settings, selectedDateKey]);
+  }, [settings, selectedDateKey, exceptionOpenings]);
   const closingMinutes = useMemo(() => {
+    const exOpening = getExceptionalOpening(selectedDateKey, exceptionOpenings);
+    if (exOpening) return parseTime(exOpening.closing_time.slice(0, 5));
     if (!settings) return parseTime("19:00");
     const dow = selectedDateKey ? new Date(selectedDateKey + "T12:00:00").getDay() : 1;
     const slug = DAY_SLUGS[dow];
@@ -331,7 +337,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
       ?? settings.closing_time?.slice(0, 5)
       ?? "19:00";
     return parseTime(t);
-  }, [settings, selectedDateKey]);
+  }, [settings, selectedDateKey, exceptionOpenings]);
 
   const displayedCategories = useMemo(() => {
     return orderedCategories.length > 0
@@ -1062,7 +1068,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
                     {calendarDays.map((date) => {
                       const key = toKey(date);
                       const isPast = key < todayKey;
-                      const closed = !isOpenDayFromSettings(date, settings);
+                      const closed = !isOpenDayFromSettings(date, settings) && !getExceptionalOpening(key, exceptionOpenings);
                       const staffClosed = selectedStaffMember ? (() => {
                         const sched = getStaffScheduleForDate(selectedStaffMember.id, key);
                         return sched ? !sched.is_open : true;
