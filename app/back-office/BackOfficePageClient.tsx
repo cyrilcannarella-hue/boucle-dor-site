@@ -2344,8 +2344,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                                 type="button"
                                 disabled={slotBlocked}
                                 onClick={() => openCreateModal(dk, minutesToLabel(slot))}
-                                className={`absolute left-0 right-0 ${slot % 60 === 0 ? "border-t-2" : "border-t"} transition ${slotBlocked ? (slot % 60 === 0 ? "border-[#e8b8b8] bg-[#fff5f5] cursor-not-allowed" : "border-[#f1d7d7] bg-[#fff5f5] cursor-not-allowed") : (slot % 60 === 0 ? "border-[#d4c0a8] hover:bg-[#f4ede3]" : "border-[#f0e7dc] hover:bg-[#f4ede3]")}`}
-                                style={{ top, height: slotPx }}
+                                className={`absolute left-0 right-0 border-t transition ${slotBlocked ? (slot % 60 === 0 ? "border-[#e8b8b8] bg-[#fff5f5] cursor-not-allowed" : "border-[#f1d7d7] bg-[#fff5f5] cursor-not-allowed") : (slot % 60 === 0 ? "border-[#d4c0a8] hover:bg-[#f4ede3]" : "border-[#f0e7dc] hover:bg-[#f4ede3]")}`}
+                                style={{ top, height: slotPx, ...(slot % 60 === 0 ? { borderTopWidth: "1.5px" } : {}) }}
                               />
                             );
                           })}
@@ -2481,10 +2481,10 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                         return (
                           <div
                             key={slot}
-                            className={`absolute left-0 right-0 ${isFullHour ? "border-t-2" : "border-t"} ${
+                            className={`absolute left-0 right-0 border-t ${
                               slotBlocked ? (isFullHour ? "border-[#e8b8b8] bg-[#fff5f5]" : "border-[#f1d7d7] bg-[#fff5f5]") : (isFullHour ? "border-[#d4c0a8]" : "border-[#f0e7dc]")
                             }`}
-                            style={{ top, height: SLOT_STEP * PX_PER_MINUTE }}
+                            style={{ top, height: SLOT_STEP * PX_PER_MINUTE, ...(isFullHour ? { borderTopWidth: "1.5px" } : {}) }}
                           >
                             <button
                               type="button"
@@ -2585,10 +2585,10 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                     return (
                       <div
                         key={slot}
-                        className={`absolute left-0 right-0 ${isFullHour ? "border-t-2" : "border-t"} ${
+                        className={`absolute left-0 right-0 border-t ${
                           slotBlocked ? (isFullHour ? "border-[#e8b8b8] bg-[#fff5f5]" : "border-[#f1d7d7] bg-[#fff5f5]") : (isFullHour ? "border-[#d4c0a8]" : "border-[#f0e7dc]")
                         }`}
-                        style={{ top, height: SLOT_STEP * PX_PER_MINUTE }}
+                        style={{ top, height: SLOT_STEP * PX_PER_MINUTE, ...(isFullHour ? { borderTopWidth: "1.5px" } : {}) }}
                       >
                         <button
                           type="button"
