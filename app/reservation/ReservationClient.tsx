@@ -1103,9 +1103,17 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
                         const sched = getStaffScheduleForDate(selectedStaffMember.id, key);
                         return sched ? !sched.is_open : true;
                       })() : false);
+                      // Jour grisé si fermeture exceptionnelle journée entière couvre ce jour
+                      const hasFullDayClosure = exceptionClosures.some((c) =>
+                        c.closure_date === key &&
+                        c.is_all_day &&
+                        (selectedStaffMember
+                          ? (!c.staff_id || c.staff_id === selectedStaffMember.id)
+                          : !c.staff_id)
+                      );
                       const active = selectedDateKey === key;
                       const isToday = key === todayKey;
-                      const disabled = isPast || closed || staffClosed;
+                      const disabled = isPast || closed || staffClosed || hasFullDayClosure;
 
                       return (
                         <button
