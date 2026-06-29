@@ -2109,6 +2109,9 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   </button>
                 );
               })}
+              {Array.from({ length: Math.max(0, 42 - calDays.length - calStartPadding) }).map((_, i) => (
+                <div key={`end-pad-${i}`} className="aspect-square" />
+              ))}
             </div>
 
             <button
