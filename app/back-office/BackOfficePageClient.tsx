@@ -2274,7 +2274,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   {(() => {
                     const openDays = weekDays.filter((dk) => isOpenDay(dk, settings, allFutureOpenings));
                     const cols = `64px repeat(${openDays.length}, 1fr)`;
-                    const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+                    const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
                     return (
                       <>
                   {/* En-têtes jours */}
