@@ -846,7 +846,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
 
                 <div className="rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
                   <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Coordonnées</div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 md:mt-4">
+                  <div className="mt-3 grid grid-cols-3 gap-3 md:mt-4">
                     <div className="rounded-2xl bg-white p-3 md:p-4">
                       <div className="text-xs text-[var(--nav-text)]">Téléphone</div>
                       <a href={`tel:${selectedClient.phone}`} className="mt-1 block font-semibold text-sm underline decoration-[var(--gold)] underline-offset-4 md:text-base">
@@ -854,10 +854,20 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
                       </a>
                     </div>
                     <div className="rounded-2xl bg-white p-3 md:p-4">
+                      <div className="text-xs text-[var(--nav-text)]">Email</div>
+                      <div className="mt-1 break-words font-semibold text-sm md:text-base">{selectedClient.email || "Non renseigné"}</div>
+                    </div>
+                    <div className="rounded-2xl bg-white p-3 md:p-4">
                       <div className="text-xs text-[var(--nav-text)]">Rendez-vous</div>
                       <div className="mt-1 font-semibold">{selectedClientAppointments.length}</div>
                     </div>
                   </div>
+                  {selectedClient.notes ? (
+                    <div className="mt-3 rounded-2xl bg-white p-3 md:p-4">
+                      <div className="text-xs text-[var(--nav-text)]">Notes</div>
+                      <p className="mt-1 text-sm leading-6 text-[var(--nav-text)]">{selectedClient.notes}</p>
+                    </div>
+                  ) : null}
                 </div>
 
                 {(() => {
