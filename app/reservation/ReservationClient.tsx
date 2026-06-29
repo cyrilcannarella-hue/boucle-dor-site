@@ -315,6 +315,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
       setStaffSchedules((json.staffSchedules ?? []) as StaffSchedule[]);
       setQuestions((json.questions ?? []) as QuestionRow[]);
       setExceptionOpenings((json.exceptionOpenings ?? []) as ExceptionOpening[]);
+      setExceptionClosures((json.exceptionClosures ?? []) as ExceptionClosure[]);
     };
 
     loadInitialData();
