@@ -2720,7 +2720,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                 )}
               </div>
 
-              {createModalMode === "appointment" ? (<>
+              <div className="grid">
+              <div className={`col-start-1 row-start-1 ${createModalMode !== "appointment" ? "invisible pointer-events-none" : ""}`}>
               <div className="mt-4 grid gap-4">
                 <label className="grid gap-2 text-sm text-[var(--nav-text)] md:max-w-[520px]">
                   Catégorie
@@ -3051,7 +3052,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   />
                 </label>
               </div>
-              </>) : (<>
+              </div>
+              <div className={`col-start-1 row-start-1 ${createModalMode !== "closure" ? "invisible pointer-events-none" : ""}`}>
               <div className="mt-6 grid gap-5">
                 <div className="grid gap-2 text-sm text-[var(--nav-text)]">
                   <span className="font-semibold">Durée de la fermeture</span>
@@ -3106,7 +3108,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   </label>
                 )}
               </div>
-              </>)}
+              </div>
+              </div>
             </div>
           </div>
         </div>
