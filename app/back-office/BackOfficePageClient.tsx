@@ -2344,7 +2344,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                                 type="button"
                                 disabled={slotBlocked}
                                 onClick={() => openCreateModal(dk, minutesToLabel(slot))}
-                                className={`absolute left-0 right-0 border-t transition ${slotBlocked ? "border-[#f1d7d7] bg-[#fff5f5] cursor-not-allowed" : "border-[#f0e7dc] hover:bg-[#f4ede3]"}`}
+                                className={`absolute left-0 right-0 ${slot % 60 === 0 ? "border-t-2" : "border-t"} transition ${slotBlocked ? (slot % 60 === 0 ? "border-[#e8b8b8] bg-[#fff5f5] cursor-not-allowed" : "border-[#f1d7d7] bg-[#fff5f5] cursor-not-allowed") : (slot % 60 === 0 ? "border-[#d4c0a8] hover:bg-[#f4ede3]" : "border-[#f0e7dc] hover:bg-[#f4ede3]")}`}
                                 style={{ top, height: slotPx }}
                               />
                             );
