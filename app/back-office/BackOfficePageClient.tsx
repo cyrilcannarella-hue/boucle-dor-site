@@ -2218,9 +2218,9 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                 <div className="flex items-center gap-3">
                   <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-lg transition hover:bg-[var(--panel-bg)]">‹</button>
                   <h2 className="text-2xl font-semibold leading-none">
-                    {parseDateKey(weekDays[0]).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    {parseDateKey(weekDays[0]).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
                     {" → "}
-                    {parseDateKey(weekDays[6]).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                    {parseDateKey(weekDays[6]).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                   </h2>
                   <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-lg transition hover:bg-[var(--panel-bg)]">›</button>
                 </div>
