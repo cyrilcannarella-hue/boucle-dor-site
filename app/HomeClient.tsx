@@ -421,7 +421,7 @@ useEffect(() => {
                 style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 12px 25px rgba(17,17,17,0.16), 0 0 28px 6px ${colorButtons}b3` }}
                 className="btn-shimmer rounded-full px-4 py-3 text-sm font-semibold"
               >
-                Prendre RDV
+                Prendre rendez-vous
               </motion.a>
             </div>
           </div>
@@ -497,7 +497,7 @@ useEffect(() => {
                 style={{ backgroundColor: colorButtons, color: colorButtonsText, boxShadow: `0 14px 30px rgba(17,17,17,0.18), 0 0 28px 6px ${colorButtons}b3` }}
                 className="btn-shimmer rounded-full px-5 py-3 text-sm font-semibold transition"
               >
-                Prendre RDV
+                Prendre rendez-vous
               </motion.a>
             </div>
           </div>

@@ -908,7 +908,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
                       <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Historique</div>
                       <h3 className="mt-1 text-xl font-semibold">Rendez-vous</h3>
                     </div>
-                    <span className="rounded-full border border-[var(--card-border)] bg-white px-4 py-2 text-sm text-[var(--nav-text)]">{selectedClientAppointments.length} RDV</span>
+                    <span className="rounded-full border border-[var(--card-border)] bg-white px-4 py-2 text-sm text-[var(--nav-text)]">{selectedClientAppointments.length} rendez-vous</span>
                   </div>
 
                   {loadingClientDetails ? (
