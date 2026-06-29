@@ -355,7 +355,8 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [savingSms, setSavingSms] = useState(false);
 
   const [closures, setClosures] = useState<ClosureRow[]>([]);
-  const [newClosureDate, setNewClosureDate] = useState("");
+  const [newClosureDateStart, setNewClosureDateStart] = useState("");
+  const [newClosureDateEnd, setNewClosureDateEnd] = useState("");
   const [newClosureAllDay, setNewClosureAllDay] = useState(false);
   const [newClosureStartTime, setNewClosureStartTime] = useState("09:00");
   const [newClosureEndTime, setNewClosureEndTime] = useState("18:00");
@@ -761,34 +762,46 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   };
 
   const handleCreateClosure = async () => {
-    if (!newClosureDate) {
-      setStatusMessage("Choisis une date pour la fermeture.");
+    if (!newClosureDateStart) {
+      setStatusMessage("Choisis une date de début pour la fermeture.");
       return;
     }
+    const dateEnd = newClosureDateEnd && newClosureDateEnd >= newClosureDateStart ? newClosureDateEnd : newClosureDateStart;
     if (!newClosureAllDay && newClosureStartTime >= newClosureEndTime) {
-      setStatusMessage("L'heure de début doit être avant l'heure de fin.");
+      setStatusMessage("L’heure de début doit être avant l’heure de fin.");
       return;
+    }
+    // Génère toutes les dates de la plage
+    const dates: string[] = [];
+    const cur = new Date(`${newClosureDateStart}T00:00:00`);
+    const end = new Date(`${dateEnd}T00:00:00`);
+    while (cur <= end) {
+      dates.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`);
+      cur.setDate(cur.getDate() + 1);
     }
     try {
       setSavingClosure(true);
       setStatusMessage("");
-      const { error } = await supabase.from("exception_closures").insert({
+      const rows = dates.map((d) => ({
         salon_id: salonId,
-        closure_date: newClosureDate,
+        closure_date: d,
         is_all_day: newClosureAllDay,
         start_time: newClosureAllDay ? "00:00" : newClosureStartTime,
         end_time: newClosureAllDay ? "23:59" : newClosureEndTime,
         reason: newClosureReason.trim() || null,
         staff_id: newClosureStaffId || null,
-      });
+      }));
+      const { error } = await supabase.from("exception_closures").insert(rows);
       if (error) throw new Error((error as Error).message);
-      setNewClosureDate("");
+      setNewClosureDateStart("");
+      setNewClosureDateEnd("");
       setNewClosureAllDay(false);
       setNewClosureStartTime("09:00");
       setNewClosureEndTime("18:00");
       setNewClosureReason("");
       setNewClosureStaffId("");
-      setStatusMessage("Fermeture ajoutée ✅");
+      const label = dates.length > 1 ? `${dates.length} fermetures ajoutées ✅` : "Fermeture ajoutée ✅";
+      setStatusMessage(label);
       await loadGestionData();
     } catch (error: unknown) {
       setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible d’ajouter la fermeture."}`);
@@ -1893,15 +1906,30 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                     <div className="mb-4 text-lg font-black">Ajouter une fermeture</div>
 
                     <div className="grid gap-4">
-                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
-                        Date
-                        <input
-                          type="date"
-                          value={newClosureDate}
-                          onChange={(e) => setNewClosureDate(e.target.value)}
-                          className={fieldClass}
-                        />
-                      </label>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Du
+                          <input
+                            type="date"
+                            value={newClosureDateStart}
+                            onChange={(e) => {
+                              setNewClosureDateStart(e.target.value);
+                              if (newClosureDateEnd && newClosureDateEnd < e.target.value) setNewClosureDateEnd(e.target.value);
+                            }}
+                            className={fieldClass}
+                          />
+                        </label>
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Au
+                          <input
+                            type="date"
+                            value={newClosureDateEnd}
+                            min={newClosureDateStart || undefined}
+                            onChange={(e) => setNewClosureDateEnd(e.target.value)}
+                            className={fieldClass}
+                          />
+                        </label>
+                      </div>
 
                       <label className="flex items-center justify-between rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-sm font-semibold">
                         <span>Journée entière</span>
