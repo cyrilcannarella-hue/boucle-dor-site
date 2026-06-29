@@ -2058,7 +2058,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
               >
                 &#8249;
               </button>
-              <span className="text-base font-semibold capitalize text-[var(--text-main)]">
+              <span className="text-sm font-semibold capitalize whitespace-nowrap text-[var(--text-main)]">
                 {MONTH_NAMES[calMonth]} {calYear}
               </span>
               <button
