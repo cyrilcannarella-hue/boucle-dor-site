@@ -649,14 +649,6 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
           </div>
 
           <div className="hidden sm:grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-[26px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
-              <div className="text-sm text-[var(--nav-text)]">Avec email</div>
-              <div className="mt-2 text-3xl font-semibold">{clientsWithEmail}</div>
-            </div>
-            <div className="rounded-[26px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
-              <div className="text-sm text-[var(--nav-text)]">Avec notes</div>
-              <div className="mt-2 text-3xl font-semibold">{clientsWithNotes}</div>
-            </div>
             <button
               type="button"
               onClick={handleExport}
