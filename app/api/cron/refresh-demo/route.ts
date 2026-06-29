@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
 
   // Sources réalistes pour les appointments générés automatiquement.
   // "web" est exclu ici pour ne pas polluer le panneau Notifications.
-  const BULK_SOURCES = ["admin", "admin", "phone"];
+  const BULK_SOURCES = ["salon", "salon", "web"];
 
   const appointments: Record<string, unknown>[] = [];
 
