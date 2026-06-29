@@ -2651,18 +2651,18 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   <p className="mt-3 text-[var(--nav-text)]">
                     {formatFrenchDate(createDate)} • {createTime}
                   </p>
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] p-1 w-fit">
                     <button
                       type="button"
                       onClick={() => setCreateModalMode("appointment")}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${createModalMode === "appointment" ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : "border border-[var(--card-border)] bg-white text-[var(--text-main)]"}`}
+                      className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${createModalMode === "appointment" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
                     >
                       Nouveau rendez-vous
                     </button>
                     <button
                       type="button"
                       onClick={() => setCreateModalMode("closure")}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${createModalMode === "closure" ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : "border border-[var(--card-border)] bg-white text-[var(--text-main)]"}`}
+                      className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${createModalMode === "closure" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
                     >
                       Fermeture exceptionnelle
                     </button>
