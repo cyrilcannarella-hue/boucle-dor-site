@@ -810,14 +810,14 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
     }
   };
 
-  const handleDeleteClosure = async (id: string) => {
+  const handleDeleteClosure = async (ids: string[]) => {
     try {
-      setDeletingClosureId(id);
+      setDeletingClosureId(ids[0]);
       setStatusMessage("");
-      const { error } = await supabase.from("exception_closures").delete().eq("id", id).eq("salon_id", salonId);
+      const { error } = await supabase.from("exception_closures").delete().in("id", ids).eq("salon_id", salonId);
       if (error) throw new Error((error as Error).message);
-      setClosures((prev) => prev.filter((closure) => closure.id !== id));
-      setStatusMessage("Fermeture supprimée ✅");
+      setClosures((prev) => prev.filter((c) => !ids.includes(c.id)));
+      setStatusMessage(ids.length > 1 ? `${ids.length} fermetures supprimées ✅` : "Fermeture supprimée ✅");
     } catch (error: unknown) {
       setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible de supprimer la fermeture."}`);
     } finally {
@@ -2017,46 +2017,75 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                         const now = new Date();
                         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
                         const upcomingClosures = closures.filter((c) => c.closure_date >= today);
-                        return upcomingClosures.length === 0 ? (
-                        <div className="rounded-[24px] border border-dashed border-[#dccdbb] bg-white/70 px-4 py-5 text-sm text-[var(--nav-text)]">
-                          Aucune fermeture exceptionnelle.
-                        </div>
-                      ) : (
-                        upcomingClosures.map((closure) => (
+                        if (upcomingClosures.length === 0) {
+                          return (
+                            <div className="rounded-[24px] border border-dashed border-[#dccdbb] bg-white/70 px-4 py-5 text-sm text-[var(--nav-text)]">
+                              Aucune fermeture exceptionnelle.
+                            </div>
+                          );
+                        }
+                        // Grouper les jours consécutifs ayant les mêmes propriétés
+                        const nextDay = (d: string) => {
+                          const a = new Date(`${d}T00:00:00`);
+                          a.setDate(a.getDate() + 1);
+                          return `${a.getFullYear()}-${String(a.getMonth() + 1).padStart(2, "0")}-${String(a.getDate()).padStart(2, "0")}`;
+                        };
+                        type ClosureGroup = { ids: string[]; dateStart: string; dateEnd: string; is_all_day: boolean; start_time: string; end_time: string; reason: string | null; staff_id: string | null };
+                        const groups: ClosureGroup[] = [];
+                        for (const c of upcomingClosures) {
+                          const last = groups[groups.length - 1];
+                          if (
+                            last &&
+                            last.is_all_day === c.is_all_day &&
+                            last.start_time === c.start_time &&
+                            last.end_time === c.end_time &&
+                            last.reason === c.reason &&
+                            last.staff_id === c.staff_id &&
+                            nextDay(last.dateEnd) === c.closure_date
+                          ) {
+                            last.ids.push(c.id);
+                            last.dateEnd = c.closure_date;
+                          } else {
+                            groups.push({ ids: [c.id], dateStart: c.closure_date, dateEnd: c.closure_date, is_all_day: c.is_all_day, start_time: c.start_time, end_time: c.end_time, reason: c.reason, staff_id: c.staff_id });
+                          }
+                        }
+                        return groups.map((group) => (
                           <div
-                            key={closure.id}
+                            key={group.ids[0]}
                             className="rounded-2xl border border-[var(--card-border)] bg-white p-4 shadow-sm"
                           >
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                               <div>
-                                <div className="font-black">{formatFrenchDate(closure.closure_date)}</div>
-                                <div className="mt-1 text-sm text-[var(--nav-text)]">
-                                  {closure.is_all_day
-                                    ? "Fermé toute la journée"
-                                    : `Fermé de ${formatTime(closure.start_time)} à ${formatTime(closure.end_time)}`}
+                                <div className="font-black">
+                                  {group.dateStart === group.dateEnd
+                                    ? formatFrenchDate(group.dateStart)
+                                    : `Du ${formatFrenchDate(group.dateStart)} au ${formatFrenchDate(group.dateEnd)}`}
                                 </div>
-                                {closure.staff_id ? (
+                                <div className="mt-1 text-sm text-[var(--nav-text)]">
+                                  {group.is_all_day
+                                    ? "Fermé toute la journée"
+                                    : `Fermé de ${formatTime(group.start_time)} à ${formatTime(group.end_time)}`}
+                                </div>
+                                {group.staff_id ? (
                                   <div className="mt-1 text-sm font-semibold text-[var(--gold)]">
-                                    {staff.find((s) => s.id === closure.staff_id)?.first_name ?? "Prestataire"} uniquement
+                                    {staff.find((s) => s.id === group.staff_id)?.first_name ?? "Prestataire"} uniquement
                                   </div>
                                 ) : null}
-                                {closure.reason ? (
-                                  <div className="mt-1 text-sm text-[var(--nav-text)]">Motif : {closure.reason}</div>
+                                {group.reason ? (
+                                  <div className="mt-1 text-sm text-[var(--nav-text)]">Motif : {group.reason}</div>
                                 ) : null}
                               </div>
-
                               <button
                                 type="button"
-                                onClick={() => handleDeleteClosure(closure.id)}
-                                disabled={deletingClosureId === closure.id}
+                                onClick={() => handleDeleteClosure(group.ids)}
+                                disabled={deletingClosureId === group.ids[0]}
                                 className={dangerButtonClass}
                               >
-                                {deletingClosureId === closure.id ? "Suppression..." : "Supprimer"}
+                                {deletingClosureId === group.ids[0] ? "Suppression..." : "Supprimer"}
                               </button>
                             </div>
                           </div>
-                        ))
-                      );
+                        ));
                       })()}
                     </div>
                   </div>
