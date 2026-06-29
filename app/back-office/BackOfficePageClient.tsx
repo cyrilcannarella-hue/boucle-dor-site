@@ -2472,6 +2472,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                         const slotStart = slot;
                         const slotEnd = slot + SLOT_STEP;
                         const top = (slot - dayStart) * PX_PER_MINUTE;
+                        const isFullHour = slot % 60 === 0;
                         const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures.filter(c => !c.staff_id))
                           || (staffBreakBlock !== null && selectedStaffScheduleToday?.has_break && selectedStaffScheduleToday.break_start && selectedStaffScheduleToday.break_end
                             ? slotStart < parseTimeToMinutes(selectedStaffScheduleToday.break_end.slice(0,5)) && slotEnd > parseTimeToMinutes(selectedStaffScheduleToday.break_start.slice(0,5))
@@ -2480,8 +2481,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                         return (
                           <div
                             key={slot}
-                            className={`absolute left-0 right-0 border-t ${
-                              slotBlocked ? "border-[#f1d7d7] bg-[#fff5f5]" : "border-[#f0e7dc]"
+                            className={`absolute left-0 right-0 ${isFullHour ? "border-t-2" : "border-t"} ${
+                              slotBlocked ? (isFullHour ? "border-[#e8b8b8] bg-[#fff5f5]" : "border-[#f1d7d7] bg-[#fff5f5]") : (isFullHour ? "border-[#d4c0a8]" : "border-[#f0e7dc]")
                             }`}
                             style={{ top, height: SLOT_STEP * PX_PER_MINUTE }}
                           >
@@ -2575,6 +2576,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                     const slotStart = slot;
                     const slotEnd = slot + SLOT_STEP;
                     const top = (slot - dayStart) * PX_PER_MINUTE;
+                    const isFullHour = slot % 60 === 0;
                     const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures)
                       || (staffBreakBlock !== null && selectedStaffScheduleToday?.has_break && selectedStaffScheduleToday.break_start && selectedStaffScheduleToday.break_end
                         ? slotStart < parseTimeToMinutes(selectedStaffScheduleToday.break_end.slice(0,5)) && slotEnd > parseTimeToMinutes(selectedStaffScheduleToday.break_start.slice(0,5))
@@ -2583,8 +2585,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                     return (
                       <div
                         key={slot}
-                        className={`absolute left-0 right-0 border-t ${
-                          slotBlocked ? "border-[#f1d7d7] bg-[#fff5f5]" : "border-[#f0e7dc]"
+                        className={`absolute left-0 right-0 ${isFullHour ? "border-t-2" : "border-t"} ${
+                          slotBlocked ? (isFullHour ? "border-[#e8b8b8] bg-[#fff5f5]" : "border-[#f1d7d7] bg-[#fff5f5]") : (isFullHour ? "border-[#d4c0a8]" : "border-[#f0e7dc]")
                         }`}
                         style={{ top, height: SLOT_STEP * PX_PER_MINUTE }}
                       >
