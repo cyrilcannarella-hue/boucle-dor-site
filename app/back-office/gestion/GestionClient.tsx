@@ -1913,8 +1913,10 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                             type="date"
                             value={newClosureDateStart}
                             onChange={(e) => {
-                              setNewClosureDateStart(e.target.value);
-                              if (newClosureDateEnd && newClosureDateEnd < e.target.value) setNewClosureDateEnd(e.target.value);
+                              const val = e.target.value;
+                              setNewClosureDateStart(val);
+                              if (newClosureDateEnd && newClosureDateEnd < val) setNewClosureDateEnd(val);
+                              if (newClosureDateEnd && newClosureDateEnd > val) setNewClosureAllDay(true);
                             }}
                             className={fieldClass}
                           />
@@ -1925,7 +1927,10 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                             type="date"
                             value={newClosureDateEnd}
                             min={newClosureDateStart || undefined}
-                            onChange={(e) => setNewClosureDateEnd(e.target.value)}
+                            onChange={(e) => {
+                              setNewClosureDateEnd(e.target.value);
+                              if (e.target.value && e.target.value !== newClosureDateStart) setNewClosureAllDay(true);
+                            }}
                             className={fieldClass}
                           />
                         </label>
