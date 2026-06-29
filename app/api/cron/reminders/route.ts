@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { formatPhoneE164 } from "@/lib/phone";
 
 export const runtime = "nodejs";
 
@@ -7,14 +8,6 @@ function getTomorrowParis(): string {
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   return tomorrow.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
-}
-
-function formatPhoneE164(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("0033")) return `+33${digits.slice(4)}`;
-  if (digits.startsWith("33") && digits.length === 11) return `+${digits}`;
-  if (digits.startsWith("0") && digits.length === 10) return `+33${digits.slice(1)}`;
-  return `+${digits}`;
 }
 
 export async function GET(req: NextRequest) {

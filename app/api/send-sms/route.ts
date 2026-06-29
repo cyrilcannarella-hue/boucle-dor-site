@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 import { getCurrentSalon } from "@/lib/salon";
+import { formatPhoneE164 } from "@/lib/phone";
 
 export async function POST(req: NextRequest) {
-  const { to, firstName, serviceName, date, time } = await req.json();
+  const { to: rawTo, firstName, serviceName, date, time } = await req.json();
 
-  if (!to || !date || !time) {
+  if (!rawTo || !date || !time) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
+
+  const to = formatPhoneE164(rawTo);
 
   let smsProvider = "brevo";
   let smsSender = "";

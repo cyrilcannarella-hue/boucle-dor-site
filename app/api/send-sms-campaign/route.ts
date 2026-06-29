@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 import { getCurrentSalon } from "@/lib/salon";
+import { formatPhoneE164 } from "@/lib/phone";
 
 export async function POST(req: NextRequest) {
   const { message, dryRun, onlyWithAppointments } = await req.json();
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
   const errors: string[] = [];
 
   for (const client of recipients) {
-    const phone = client.phone as string;
+    const phone = formatPhoneE164(client.phone as string);
     try {
       if (provider === "twilio") {
         if (!twilioAccountSid || !twilioAuthToken || !twilioFromNumber) {
