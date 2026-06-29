@@ -403,7 +403,6 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     const rows = (json.appointments ?? []) as BusyAppointment[];
     const closures = (json.closures ?? []) as ExceptionClosure[];
     setBusyAppointments(rows);
-    setExceptionClosures(closures);
     return [rows, closures] as const;
   };
 
@@ -463,13 +462,13 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
           const segs = getServiceSegments(selectedService, slotStart);
           if (segs.totalEnd > memberClose || slotStart < memberOpen) return false;
           const memberAppts = busyAppointments.filter((a) => a.staff_id === member.id || a.staff_id === null);
-          const memberClosures = exceptionClosures.filter((c) => !c.staff_id || c.staff_id === member.id);
+          const memberClosures = exceptionClosures.filter((c) => c.closure_date === selectedDateKey && (!c.staff_id || c.staff_id === member.id));
           return isSlotAvailable(slotStart, selectedService, memberAppts, memberClosures, memberClose, memberExOpening ? null : sched, null);
         });
       } else {
         const closuresForStaff = selectedStaffId
-          ? exceptionClosures.filter((c) => !c.staff_id || c.staff_id === selectedStaffId)
-          : exceptionClosures.filter((c) => !c.staff_id);
+          ? exceptionClosures.filter((c) => c.closure_date === selectedDateKey && (!c.staff_id || c.staff_id === selectedStaffId))
+          : exceptionClosures.filter((c) => c.closure_date === selectedDateKey && !c.staff_id);
         available = !isPast && isSlotAvailable(
           slotStart,
           selectedService,
