@@ -638,6 +638,9 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [createStaffId, setCreateStaffId] = useState<string>("");
+  const [createModalMode, setCreateModalMode] = useState<"appointment" | "closure">("appointment");
+  const [createClosureDuration, setCreateClosureDuration] = useState(60);
+  const [createClosureReason, setCreateClosureReason] = useState("");
 
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const [savingEditAppointment, setSavingEditAppointment] = useState(false);
@@ -1215,6 +1218,9 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setCreateMessage("");
     setCreateInternalNote("");
     setCreateStaffId(selectedStaffId || "");
+    setCreateModalMode("appointment");
+    setCreateClosureDuration(60);
+    setCreateClosureReason("");
     setShowCreateModal(true);
     setStatusMessage("");
     setCreateModalError("");
@@ -1224,6 +1230,37 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setShowCreateModal(false);
     setCreateOverlapWarning(false);
     setCreateModalError("");
+  };
+
+  const handleCreateExceptionalClosure = async () => {
+    try {
+      setSavingCreate(true);
+      setCreateModalError("");
+      const [h, m] = createTime.split(":").map(Number);
+      const endTotal = h * 60 + m + createClosureDuration;
+      const endTime = `${String(Math.floor(endTotal / 60) % 24).padStart(2, "0")}:${String(endTotal % 60).padStart(2, "0")}`;
+      const { error } = await supabase.from("exception_closures").insert({
+        salon_id: salonId,
+        closure_date: createDate,
+        is_all_day: false,
+        start_time: createTime,
+        end_time: endTime,
+        reason: createClosureReason.trim() || null,
+        staff_id: createStaffId || null,
+      });
+      if (error) throw new Error(error.message);
+      if (agendaView === "week" && weekDays.length === 7) {
+        await loadWeekData(weekDays[0], weekDays[6]);
+      } else {
+        await loadClosuresForDay(createDate);
+      }
+      closeCreateModal();
+      setStatusMessage("Fermeture ajoutée ✅");
+    } catch (e: unknown) {
+      setCreateModalError((e as Error).message ?? "Impossible d'ajouter la fermeture.");
+    } finally {
+      setSavingCreate(false);
+    }
   };
 
   const loadClientDetails = async (clientId: string) => {
@@ -2610,10 +2647,26 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
                     Ajout manuel
                   </div>
-                  <h2 className="text-4xl">Nouveau rendez-vous</h2>
+                  <h2 className="text-4xl">{createModalMode === "closure" ? "Fermeture exceptionnelle" : "Nouveau rendez-vous"}</h2>
                   <p className="mt-3 text-[var(--nav-text)]">
                     {formatFrenchDate(createDate)} • {createTime}
                   </p>
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCreateModalMode("appointment")}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${createModalMode === "appointment" ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : "border border-[var(--card-border)] bg-white text-[var(--text-main)]"}`}
+                    >
+                      Nouveau rendez-vous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreateModalMode("closure")}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${createModalMode === "closure" ? "bg-[var(--selected-bg)] text-[var(--selected-text)]" : "border border-[var(--card-border)] bg-white text-[var(--text-main)]"}`}
+                    >
+                      Fermeture exceptionnelle
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
@@ -2624,14 +2677,25 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   >
                     Fermer
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleCreateAppointment()}
-                    disabled={savingCreate}
-                    className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
-                  >
-                    {savingCreate ? "Enregistrement..." : "Créer le rendez-vous"}
-                  </button>
+                  {createModalMode === "appointment" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleCreateAppointment()}
+                      disabled={savingCreate}
+                      className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
+                    >
+                      {savingCreate ? "Enregistrement..." : "Créer le rendez-vous"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCreateExceptionalClosure}
+                      disabled={savingCreate}
+                      className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
+                    >
+                      {savingCreate ? "Enregistrement..." : "Ajouter la fermeture"}
+                    </button>
+                  )}
                 </div>
 
                 {createModalError && (
@@ -2656,6 +2720,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                 )}
               </div>
 
+              {createModalMode === "appointment" ? (<>
               <div className="mt-4 grid gap-4">
                 <label className="grid gap-2 text-sm text-[var(--nav-text)] md:max-w-[520px]">
                   Catégorie
@@ -2986,6 +3051,62 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   />
                 </label>
               </div>
+              </>) : (<>
+              <div className="mt-6 grid gap-5">
+                <div className="grid gap-2 text-sm text-[var(--nav-text)]">
+                  <span className="font-semibold">Durée de la fermeture</span>
+                  <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-2xl font-black text-[var(--text-main)]">
+                        {(() => { const h = Math.floor(createClosureDuration / 60); const m = createClosureDuration % 60; if (h === 0) return `${m}min`; if (m === 0) return `${h}h`; return `${h}h${m}`; })()}
+                      </span>
+                      <span className="text-sm text-[var(--nav-text)]">
+                        {createTime} → {(() => { const [h, m] = createTime.split(":").map(Number); const t = h * 60 + m + createClosureDuration; return `${String(Math.floor(t / 60) % 24).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`; })()}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={30}
+                      max={300}
+                      step={30}
+                      value={createClosureDuration}
+                      onChange={(e) => setCreateClosureDuration(Number(e.target.value))}
+                      className="w-full accent-[var(--gold)]"
+                    />
+                    <div className="mt-2 flex justify-between text-xs text-[var(--nav-text)]">
+                      <span>30min</span><span>1h</span><span>1h30</span><span>2h</span><span>2h30</span><span>3h</span><span>3h30</span><span>4h</span><span>4h30</span><span>5h</span>
+                    </div>
+                  </div>
+                </div>
+
+                <label className="grid gap-2 text-sm text-[var(--nav-text)]">
+                  Motif <span className="font-normal opacity-60">(optionnel)</span>
+                  <input
+                    type="text"
+                    value={createClosureReason}
+                    onChange={(e) => setCreateClosureReason(e.target.value)}
+                    placeholder="Pause déjeuner, formation, livraison..."
+                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                  />
+                </label>
+
+                {staff.filter((s) => s.is_active).length > 1 && (
+                  <label className="grid gap-2 text-sm text-[var(--nav-text)]">
+                    Concerne
+                    <select
+                      value={createStaffId}
+                      onChange={(e) => setCreateStaffId(e.target.value)}
+                      className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-4 py-3 text-[var(--text-main)] shadow-sm outline-none transition focus:border-[var(--gold)] focus:ring-4 focus:ring-[var(--gold)]/10"
+                    >
+                      <option value="">Tout le salon</option>
+                      {staff.filter((s) => s.is_active).map((s) => (
+                        <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+              </>)}
             </div>
           </div>
         </div>
