@@ -641,6 +641,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
   const [createModalMode, setCreateModalMode] = useState<"appointment" | "closure">("appointment");
   const [createClosureDuration, setCreateClosureDuration] = useState(60);
   const [createClosureReason, setCreateClosureReason] = useState("");
+  const [editingClosureId, setEditingClosureId] = useState<string | null>(null);
 
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const [savingEditAppointment, setSavingEditAppointment] = useState(false);
@@ -1221,6 +1222,23 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setCreateModalMode("appointment");
     setCreateClosureDuration(60);
     setCreateClosureReason("");
+    setEditingClosureId(null);
+    setShowCreateModal(true);
+    setStatusMessage("");
+    setCreateModalError("");
+  };
+
+  const openClosureModal = (closure: ExceptionClosure) => {
+    if (closure.is_all_day || !closure.start_time || !closure.end_time) return;
+    const startMinutes = parseTimeToMinutes(closure.start_time);
+    const endMinutes = parseTimeToMinutes(closure.end_time);
+    setCreateDate(closure.closure_date);
+    setCreateTime(closure.start_time.slice(0, 5));
+    setCreateClosureDuration(Math.max(30, endMinutes - startMinutes));
+    setCreateClosureReason(closure.reason ?? "");
+    setCreateStaffId(closure.staff_id ?? "");
+    setCreateModalMode("closure");
+    setEditingClosureId(closure.id);
     setShowCreateModal(true);
     setStatusMessage("");
     setCreateModalError("");
@@ -1230,6 +1248,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setShowCreateModal(false);
     setCreateOverlapWarning(false);
     setCreateModalError("");
+    setEditingClosureId(null);
   };
 
   const handleCreateExceptionalClosure = async () => {
@@ -1239,15 +1258,17 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       const [h, m] = createTime.split(":").map(Number);
       const endTotal = h * 60 + m + createClosureDuration;
       const endTime = `${String(Math.floor(endTotal / 60) % 24).padStart(2, "0")}:${String(endTotal % 60).padStart(2, "0")}`;
-      const { error } = await supabase.from("exception_closures").insert({
-        salon_id: salonId,
+      const payload = {
         closure_date: createDate,
         is_all_day: false,
         start_time: createTime,
         end_time: endTime,
         reason: createClosureReason.trim() || null,
         staff_id: createStaffId || null,
-      });
+      };
+      const { error } = editingClosureId
+        ? await supabase.from("exception_closures").update(payload).eq("id", editingClosureId)
+        : await supabase.from("exception_closures").insert({ salon_id: salonId, ...payload });
       if (error) throw new Error(error.message);
       if (agendaView === "week" && weekDays.length === 7) {
         await loadWeekData(weekDays[0], weekDays[6]);
@@ -1255,9 +1276,30 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
         await loadClosuresForDay(createDate);
       }
       closeCreateModal();
-      setStatusMessage("Fermeture ajoutée ✅");
+      setStatusMessage(editingClosureId ? "Fermeture modifiée ✅" : "Fermeture ajoutée ✅");
     } catch (e: unknown) {
-      setCreateModalError((e as Error).message ?? "Impossible d'ajouter la fermeture.");
+      setCreateModalError((e as Error).message ?? "Impossible d'enregistrer la fermeture.");
+    } finally {
+      setSavingCreate(false);
+    }
+  };
+
+  const handleDeleteClosureFromModal = async () => {
+    if (!editingClosureId) return;
+    try {
+      setSavingCreate(true);
+      setCreateModalError("");
+      const { error } = await supabase.from("exception_closures").delete().eq("id", editingClosureId);
+      if (error) throw new Error(error.message);
+      if (agendaView === "week" && weekDays.length === 7) {
+        await loadWeekData(weekDays[0], weekDays[6]);
+      } else {
+        await loadClosuresForDay(createDate);
+      }
+      closeCreateModal();
+      setStatusMessage("Fermeture annulée ✅");
+    } catch (e: unknown) {
+      setCreateModalError((e as Error).message ?? "Impossible d'annuler la fermeture.");
     } finally {
       setSavingCreate(false);
     }
@@ -2329,7 +2371,6 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                       const segs = getWeekDaySegments(dk);
                       const slotPx = SLOT_STEP * pxPerMinuteWeek;
                       const dayClosures = weekExceptionClosures.filter(c => c.closure_date === dk);
-                      const salonWideClosures = dayClosures.filter(c => !c.staff_id);
                       return (
                         <div
                           key={dk}
@@ -2340,7 +2381,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                           {weekHourSlots.map((slot) => {
                             if (slot === weekGlobalEnd) return null;
                             const top = (slot - weekGlobalStart) * pxPerMinuteWeek;
-                            const slotBlocked = isBlockedByExceptionalClosure(slot, slot + SLOT_STEP, salonWideClosures);
+                            const slotBlocked = isBlockedByExceptionalClosure(slot, slot + SLOT_STEP, dayClosures);
                             return (
                               <button
                                 key={slot}
@@ -2361,9 +2402,11 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                               const top = (start - weekGlobalStart) * pxPerMinuteWeek;
                               const height = Math.max((end - start) * pxPerMinuteWeek, 28);
                               return (
-                                <div
+                                <button
                                   key={closure.id}
-                                  className="pointer-events-none absolute left-0.5 right-0.5 z-20 overflow-hidden rounded-xl border border-[#efc9c9] bg-[#fff1f1]/90 px-1.5 py-1 text-[10px] text-[#a33a3a]"
+                                  type="button"
+                                  onClick={() => openClosureModal(closure)}
+                                  className="absolute left-0.5 right-0.5 z-20 overflow-hidden rounded-xl border border-[#efc9c9] bg-[#fff1f1]/90 px-1.5 py-1 text-center text-[10px] text-[#a33a3a] transition hover:z-30 hover:scale-105 hover:bg-[#ffe4e4] hover:shadow-lg"
                                   style={{ top, height }}
                                 >
                                   <div className="font-semibold leading-tight truncate">Fermeture</div>
@@ -2373,7 +2416,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                                   {height >= 52 && closure.reason && (
                                     <div className="leading-tight truncate">{closure.reason}</div>
                                   )}
-                                </div>
+                                </button>
                               );
                             })}
                           {/* Ligne heure actuelle */}
@@ -2476,7 +2519,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                         const slotEnd = slot + SLOT_STEP;
                         const top = (slot - dayStart) * PX_PER_MINUTE;
                         const isFullHour = slot % 60 === 0;
-                        const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures.filter(c => !c.staff_id))
+                        const slotBlocked = isBlockedByExceptionalClosure(slotStart, slotEnd, exceptionClosures)
                           || (staffBreakBlock !== null && selectedStaffScheduleToday?.has_break && selectedStaffScheduleToday.break_start && selectedStaffScheduleToday.break_end
                             ? slotStart < parseTimeToMinutes(selectedStaffScheduleToday.break_end.slice(0,5)) && slotEnd > parseTimeToMinutes(selectedStaffScheduleToday.break_start.slice(0,5))
                             : false);
@@ -2511,9 +2554,11 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                       )}
 
                       {closureBlocks.map((closure) => (
-                        <div
+                        <button
                           key={closure.id}
-                          className="pointer-events-none absolute left-4 right-4 rounded-[18px] border border-[#efc9c9] bg-[#fff1f1]/90 p-3 text-sm text-[#a33a3a]"
+                          type="button"
+                          onClick={() => openClosureModal(closure)}
+                          className="absolute left-4 right-4 z-20 rounded-[18px] border border-[#efc9c9] bg-[#fff1f1]/90 p-3 text-center text-sm text-[#a33a3a] transition hover:z-30 hover:scale-105 hover:bg-[#ffe4e4] hover:shadow-lg"
                           style={{
                             top: closure.top,
                             height: closure.height,
@@ -2526,7 +2571,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                               : "Créneau fermé"}
                           </div>
                           {closure.reason ? <div>{closure.reason}</div> : null}
-                        </div>
+                        </button>
                       ))}
 
                       {visualAppointmentSegments.map((segment) => renderAgendaCard(segment))}
@@ -2606,9 +2651,11 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   })}
 
                   {closureBlocks.map((closure) => (
-                    <div
+                    <button
                       key={closure.id}
-                      className="pointer-events-none absolute left-4 right-4 rounded-[18px] border border-[#efc9c9] bg-[#fff1f1]/90 p-3 text-sm text-[#a33a3a]"
+                      type="button"
+                      onClick={() => openClosureModal(closure)}
+                      className="absolute left-4 right-4 z-20 rounded-[18px] border border-[#efc9c9] bg-[#fff1f1]/90 p-3 text-center text-sm text-[#a33a3a] transition hover:z-30 hover:scale-105 hover:bg-[#ffe4e4] hover:shadow-lg"
                       style={{
                         top: closure.top,
                         height: closure.height,
@@ -2621,7 +2668,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                           : "Créneau fermé"}
                       </div>
                       {closure.reason ? <div>{closure.reason}</div> : null}
-                    </div>
+                    </button>
                   ))}
 
                   {visualAppointmentSegments.map((segment) => renderAgendaCard(segment))}
@@ -2650,28 +2697,30 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
               <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--gold)]">
-                    Ajout manuel
+                    {editingClosureId ? "Modifier" : "Ajout manuel"}
                   </div>
                   <h2 className="text-4xl">{createModalMode === "closure" ? "Fermeture exceptionnelle" : "Nouveau rendez-vous"}</h2>
                   <p className="mt-3 text-[var(--nav-text)]">
                     {formatFrenchDate(createDate)} • {createTime}
                   </p>
-                  <div className="mt-4 flex rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] p-1 w-fit">
-                    <button
-                      type="button"
-                      onClick={() => setCreateModalMode("appointment")}
-                      className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${createModalMode === "appointment" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
-                    >
-                      Nouveau rendez-vous
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCreateModalMode("closure")}
-                      className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${createModalMode === "closure" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
-                    >
-                      Fermeture exceptionnelle
-                    </button>
-                  </div>
+                  {!editingClosureId && (
+                    <div className="mt-4 flex rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] p-1 w-fit">
+                      <button
+                        type="button"
+                        onClick={() => setCreateModalMode("appointment")}
+                        className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${createModalMode === "appointment" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
+                      >
+                        Nouveau rendez-vous
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreateModalMode("closure")}
+                        className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${createModalMode === "closure" ? "bg-[var(--selected-bg)] text-[var(--selected-text)] shadow-sm" : "text-[var(--nav-text)] hover:bg-[var(--page-bg)]"}`}
+                      >
+                        Fermeture exceptionnelle
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3">
@@ -2682,6 +2731,16 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   >
                     Fermer
                   </button>
+                  {editingClosureId && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteClosureFromModal}
+                      disabled={savingCreate}
+                      className="rounded-2xl border border-[#efc9c9] bg-[#fff5f5] px-5 py-3 font-semibold text-[#a33a3a] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#ffeaea] disabled:opacity-50"
+                    >
+                      Annuler la fermeture
+                    </button>
+                  )}
                   {createModalMode === "appointment" ? (
                     <button
                       type="button"
@@ -2698,7 +2757,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                       disabled={savingCreate}
                       className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
                     >
-                      {savingCreate ? "Enregistrement..." : "Ajouter la fermeture"}
+                      {savingCreate ? "Enregistrement..." : editingClosureId ? "Enregistrer les modifications" : "Ajouter la fermeture"}
                     </button>
                   )}
                 </div>
