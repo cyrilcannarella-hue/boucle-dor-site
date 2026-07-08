@@ -1015,7 +1015,22 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setDeletingServiceId(id);
       setStatusMessage("");
       const { error } = await supabase.from("services").delete().eq("id", id).eq("salon_id", salonId);
-      if (error) throw new Error((error as Error).message);
+      if (error) {
+        // Prestation déjà utilisée dans des rendez-vous existants (contrainte de clé étrangère) :
+        // suppression impossible sans casser l'historique, on la masque à la place.
+        if (error.code === "23503") {
+          const { error: hideError } = await supabase
+            .from("services")
+            .update({ is_visible: false })
+            .eq("id", id)
+            .eq("salon_id", salonId);
+          if (hideError) throw new Error(hideError.message);
+          setServices((prev) => prev.map((service) => (service.id === id ? { ...service, is_visible: false } : service)));
+          setStatusMessage("Cette prestation a déjà des rendez-vous liés, elle ne peut pas être supprimée définitivement — elle a été masquée à la place (invisible en réservation, conservée dans l'historique).");
+          return;
+        }
+        throw new Error(error.message);
+      }
       setServices((prev) => prev.filter((service) => service.id !== id));
       setStatusMessage("Prestation supprimée ✅");
     } catch (error: unknown) {
