@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
@@ -329,6 +330,10 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
 
       <footer className="border-t py-8 text-center text-sm" style={{ borderColor: colorCardBorder, color: colorTextSecondary }}>
         © {new Date().getFullYear()} {salonName}
+        {" · "}
+        <Link href="/politique-de-confidentialite" className="hover:underline">
+          Politique de confidentialité
+        </Link>
       </footer>
     </main>
   );

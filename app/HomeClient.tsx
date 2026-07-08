@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
@@ -914,6 +915,10 @@ useEffect(() => {
         <div className="mx-auto w-[min(1200px,calc(100%-32px))] pt-5 pb-20 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:pb-5">
           <p className="text-xs text-[var(--footer-text)]">
             © {new Date().getFullYear()} {salonName}{salonAddress ? ` — ${salonAddress}` : ""}
+            {" · "}
+            <Link href="/politique-de-confidentialite" className="hover:text-[var(--gold)]">
+              Politique de confidentialité
+            </Link>
           </p>
           {instagramUrl && (
             <a

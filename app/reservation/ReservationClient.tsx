@@ -1296,6 +1296,13 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
                 </div>
               ) : null}
 
+              <p className="text-xs text-[var(--text-secondary)]">
+                Vos informations sont utilisées uniquement pour la gestion de votre rendez-vous.{" "}
+                <Link href="/politique-de-confidentialite" className="underline hover:text-[var(--gold)]">
+                  En savoir plus
+                </Link>
+              </p>
+
               <div className="mt-2 flex flex-col gap-4 rounded-[24px] border border-[var(--card-border)] bg-gradient-to-br from-[var(--page-bg)] to-[var(--page-bg)] p-5 shadow-[0_16px_36px_rgba(185,139,61,0.10)] md:flex-row md:items-center md:justify-between">
                 <div>
                   <strong>Rendez-vous prêt à être confirmé</strong>
