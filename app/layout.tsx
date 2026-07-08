@@ -19,6 +19,13 @@ const geistMono = Geist_Mono({
   display: "optional",
 });
 
+// Codes de vérification Google Search Console, un par salon — jamais partagés
+// entre salons (chaque propriétaire garde le contrôle de sa propre indexation).
+const GOOGLE_SITE_VERIFICATION: Record<string, string> = {
+  "boucle-dor": "kyMq4XmmiwcfVGrnFezDzlsdWuL9DH0Z_GSwYHoIdOU",
+  "sagessedautrefoi": "RgbIyo06EZMXplccI5nrS5fimu8qwDtoqA5aDMSyOac",
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   let salonName = "Votre salon";
   let iconUrl: string | null = null;
@@ -67,8 +74,8 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: "/",
     },
-    verification: salonSlug === "boucle-dor" ? {
-      google: "kyMq4XmmiwcfVGrnFezDzlsdWuL9DH0Z_GSwYHoIdOU",
+    verification: salonSlug && GOOGLE_SITE_VERIFICATION[salonSlug] ? {
+      google: GOOGLE_SITE_VERIFICATION[salonSlug],
     } : undefined,
     openGraph: {
       title: titleDefault,
