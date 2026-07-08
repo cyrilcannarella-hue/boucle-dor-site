@@ -757,7 +757,15 @@ useEffect(() => {
           <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}>
             À propos
           </div>
-          <h2 className="text-4xl" style={{ color: colorTextMain }}>{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
+          <h2 className="text-4xl" style={{ color: colorTextMain }}>
+            {salonName}
+            {aproposTitle && (
+              <>
+                <br />
+                {aproposTitle}
+              </>
+            )}
+          </h2>
           {aproposText && <p className="mt-4 whitespace-pre-line" style={{ color: colorTextSecondary }}>{aproposText}</p>}
         </motion.div>
 
