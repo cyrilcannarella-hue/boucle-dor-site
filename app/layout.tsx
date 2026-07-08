@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@supabase/supabase-js";
 import { getCurrentSalon } from "@/lib/salon";
+import { getBaseUrl } from "@/lib/site-url";
+import { cityFromAddress } from "@/lib/address";
 import { SalonProvider } from "@/components/SalonProvider";
 import "./globals.css";
 
@@ -20,6 +22,11 @@ const geistMono = Geist_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   let salonName = "Votre salon";
   let iconUrl: string | null = null;
+  let description = "Réservation en ligne";
+  let imageUrl: string | null = null;
+  let city: string | null = null;
+  const baseUrl = await getBaseUrl();
+
   try {
     const salon = await getCurrentSalon();
     const supabase = createClient(
@@ -28,16 +35,45 @@ export async function generateMetadata(): Promise<Metadata> {
     );
     const { data } = await supabase
       .from("salon_settings")
-      .select("salon_name, logo_image_url")
+      .select("salon_name, logo_image_url, salon_subtitle, hero_tagline, apropos_text, hero_image_url, address")
       .eq("salon_id", salon.id)
       .single();
     if (data?.salon_name) salonName = data.salon_name;
     if (data?.logo_image_url) iconUrl = data.logo_image_url;
+    city = cityFromAddress(data?.address);
+    const desc = data?.salon_subtitle || data?.hero_tagline || data?.apropos_text;
+    if (desc) description = desc.slice(0, 140);
+    else if (salonName !== "Votre salon") description = `Réservation en ligne — ${salonName}`;
+    imageUrl = data?.hero_image_url || data?.logo_image_url || null;
   } catch {}
 
+  // Complète la description avec la ville si elle n'y figure pas déjà — sans écraser
+  // le vrai texte saisi par le salon (sous-titre/tagline/à propos), juste enrichi.
+  if (city && !description.toLowerCase().includes(city.toLowerCase())) {
+    description = `${description} à ${city}`;
+  }
+
+  const titleDefault = city ? `${salonName} — Coiffeur à ${city}` : salonName;
+
   return {
-    title: salonName,
-    description: `Réservation en ligne — ${salonName}`,
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: titleDefault,
+      template: `%s | ${salonName}`,
+    },
+    description,
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      title: titleDefault,
+      description,
+      url: "/",
+      siteName: salonName,
+      locale: "fr_FR",
+      type: "website",
+      images: imageUrl ? [{ url: imageUrl }] : [],
+    },
     icons: iconUrl ? {
       icon: [{ url: iconUrl, type: "image/png" }],
       apple: [{ url: iconUrl, type: "image/png" }],

@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
+import { cityFromAddress } from "@/lib/address";
 
 export type SalonSettings = {
   id: string;
   salon_name: string;
+  address?: string | null;
   salon_subtitle?: string | null;
   logo_image_url?: string | null;
   color_accents?: string | null;
@@ -98,9 +100,11 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
   const colorNavText = settings.color_nav_text || "#111827";
   const colorSubtitles = settings.color_subtitles || colorTextSecondary;
   const salonName = settings.salon_name || "Votre salon";
+  const city = cityFromAddress(settings.address);
   const logoUrl = settings.logo_image_url || null;
   const gallery = settings.site_gallery;
   const photos = (gallery?.photos ?? []).filter((p) => p.url);
+  const galleryTitle = gallery?.title || `${salonName} — Nos réalisations${city ? ` à ${city}` : ""}`;
 
   const cssVars = `
     :root {
@@ -216,18 +220,16 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
               Galerie
             </span>
 
-            {gallery.title && (
-              <h1 className="relative z-10 mb-4 text-3xl font-black tracking-tight md:text-4xl">
-                <motion.span
-                  className="inline-block [backface-visibility:hidden]"
-                  style={{ color: colorTextMain }}
-                  animate={{ scale: [1, 1.04, 1] }}
-                  transition={{ duration: 3.2, ease: "easeInOut", repeat: Infinity }}
-                >
-                  {gallery.title}
-                </motion.span>
-              </h1>
-            )}
+            <h1 className="relative z-10 mb-4 text-3xl font-black tracking-tight md:text-4xl">
+              <motion.span
+                className="inline-block [backface-visibility:hidden]"
+                style={{ color: colorTextMain }}
+                animate={{ scale: [1, 1.04, 1] }}
+                transition={{ duration: 3.2, ease: "easeInOut", repeat: Infinity }}
+              >
+                {galleryTitle}
+              </motion.span>
+            </h1>
             {gallery.text && (
               <p className="relative z-10 max-w-2xl text-base font-medium leading-relaxed">
                 <span className="invisible">{gallery.text}</span>

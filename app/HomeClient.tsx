@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
+import { cityFromAddress } from "@/lib/address";
 
 export type SalonSettings = {
   id: string;
@@ -249,8 +250,9 @@ useEffect(() => {
   const salonAddress = settings?.address || null;
   const openingTime = settings?.opening_time?.slice(0, 5) || null;
   const closingTime = settings?.closing_time?.slice(0, 5) || null;
+  const city = useMemo(() => cityFromAddress(salonAddress), [salonAddress]);
 
-  const salonSubtitle = settings?.salon_subtitle || "";
+  const salonSubtitle = settings?.salon_subtitle || (city ? `Salon de coiffure à ${city}` : "");
   const heroTagline = settings?.hero_tagline || "";
   const heroDescription = settings?.hero_description || "";
   const heroFeatures = settings?.hero_features?.length ? settings.hero_features : [];

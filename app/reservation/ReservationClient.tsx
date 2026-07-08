@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSalon } from "@/hooks/useSalon";
 import { SiteFont } from "@/components/SiteFont";
 import { SitePattern, getPatternBgLayer } from "@/components/SitePattern";
+import { cityFromAddress } from "@/lib/address";
 import {
   formatTime,
   getExceptionalOpening,
@@ -51,6 +52,7 @@ type Slot = {
 export type SalonSettings = {
   id: string;
   salon_name: string;
+  address?: string | null;
   opening_time: string;
   closing_time: string;
   is_open_monday: boolean;
@@ -768,6 +770,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
   const colorNavText = settings?.color_nav_text || "#111827";
   const logoUrl = settings?.logo_image_url || null;
   const salonName = (settings?.salon_name || "Votre salon").replace(/['‘’‛]/g, "'");
+  const city = cityFromAddress(settings?.address);
 
   return (
     <main
@@ -810,11 +813,11 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
               </div>
             )}
             <span>
-              <span className="block text-2xl leading-none tracking-tight sm:text-3xl">
+              <h1 className="m-0 block text-2xl leading-none tracking-tight sm:text-3xl">
                 <SalonNameGradient name={salonName} goldColor={colorSalonName} />
-              </span>
+              </h1>
               <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--text-secondary)]">
-                Réservation en ligne
+                Réservation en ligne{city ? ` à ${city}` : ""}
               </span>
             </span>
           </Link>
