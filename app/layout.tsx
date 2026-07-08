@@ -25,10 +25,12 @@ export async function generateMetadata(): Promise<Metadata> {
   let description = "Réservation en ligne";
   let imageUrl: string | null = null;
   let city: string | null = null;
+  let salonSlug: string | null = null;
   const baseUrl = await getBaseUrl();
 
   try {
     const salon = await getCurrentSalon();
+    salonSlug = salon.slug;
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
@@ -65,6 +67,9 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: "/",
     },
+    verification: salonSlug === "boucle-dor" ? {
+      google: "kyMq4XmmiwcfVGrnFezDzlsdWuL9DH0Z_GSwYHoIdOU",
+    } : undefined,
     openGraph: {
       title: titleDefault,
       description,
