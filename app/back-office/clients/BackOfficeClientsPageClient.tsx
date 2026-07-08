@@ -16,6 +16,7 @@ type ClientRow = {
   phone: string | null;
   email: string | null;
   notes: string | null;
+  sms_marketing_consent: boolean;
 };
 
 type AppointmentAnswer = {
@@ -160,6 +161,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editSmsConsent, setEditSmsConsent] = useState(false);
 
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState("");
@@ -178,7 +180,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
 
       const { data, error } = await supabase
         .from("clients")
-        .select("id, first_name, last_name, phone, email, notes")
+        .select("id, first_name, last_name, phone, email, notes, sms_marketing_consent")
         .eq("salon_id", salonId)
         .order("last_name", { ascending: true })
         .order("first_name", { ascending: true })
@@ -314,6 +316,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
           phone: cleanPhone,
           email: editEmail.trim() || null,
           notes: editNotes.trim() || null,
+          sms_marketing_consent: editSmsConsent,
         })
         .eq("id", selectedClient.id)
         .eq("salon_id", salonId);
@@ -327,6 +330,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
         phone: cleanPhone,
         email: editEmail.trim() || null,
         notes: editNotes.trim() || null,
+        sms_marketing_consent: editSmsConsent,
       };
 
       setSelectedClient(updatedClient);
@@ -760,6 +764,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
                         setEditPhone(selectedClient.phone ?? "");
                         setEditEmail(selectedClient.email ?? "");
                         setEditNotes(selectedClient.notes ?? "");
+                        setEditSmsConsent(selectedClient.sms_marketing_consent ?? false);
                       }}
                       className="rounded-2xl border border-[var(--card-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--nav-text)] transition hover:bg-white/70"
                     >
@@ -843,12 +848,22 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
                       Notes
                       <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="min-h-[120px] rounded-2xl border border-[var(--card-border)] bg-white px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--gold)]" />
                     </label>
+
+                    <label className="mt-4 flex items-center gap-2 text-sm font-medium text-[var(--nav-text)]">
+                      <input
+                        type="checkbox"
+                        checked={editSmsConsent}
+                        onChange={(e) => setEditSmsConsent(e.target.checked)}
+                        className="h-4 w-4 accent-[var(--gold)]"
+                      />
+                      A accepté de recevoir des SMS marketing (offres, actualités)
+                    </label>
                   </div>
                 ) : null}
 
                 <div className="rounded-[28px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-5 shadow-sm">
                   <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)]">Coordonnées</div>
-                  <div className="mt-3 grid grid-cols-3 gap-3 md:mt-4">
+                  <div className="mt-3 grid grid-cols-2 gap-3 md:mt-4 md:grid-cols-4">
                     <div className="rounded-2xl bg-white p-3 md:p-4">
                       <div className="text-xs text-[var(--nav-text)]">Téléphone</div>
                       <a href={`tel:${selectedClient.phone}`} className="mt-1 block font-semibold text-sm underline decoration-[var(--gold)] underline-offset-4 md:text-base">
@@ -862,6 +877,12 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
                     <div className="rounded-2xl bg-white p-3 md:p-4">
                       <div className="text-xs text-[var(--nav-text)]">Rendez-vous</div>
                       <div className="mt-1 font-semibold">{selectedClientAppointments.length}</div>
+                    </div>
+                    <div className="rounded-2xl bg-white p-3 md:p-4">
+                      <div className="text-xs text-[var(--nav-text)]">SMS marketing</div>
+                      <div className={`mt-1 font-semibold ${selectedClient.sms_marketing_consent ? "text-[#1f6a3a]" : "text-[var(--nav-text)]"}`}>
+                        {selectedClient.sms_marketing_consent ? "Accepté" : "Non accepté"}
+                      </div>
                     </div>
                   </div>
                   {selectedClient.notes ? (

@@ -2778,7 +2778,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                           Campagne SMS
                         </div>
                         <p className="text-sm text-[var(--nav-text)] opacity-70">
-                          Envoyez un message à tous vos clients ayant un numéro de téléphone.
+                          Envoyez un message aux clients ayant accepté de recevoir des SMS du salon (case cochée à la réservation, ou activée manuellement sur leur fiche).
                         </p>
                       </div>
 
@@ -2830,7 +2830,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                           </button>
                           {campaignClientCount !== null && (
                             <span className="text-sm text-[var(--nav-text)] opacity-70">
-                              {campaignClientCount} client{campaignClientCount > 1 ? "s" : ""} avec un numéro
+                              {campaignClientCount} client{campaignClientCount > 1 ? "s" : ""} ayant consenti au SMS marketing
                             </span>
                           )}
                         </div>

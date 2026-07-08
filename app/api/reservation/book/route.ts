@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
   const startTime = String(body.startTime ?? "");
   const staffId = body.staffId ? String(body.staffId) : null;
   const answers: AnswerInput[] = Array.isArray(body.answers) ? body.answers : [];
+  const smsMarketingConsent = body.smsMarketingConsent === true;
 
   if (
     phone.length !== 10 ||
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
 
   const { data: existingClient, error: existingClientError } = await supabase
     .from("clients")
-    .select("id")
+    .select("id, sms_marketing_consent")
     .eq("salon_id", salon.id)
     .eq("phone", phone)
     .maybeSingle();
@@ -88,9 +89,16 @@ export async function POST(req: NextRequest) {
 
   if (existingClient?.id) {
     clientId = existingClient.id;
+    const updatePayload: Record<string, unknown> = { first_name: firstName, last_name: lastName, email: email || null, notes: message || null };
+    // Le consentement ne se retire jamais via ce formulaire (case décochée = pas d'action),
+    // seulement accordé — une révocation doit passer par une action explicite du client.
+    if (smsMarketingConsent && !existingClient.sms_marketing_consent) {
+      updatePayload.sms_marketing_consent = true;
+      updatePayload.sms_marketing_consent_at = new Date().toISOString();
+    }
     const { error: updateError } = await supabase
       .from("clients")
-      .update({ first_name: firstName, last_name: lastName, email: email || null, notes: message || null })
+      .update(updatePayload)
       .eq("id", clientId)
       .eq("salon_id", salon.id);
 
@@ -100,7 +108,16 @@ export async function POST(req: NextRequest) {
   } else {
     const { data: insertedClient, error: insertError } = await supabase
       .from("clients")
-      .insert({ salon_id: salon.id, first_name: firstName, last_name: lastName, phone, email: email || null, notes: message || null })
+      .insert({
+        salon_id: salon.id,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        email: email || null,
+        notes: message || null,
+        sms_marketing_consent: smsMarketingConsent,
+        sms_marketing_consent_at: smsMarketingConsent ? new Date().toISOString() : null,
+      })
       .select("id")
       .single();
 

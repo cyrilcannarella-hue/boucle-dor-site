@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     .from("clients")
     .select("id, first_name, phone")
     .eq("salon_id", salon.id)
+    .eq("sms_marketing_consent", true)
     .not("phone", "is", null)
     .neq("phone", "");
 

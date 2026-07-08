@@ -239,6 +239,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
   const [email, setEmail] = useState("");
   const [isKnownClient, setIsKnownClient] = useState(false);
   const [message, setMessage] = useState("");
+  const [smsMarketingConsent, setSmsMarketingConsent] = useState(false);
 
   const [status, setStatus] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -691,6 +692,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
           breakEndTime,
           staffId: assignedStaffId,
           answers: answersPayload,
+          smsMarketingConsent,
         }),
       });
       const bookJson = await bookRes.json();
@@ -753,6 +755,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
     setSelectedStaffId(staff.length === 1 ? staff[0].id : "");
     setMessage("");
     setAnswers({});
+    setSmsMarketingConsent(false);
     scrollToSection(serviceSectionRef);
   };
 
@@ -1302,6 +1305,16 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
                   En savoir plus
                 </Link>
               </p>
+
+              <label className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+                <input
+                  type="checkbox"
+                  checked={smsMarketingConsent}
+                  onChange={(e) => setSmsMarketingConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--gold)]"
+                />
+                J&apos;accepte de recevoir par SMS les offres et actualités du salon (facultatif, sans rapport avec les SMS de confirmation/rappel de rendez-vous).
+              </label>
 
               <div className="mt-2 flex flex-col gap-4 rounded-[24px] border border-[var(--card-border)] bg-gradient-to-br from-[var(--page-bg)] to-[var(--page-bg)] p-5 shadow-[0_16px_36px_rgba(185,139,61,0.10)] md:flex-row md:items-center md:justify-between">
                 <div>
