@@ -232,7 +232,7 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
               </motion.span>
             </h1>
             {gallery.text && (
-              <p className="relative z-10 max-w-2xl text-base font-medium leading-relaxed">
+              <p className="relative z-10 max-w-2xl whitespace-pre-line text-base font-medium leading-relaxed">
                 <span className="invisible">{gallery.text}</span>
                 <span
                   className="absolute inset-0 [backface-visibility:hidden]"

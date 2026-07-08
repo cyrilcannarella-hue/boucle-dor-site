@@ -618,7 +618,7 @@ useEffect(() => {
             )}
           </motion.h1>
           {heroDescription && (
-            <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl text-lg" style={{ color: `${colorHeroText}bf` }}>
+            <motion.p variants={fadeUp} className="relative z-10 mt-6 max-w-xl whitespace-pre-line text-lg" style={{ color: `${colorHeroText}bf` }}>
               <span className="invisible">{heroDescription}</span>
               <span className="absolute inset-0">
                 {typedDesc}
@@ -758,7 +758,7 @@ useEffect(() => {
             À propos
           </div>
           <h2 className="text-4xl" style={{ color: colorTextMain }}>{aproposTitle ? `${salonName}, ${aproposTitle}` : salonName}</h2>
-          {aproposText && <p className="mt-4" style={{ color: colorTextSecondary }}>{aproposText}</p>}
+          {aproposText && <p className="mt-4 whitespace-pre-line" style={{ color: colorTextSecondary }}>{aproposText}</p>}
         </motion.div>
 
         {aproposImageUrl && (
@@ -797,7 +797,7 @@ useEffect(() => {
                 className="flex w-80 shrink-0 flex-col rounded-[24px] border border-[var(--card-border)] p-6 shadow-sm"
                 style={{ backgroundColor: colorAvisBg }}
               >
-                <p style={{ color: colorTextSecondary }}>
+                <p className="whitespace-pre-line" style={{ color: colorTextSecondary }}>
                   <span style={{ color: colorBadge }}>"</span>{review.text}<span style={{ color: colorBadge }}>"</span>
                 </p>
                 <div className="mt-auto pt-5 font-semibold" style={{ color: colorAvisName }}>{review.name}</div>
