@@ -76,6 +76,7 @@ type ClientAppointmentHistory = {
   price_cents: number;
   client_message: string | null;
   internal_note?: string | null;
+  service_name?: string | null;
   services: {
     name: string;
     categories: {
@@ -1010,29 +1011,53 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
     }
   };
 
+  const hideService = async (id: string) => {
+    const { error: hideError } = await supabase
+      .from("services")
+      .update({ is_visible: false })
+      .eq("id", id)
+      .eq("salon_id", salonId);
+    if (hideError) throw new Error(hideError.message);
+    setServices((prev) => prev.map((service) => (service.id === id ? { ...service, is_visible: false } : service)));
+  };
+
   const handleDeleteService = async (id: string) => {
     try {
       setDeletingServiceId(id);
       setStatusMessage("");
+
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+      // Un rendez-vous à venir référençant cette prestation bloque la suppression définitive
+      // (le client a réservé cette prestation précise) — on masque à la place.
+      const { count: upcomingCount } = await supabase
+        .from("appointments")
+        .select("id", { count: "exact", head: true })
+        .eq("service_id", id)
+        .eq("salon_id", salonId)
+        .eq("status", "confirmed")
+        .gte("appointment_date", todayKey);
+
+      if (upcomingCount && upcomingCount > 0) {
+        await hideService(id);
+        setStatusMessage("Cette prestation a des rendez-vous à venir, elle ne peut pas être supprimée définitivement — elle a été masquée à la place (invisible en réservation).");
+        return;
+      }
+
+      // Aucun rendez-vous à venir : suppression définitive. Les rendez-vous passés qui y
+      // font encore référence gardent leur nom figé (service_name) même après suppression.
       const { error } = await supabase.from("services").delete().eq("id", id).eq("salon_id", salonId);
       if (error) {
-        // Prestation déjà utilisée dans des rendez-vous existants (contrainte de clé étrangère) :
-        // suppression impossible sans casser l'historique, on la masque à la place.
         if (error.code === "23503") {
-          const { error: hideError } = await supabase
-            .from("services")
-            .update({ is_visible: false })
-            .eq("id", id)
-            .eq("salon_id", salonId);
-          if (hideError) throw new Error(hideError.message);
-          setServices((prev) => prev.map((service) => (service.id === id ? { ...service, is_visible: false } : service)));
+          await hideService(id);
           setStatusMessage("Cette prestation a déjà des rendez-vous liés, elle ne peut pas être supprimée définitivement — elle a été masquée à la place (invisible en réservation, conservée dans l'historique).");
           return;
         }
         throw new Error(error.message);
       }
       setServices((prev) => prev.filter((service) => service.id !== id));
-      setStatusMessage("Prestation supprimée ✅");
+      setStatusMessage("Prestation supprimée définitivement ✅");
     } catch (error: unknown) {
       setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible de supprimer la prestation."}`);
     } finally {
@@ -1216,6 +1241,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
           price_cents,
           client_message,
           internal_note,
+          service_name,
           services (
             name,
             categories (

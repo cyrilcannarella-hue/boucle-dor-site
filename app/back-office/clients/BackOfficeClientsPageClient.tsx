@@ -32,6 +32,7 @@ type ClientAppointmentHistory = {
   price_cents: number;
   client_message: string | null;
   internal_note?: string | null;
+  service_name?: string | null;
   services: {
     name: string;
     categories: {
@@ -229,6 +230,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
           price_cents,
           client_message,
           internal_note,
+          service_name,
           services (
             name,
             categories (
@@ -925,7 +927,7 @@ export function BackOfficeClientsPageClient({ initialSettings }: { initialSettin
                         <article key={appointment.id} className="rounded-[24px] border border-[var(--card-border)] bg-white p-4 transition hover:border-[var(--gold)]">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                              <h4 className="text-lg font-semibold">{appointment.services?.name ?? "Prestation"}</h4>
+                              <h4 className="text-lg font-semibold">{appointment.services?.name ?? appointment.service_name ?? "Prestation"}</h4>
                               <p className="mt-1 text-sm text-[var(--nav-text)]">{appointment.services?.categories?.name ?? "Sans catégorie"}</p>
                             </div>
                             <span className={`rounded-full border px-3 py-1.5 text-xs font-bold ${getBadgeClasses(appointment.status)}`}>

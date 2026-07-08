@@ -17,6 +17,7 @@ type AppointmentRow = {
   client_message: string | null;
   staff_id?: string | null;
   staff?: { first_name: string; last_name: string } | null;
+  service_name?: string | null;
   services: {
     id: string;
     name: string;
@@ -387,7 +388,7 @@ export function EspaceClientPageClient({ initialSettings }: { initialSettings: S
                   <div className="mb-4 grid gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-between">
                     <div>
                       <h3 className="text-xl leading-tight sm:text-2xl">
-                        {appointment.services?.name ?? "Prestation"}
+                        {appointment.services?.name ?? appointment.service_name ?? "Prestation"}
                       </h3>
                       <p className="mt-1 text-[var(--text-secondary)]">
                         {appointment.services?.categories?.name ??

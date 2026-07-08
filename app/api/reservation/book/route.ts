@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   const { data: serviceRow, error: serviceError } = await supabase
     .from("services")
-    .select("duration_minutes, duration_before_break, break_duration, duration_after_break, price_cents")
+    .select("name, duration_minutes, duration_before_break, break_duration, duration_after_break, price_cents")
     .eq("id", serviceId)
     .eq("salon_id", salon.id)
     .maybeSingle();
@@ -130,6 +130,7 @@ export async function POST(req: NextRequest) {
       salon_id: salon.id,
       client_id: clientId,
       service_id: serviceId,
+      service_name: serviceRow.name,
       appointment_date: appointmentDate,
       start_time: startTimePg,
       end_time: endTimePg,

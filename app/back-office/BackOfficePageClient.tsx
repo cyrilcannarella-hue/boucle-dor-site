@@ -37,6 +37,7 @@ type AppointmentRow = {
   internal_note: string | null;
   client_id?: string | null;
   service_id?: string | null;
+  service_name?: string | null;
   staff_id?: string | null;
   services: {
     id: string;
@@ -95,6 +96,7 @@ type ClientAppointmentHistory = {
   end_time: string;
   status: "confirmed" | "cancelled" | "completed";
   price_cents: number;
+  service_name?: string | null;
   services: {
     name: string;
     categories: {
@@ -727,6 +729,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
         internal_note,
         client_id,
         service_id,
+        service_name,
         staff_id,
         services (
           id,
@@ -792,7 +795,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setLoadingWeek(true);
     const { data } = await supabase
       .from("appointments")
-      .select(`id, appointment_date, start_time, end_time, break_start_time, break_end_time, status, source, price_cents, client_message, internal_note, client_id, service_id, staff_id,
+      .select(`id, appointment_date, start_time, end_time, break_start_time, break_end_time, status, source, price_cents, client_message, internal_note, client_id, service_id, service_name, staff_id,
         services(id, name, duration_minutes, duration_before_break, break_duration, duration_after_break, price_cents, category_id, categories(id, name, color)),
         clients(id, first_name, last_name, phone, email, notes)`)
       .eq("salon_id", salonId)
@@ -1321,6 +1324,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
         end_time,
         status,
         price_cents,
+        service_name,
         services (
           name,
           categories (
@@ -1576,6 +1580,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
         salon_id: salonId,
         client_id: clientId,
         service_id: selectedCreateService.id,
+        service_name: selectedCreateService.name,
         appointment_date: createDate,
         start_time: startTime,
         end_time: endTime,
@@ -1713,6 +1718,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
           break_start_time: breakStartTime,
           break_end_time: breakEndTime,
           service_id: selectedEditService.id,
+          service_name: selectedEditService.name,
           client_message: editAppointmentMessage.trim() || null,
           internal_note: editAppointmentInternalNote.trim() || null,
           price_cents: selectedEditService.price_cents,
@@ -1973,7 +1979,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
               isSmall ? "text-[11px] md:text-[16px]" : isLarge ? "text-[14px] md:text-[24px]" : "text-[12px] md:text-[20px]"
             }`}
           >
-            {segment.appointment.services?.name ?? "Prestation"}
+            {segment.appointment.services?.name ?? segment.appointment.service_name ?? "Prestation"}
           </h3>
 
           <button
@@ -2455,7 +2461,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                                   {seg.label.split(" → ")[0]}<span className="font-normal text-[var(--text-main)]"> · {clientName}</span>
                                 </div>
                                 {(seg.height >= 42 || hoveredWeekSegId === seg.id) && (
-                                  <div className={`break-words leading-tight text-[var(--nav-text)] ${hoveredWeekSegId === seg.id ? "text-[12px] font-bold" : ""}`}>{seg.appointment.services?.name}</div>
+                                  <div className={`break-words leading-tight text-[var(--nav-text)] ${hoveredWeekSegId === seg.id ? "text-[12px] font-bold" : ""}`}>{seg.appointment.services?.name ?? seg.appointment.service_name}</div>
                                 )}
                               </button>
                             );
@@ -3206,7 +3212,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h2 className="text-4xl">
-                        {selectedAppointment.services?.name ?? "Prestation"}
+                        {selectedAppointment.services?.name ?? selectedAppointment.service_name ?? "Prestation"}
                       </h2>
                       <p className="mt-2 text-[var(--nav-text)]">
                         {formatFrenchDate(selectedAppointment.appointment_date)} •{" "}
@@ -3545,7 +3551,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                           <article key={appointment.id} className="rounded-[20px] border border-[var(--card-border)] bg-white p-4">
                             <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                               <div>
-                                <h3 className="text-xl">{appointment.services?.name ?? "Prestation"}</h3>
+                                <h3 className="text-xl">{appointment.services?.name ?? appointment.service_name ?? "Prestation"}</h3>
                                 <p className="mt-1 text-sm text-[var(--nav-text)]">{appointment.services?.categories?.name ?? "Sans catégorie"}</p>
                               </div>
                               <span className={`rounded-full border px-3 py-2 text-sm font-semibold ${getBadgeClasses(appointment.status)}`}>

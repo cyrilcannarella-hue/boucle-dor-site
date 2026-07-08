@@ -22,10 +22,10 @@ const SEED_CLIENT_PHONES = [
 // Ces IDs ne changent jamais (jamais supprimés par le cron).
 const DEMO_STAFF_CAMILLE = "d0fce9db-bd3c-4da3-8329-7c7961fbb7e6";
 const DEMO_STAFF_LEA     = "9aa8501f-8eec-431d-80ad-3208b6322547";
-const DEMO_SVC_COUPE_F   = { id: "26156f57-cbe3-4e36-8571-bd73b5fd5495", duration: 45, price: 4500 };
-const DEMO_SVC_COUPE_H   = { id: "acc1d28e-5318-42f2-b961-8747730476a7", duration: 30, price: 3000 };
-const DEMO_SVC_COLORATION= { id: "6a25308a-41e9-4e18-936a-2e961c3665cc", duration: 90, price: 7500 };
-const DEMO_SVC_BRUSHING  = { id: "7ee87204-4d0d-4864-b4b7-ecd19f1d4b63", duration: 30, price: 2500 };
+const DEMO_SVC_COUPE_F   = { id: "26156f57-cbe3-4e36-8571-bd73b5fd5495", name: "Coupe Femme", duration: 45, price: 4500 };
+const DEMO_SVC_COUPE_H   = { id: "acc1d28e-5318-42f2-b961-8747730476a7", name: "Coupe Homme", duration: 30, price: 3000 };
+const DEMO_SVC_COLORATION= { id: "6a25308a-41e9-4e18-936a-2e961c3665cc", name: "Coloration", duration: 90, price: 7500 };
+const DEMO_SVC_BRUSHING  = { id: "7ee87204-4d0d-4864-b4b7-ecd19f1d4b63", name: "Brushing", duration: 30, price: 2500 };
 
 // Téléphones des clients utilisés pour les notifications web permanentes.
 // Leurs IDs sont stables (jamais supprimés par le cron).
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
 
   const [{ data: clients }, { data: services }, { data: staff }, { data: notifClients }] = await Promise.all([
     supabase.from("clients").select("id").eq("salon_id", salon.id),
-    supabase.from("services").select("id, price_cents, duration_minutes").eq("salon_id", salon.id),
+    supabase.from("services").select("id, name, price_cents, duration_minutes").eq("salon_id", salon.id),
     supabase.from("staff").select("id").eq("salon_id", salon.id),
     supabase.from("clients").select("id, phone").eq("salon_id", salon.id).in("phone", NOTIF_PHONES),
   ]);
@@ -111,6 +111,7 @@ export async function GET(req: NextRequest) {
           salon_id: salon.id,
           client_id: client.id,
           service_id: service.id,
+          service_name: service.name,
           staff_id: member.id,
           appointment_date: dateKey,
           start_time: `${slot}:00`,
@@ -190,6 +191,7 @@ export async function GET(req: NextRequest) {
       salon_id: salon.id,
       client_id: clientByPhone[n.client_phone],
       service_id: n.service.id,
+      service_name: n.service.name,
       staff_id: n.staff_id,
       appointment_date: n.appointment_date,
       start_time: n.start_time,

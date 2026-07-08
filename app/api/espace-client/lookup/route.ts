@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       price_cents,
       client_message,
       staff_id,
+      service_name,
       staff ( first_name, last_name ),
       services ( id, name, duration_minutes, categories ( name ) ),
       clients ( first_name, last_name, phone, email )
