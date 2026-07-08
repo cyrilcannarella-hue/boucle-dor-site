@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 import { getCurrentSalon } from "@/lib/salon";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin-client";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,10 @@ export default async function MentionsLegalesPage() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
+  // owner_first_name/owner_last_name sont volontairement hors du grant anon sur `salons`
+  // (fuite PII corrigée précédemment) — lecture via service role, légitime ici puisque
+  // le nom du directeur de la publication est une mention légalement publique.
+  const admin = createAdminSupabaseClient();
 
   const [{ data: settings }, { data: salonRow }] = await Promise.all([
     supabase
@@ -22,7 +27,7 @@ export default async function MentionsLegalesPage() {
       .select("salon_name, address, phone, email, siret, legal_form")
       .eq("salon_id", salon.id)
       .maybeSingle(),
-    supabase
+    admin
       .from("salons")
       .select("owner_first_name, owner_last_name")
       .eq("id", salon.id)
