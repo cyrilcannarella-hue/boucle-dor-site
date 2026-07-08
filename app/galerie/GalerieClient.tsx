@@ -331,6 +331,10 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
       <footer className="border-t py-8 text-center text-sm" style={{ borderColor: colorCardBorder, color: colorTextSecondary }}>
         © {new Date().getFullYear()} {salonName}
         {" · "}
+        <Link href="/mentions-legales" className="hover:underline">
+          Mentions légales
+        </Link>
+        {" · "}
         <Link href="/politique-de-confidentialite" className="hover:underline">
           Politique de confidentialité
         </Link>

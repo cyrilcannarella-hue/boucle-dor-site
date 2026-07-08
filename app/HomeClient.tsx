@@ -916,6 +916,10 @@ useEffect(() => {
           <p className="text-xs text-[var(--footer-text)]">
             © {new Date().getFullYear()} {salonName}{salonAddress ? ` — ${salonAddress}` : ""}
             {" · "}
+            <Link href="/mentions-legales" className="hover:text-[var(--gold)]">
+              Mentions légales
+            </Link>
+            {" · "}
             <Link href="/politique-de-confidentialite" className="hover:text-[var(--gold)]">
               Politique de confidentialité
             </Link>

@@ -89,6 +89,8 @@ export type SalonSettings = {
   id: string;
   salon_name?: string | null;
   phone?: string | null;
+  siret?: string | null;
+  legal_form?: string | null;
   sms_sender?: string | null;
   sms_provider?: string | null;
   brevo_api_key?: string | null;
@@ -670,6 +672,8 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
           address: settings.address ?? null,
           email: settings.email ?? null,
           instagram_url: settings.instagram_url ?? null,
+          siret: settings.siret ?? null,
+          legal_form: settings.legal_form ?? null,
           opening_time: settings.opening_time,
           closing_time: settings.closing_time,
           is_open_monday: settings.is_open_monday,
@@ -2543,6 +2547,36 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                       </label>
                     </div>
 
+                    <div className="mt-6 border-t border-[var(--card-border)] pt-6">
+                      <div className="mb-4 text-sm font-bold text-[var(--gold)]">
+                        Identité légale (mentions légales du site)
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          SIRET
+                          <input
+                            type="text"
+                            placeholder="123 456 789 00012"
+                            value={settings.siret ?? ""}
+                            onChange={(e) => setSettings({ ...settings, siret: e.target.value })}
+                            className={fieldClass}
+                          />
+                        </label>
+                        <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                          Forme juridique
+                          <input
+                            type="text"
+                            placeholder="Auto-entrepreneur, EURL, SARL..."
+                            value={settings.legal_form ?? ""}
+                            onChange={(e) => setSettings({ ...settings, legal_form: e.target.value })}
+                            className={fieldClass}
+                          />
+                        </label>
+                      </div>
+                      <p className="mt-2 text-xs text-[var(--nav-text)] opacity-60">
+                        Obligatoires pour la page "Mentions légales" du site. Tant qu'ils sont vides, la page l'indique clairement plutôt que d'afficher une fausse information.
+                      </p>
+                    </div>
 
                     <div className="mt-6 flex justify-end">
                       <button
