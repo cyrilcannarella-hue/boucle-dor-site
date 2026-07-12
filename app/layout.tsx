@@ -21,8 +21,12 @@ const geistMono = Geist_Mono({
 
 // Codes de vérification Google Search Console, un par salon — jamais partagés
 // entre salons (chaque propriétaire garde le contrôle de sa propre indexation).
-const GOOGLE_SITE_VERIFICATION: Record<string, string> = {
-  "boucle-dor": "kyMq4XmmiwcfVGrnFezDzlsdWuL9DH0Z_GSwYHoIdOU",
+// Un salon peut avoir plusieurs codes si vérifié depuis plusieurs comptes Google.
+const GOOGLE_SITE_VERIFICATION: Record<string, string | string[]> = {
+  "boucle-dor": [
+    "kyMq4XmmiwcfVGrnFezDzlsdWuL9DH0Z_GSwYHoIdOU",
+    "RgbIyo06EZMXplccI5nrS5fimu8qwDtoqA5aDMSyOac",
+  ],
   "sagessedautrefoi": "RgbIyo06EZMXplccI5nrS5fimu8qwDtoqA5aDMSyOac",
 };
 
