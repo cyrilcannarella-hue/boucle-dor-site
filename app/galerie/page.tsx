@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   let salonName = "";
   let city: string | null = null;
+  let galleryText = "";
   try {
     const salon = await getCurrentSalon();
     const supabase = createClient(
@@ -19,16 +20,22 @@ export async function generateMetadata(): Promise<Metadata> {
     );
     const { data } = await supabase
       .from("salon_settings")
-      .select("salon_name, address")
+      .select("salon_name, address, site_gallery")
       .eq("salon_id", salon.id)
       .maybeSingle();
     salonName = data?.salon_name || "";
     city = cityFromAddress(data?.address);
+    galleryText = (data?.site_gallery as { text?: string } | null)?.text?.trim() || "";
   } catch {}
+
+  const description =
+    galleryText.length > 0
+      ? galleryText.slice(0, 160)
+      : `Découvrez les réalisations${salonName ? ` de ${salonName}` : ""}${city ? ` à ${city}` : ""} en photos.`;
 
   return {
     title: "Galerie photos",
-    description: `Découvrez les réalisations${salonName ? ` de ${salonName}` : ""}${city ? ` à ${city}` : ""} en photos.`,
+    description,
     alternates: { canonical: "/galerie" },
   };
 }
