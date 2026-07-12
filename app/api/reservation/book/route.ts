@@ -3,6 +3,7 @@ import { getCurrentSalon } from "@/lib/salon";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin-client";
 import { formatTime, getServiceSegments, parseTime, serviceDurationsFromRow } from "@/lib/availability";
 import { validateAppointmentSlot } from "@/lib/availability-server";
+import { sendPushToSalon } from "@/lib/push";
 
 type AnswerInput = { questionId: string; questionText: string; answer: string };
 
@@ -176,6 +177,16 @@ export async function POST(req: NextRequest) {
         answer: a.answer,
       }))
     );
+  }
+
+  try {
+    await sendPushToSalon(salon.id, {
+      title: "Nouveau rendez-vous en ligne",
+      body: `${firstName} ${lastName} — ${serviceRow.name}, ${appointmentDate} à ${startTime.slice(0, 5)}`,
+      url: "/back-office",
+    });
+  } catch {
+    // Best-effort : une notification push qui échoue ne doit jamais faire échouer la réservation.
   }
 
   return NextResponse.json({ appointmentId: appointment.id });

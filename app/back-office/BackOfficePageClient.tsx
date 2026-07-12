@@ -9,6 +9,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useSalon } from "@/hooks/useSalon";
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
 type RealtimePayload = {
   eventType?: "INSERT" | "UPDATE" | "DELETE";
   new?: { id?: string; appointment_date?: string; start_time?: string; source?: string };
@@ -634,6 +643,78 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
           };
         })
     );
+  };
+
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushDenied, setPushDenied] = useState(false);
+  const [pushNeedsInstall, setPushNeedsInstall] = useState(false);
+
+  useEffect(() => {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true;
+    if (isIOS && !isStandalone) {
+      setPushNeedsInstall(true);
+      return;
+    }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    setPushSupported(true);
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then(async (registration) => {
+        const existing = await registration.pushManager.getSubscription();
+        setPushSubscribed(!!existing);
+      })
+      .catch(() => {});
+  }, []);
+
+  const enablePushNotifications = async () => {
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!publicKey) return;
+    setPushLoading(true);
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushDenied(true);
+        return;
+      }
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+      });
+      const json = subscription.toJSON();
+      await supabase.from("push_subscriptions").upsert(
+        { salon_id: salonId, endpoint: json.endpoint!, p256dh: json.keys!.p256dh, auth: json.keys!.auth },
+        { onConflict: "endpoint" }
+      );
+      setPushSubscribed(true);
+      setPushDenied(false);
+    } catch {
+      // Best-effort : rien à faire si l'abonnement échoue, le bouton reste disponible pour réessayer.
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  const disablePushNotifications = async () => {
+    setPushLoading(true);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      const subscription = await registration?.pushManager.getSubscription();
+      if (subscription) {
+        await supabase.from("push_subscriptions").delete().eq("endpoint", subscription.endpoint);
+        await subscription.unsubscribe();
+      }
+      setPushSubscribed(false);
+    } catch {
+      // Best-effort.
+    } finally {
+      setPushLoading(false);
+    }
   };
 
   const [staff, setStaff] = useState<StaffRow[]>([]);
@@ -2213,6 +2294,42 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
         <div className="rounded-[30px] border border-[var(--card-border)] bg-[var(--panel-bg)] p-6 shadow-[0_18px_45px_rgba(80,55,25,0.07)]">
             <div className="mb-2 flex justify-center"><div className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorAccents, borderColor: `${colorAccents}40`, backgroundColor: `${colorAccents}12` }}>Notifications</div></div>
+
+            {pushNeedsInstall ? (
+              <p className="mb-4 text-center text-xs text-[var(--nav-text)]">
+                Pour recevoir les notifications sur iPhone/iPad, ajoutez d&apos;abord ce site à l&apos;écran d&apos;accueil (bouton Partager → &laquo; Sur l&apos;écran d&apos;accueil &raquo;), puis revenez ici.
+              </p>
+            ) : pushSupported ? (
+              <div className="mb-4 flex justify-center">
+                {pushSubscribed ? (
+                  <button
+                    type="button"
+                    onClick={disablePushNotifications}
+                    disabled={pushLoading}
+                    className="rounded-full border px-4 py-2 text-xs font-semibold transition disabled:opacity-50"
+                    style={{ borderColor: `${colorAccents}40`, color: colorAccents }}
+                  >
+                    ✓ Notifications activées sur cet appareil
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={enablePushNotifications}
+                    disabled={pushLoading}
+                    className="rounded-full px-4 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
+                    style={{ backgroundColor: colorAccents }}
+                  >
+                    {pushLoading ? "Activation…" : "Activer les notifications sur cet appareil"}
+                  </button>
+                )}
+              </div>
+            ) : null}
+            {pushDenied ? (
+              <p className="mb-4 text-center text-xs text-[var(--nav-text)]">
+                Notifications bloquées par le navigateur — autorisez-les dans les réglages du site pour les recevoir.
+              </p>
+            ) : null}
+
             {webBookingsToday.length === 0 ? (
               <p className="mt-4 text-sm text-[var(--nav-text)]">Aucune réservation en ligne aujourd'hui.</p>
             ) : (
