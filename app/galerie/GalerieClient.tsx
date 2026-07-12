@@ -11,6 +11,7 @@ export type SalonSettings = {
   id: string;
   salon_name: string;
   address?: string | null;
+  phone?: string | null;
   salon_subtitle?: string | null;
   logo_image_url?: string | null;
   color_accents?: string | null;

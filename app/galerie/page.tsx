@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentSalon } from "@/lib/salon";
 import { cityFromAddress } from "@/lib/address";
+import { getBaseUrl } from "@/lib/site-url";
 import { GalerieClient, type SalonSettings } from "./GalerieClient";
 
 export const dynamic = "force-dynamic";
@@ -48,5 +49,32 @@ export default async function GaleriePage() {
   const settings = data as SalonSettings | null;
   if (!settings?.gallery_enabled) redirect("/");
 
-  return <GalerieClient settings={settings} />;
+  const images = (settings.site_gallery?.photos || []).map((p) => p.url).filter(Boolean);
+  let jsonLd: Record<string, unknown> | null = null;
+  if (images.length > 0) {
+    const baseUrl = await getBaseUrl();
+    jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: settings.salon_name,
+      url: `${baseUrl}/galerie`,
+      image: images,
+      ...(settings.phone ? { telephone: settings.phone } : {}),
+      ...(settings.address
+        ? { address: { "@type": "PostalAddress", streetAddress: settings.address, addressCountry: "FR" } }
+        : {}),
+    };
+  }
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <GalerieClient settings={settings} />
+    </>
+  );
 }

@@ -47,14 +47,17 @@ export default async function Home() {
   let jsonLd: Record<string, unknown> | null = null;
   if (settings) {
     const baseUrl = await getBaseUrl();
+    const images = [settings.hero_image_url, settings.apropos_image_url].filter(
+      (url): url is string => !!url
+    );
+    if (images.length === 0 && settings.logo_image_url) images.push(settings.logo_image_url);
+
     jsonLd = {
       "@context": "https://schema.org",
-      "@type": "HairSalon",
+      "@type": "LocalBusiness",
       name: settings.salon_name,
       url: baseUrl,
-      ...(settings.hero_image_url || settings.logo_image_url
-        ? { image: settings.hero_image_url || settings.logo_image_url }
-        : {}),
+      ...(images.length > 0 ? { image: images } : {}),
       ...(settings.phone ? { telephone: settings.phone } : {}),
       ...(settings.address
         ? { address: { "@type": "PostalAddress", streetAddress: settings.address, addressCountry: "FR" } }
