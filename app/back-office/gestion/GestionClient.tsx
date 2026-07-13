@@ -158,6 +158,7 @@ export type SalonSettings = {
   font_salon_name?: string | null;
   bg_pattern?: string | null;
   salon_subtitle?: string | null;
+  business_type?: string | null;
   logo_image_url?: string | null;
   logo_pro_image_url?: string | null;
   hero_image_url?: string | null;
@@ -452,6 +453,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [appearanceAvisName, setAppearanceAvisName] = useState("");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("");
+  const [appearanceBusinessType, setAppearanceBusinessType] = useState("");
   const [appearanceSalonNameColor, setAppearanceSalonNameColor] = useState("");
   const [appearanceFont, setAppearanceFont] = useState("");
   const [appearanceSalonNameFont, setAppearanceSalonNameFont] = useState("");
@@ -591,6 +593,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setSettings(loadedSettings);
       setAppearanceSalonName(loadedSettings?.salon_name ?? "");
       setAppearanceSalonSubtitle(loadedSettings?.salon_subtitle ?? "");
+      setAppearanceBusinessType(loadedSettings?.business_type ?? "");
       setAppearanceSalonNameColor(loadedSettings?.color_salon_name ?? "");
       setAppearanceFont(loadedSettings?.site_font ?? "");
       setAppearanceSalonNameFont(loadedSettings?.font_salon_name ?? "");
@@ -1467,6 +1470,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         .update({
           salon_name: appearanceSalonName.trim() || settings.salon_name,
           salon_subtitle: appearanceSalonSubtitle.trim() || null,
+          business_type: appearanceBusinessType.trim() || null,
           font_salon_name: appearanceSalonNameFont || null,
           color_salon_name: appearanceSalonNameColor || null,
         })
@@ -1477,6 +1481,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         ...prev,
         salon_name: appearanceSalonName.trim() || prev.salon_name,
         salon_subtitle: appearanceSalonSubtitle.trim() || null,
+        business_type: appearanceBusinessType.trim() || null,
         font_salon_name: appearanceSalonNameFont || null,
         color_salon_name: appearanceSalonNameColor || null,
       } : prev);
@@ -3883,6 +3888,19 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                           onChange={(e) => setAppearanceSalonSubtitle(e.target.value)}
                           className={fieldClass}
                         />
+                      </label>
+                      <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
+                        Activité
+                        <input
+                          type="text"
+                          value={appearanceBusinessType}
+                          onChange={(e) => setAppearanceBusinessType(e.target.value)}
+                          placeholder="ex : Coiffeur, Praticienne en massage..."
+                          className={fieldClass}
+                        />
+                        <span className="text-xs font-normal text-[var(--nav-text)]">
+                          Affiché dans le titre de la page et lors du partage (ex : « {appearanceSalonName || "Votre salon"} — {appearanceBusinessType || "Activité"} à [Ville] »)
+                        </span>
                       </label>
                       <div className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
                         Police du nom

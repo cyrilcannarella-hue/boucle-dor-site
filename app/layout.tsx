@@ -36,6 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   let description = "Réservation en ligne";
   let imageUrl: string | null = null;
   let city: string | null = null;
+  let businessType: string | null = null;
   let salonSlug: string | null = null;
   const baseUrl = await getBaseUrl();
 
@@ -48,12 +49,13 @@ export async function generateMetadata(): Promise<Metadata> {
     );
     const { data } = await supabase
       .from("salon_settings")
-      .select("salon_name, logo_image_url, salon_subtitle, hero_tagline, apropos_text, hero_image_url, address")
+      .select("salon_name, logo_image_url, salon_subtitle, hero_tagline, apropos_text, hero_image_url, address, business_type")
       .eq("salon_id", salon.id)
       .single();
     if (data?.salon_name) salonName = data.salon_name;
     if (data?.logo_image_url) iconUrl = data.logo_image_url;
     city = cityFromAddress(data?.address);
+    businessType = data?.business_type || null;
     const desc = data?.salon_subtitle || data?.hero_tagline || data?.apropos_text;
     if (desc) description = desc.slice(0, 140);
     else if (salonName !== "Votre salon") description = `Réservation en ligne — ${salonName}`;
@@ -66,7 +68,11 @@ export async function generateMetadata(): Promise<Metadata> {
     description = `${description} à ${city}`;
   }
 
-  const titleDefault = city ? `${salonName} — Coiffeur à ${city}` : salonName;
+  const titleDefault = businessType
+    ? `${salonName} — ${businessType}${city ? ` à ${city}` : ""}`
+    : city
+    ? `${salonName} — ${city}`
+    : salonName;
 
   return {
     metadataBase: new URL(baseUrl),
