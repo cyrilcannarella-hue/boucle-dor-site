@@ -41,6 +41,7 @@ export type SalonSettings = {
   promo_color_to?: string | null;
   promo_text_color?: string | null;
   salon_subtitle?: string | null;
+  business_type?: string | null;
   logo_image_url?: string | null;
   hero_tagline?: string | null;
   hero_description?: string | null;
@@ -253,7 +254,11 @@ useEffect(() => {
   const closingTime = settings?.closing_time?.slice(0, 5) || null;
   const city = useMemo(() => cityFromAddress(salonAddress), [salonAddress]);
 
-  const salonSubtitle = settings?.salon_subtitle || (city ? `Salon de coiffure à ${city}` : "");
+  const salonSubtitle =
+    settings?.salon_subtitle ||
+    (settings?.business_type
+      ? `${settings.business_type}${city ? ` à ${city}` : ""}`
+      : "");
   const heroTagline = settings?.hero_tagline || "";
   const heroDescription = settings?.hero_description || "";
   const heroFeatures = settings?.hero_features?.length ? settings.hero_features : [];
@@ -780,7 +785,7 @@ useEffect(() => {
           >
             <motion.img
               src={aproposImageUrl}
-              alt={`Espace shampoing du salon ${salonName}`}
+              alt={`${salonName} — présentation`}
               className="h-full min-h-[300px] w-full object-cover"
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.5, ease: "easeOut" }}

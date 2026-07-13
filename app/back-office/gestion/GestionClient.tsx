@@ -2304,7 +2304,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                   <textarea
                     value={settings?.promo_text ?? ""}
                     onChange={(e) => settings && setSettings({ ...settings, promo_text: e.target.value })}
-                    placeholder="Ex : Offre spéciale printemps — 20% sur toutes les colorations jusqu'au 30 avril"
+                    placeholder="Ex : Offre spéciale printemps — 20% sur une sélection de prestations jusqu'au 30 avril"
                     rows={3}
                     className={fieldClass + " resize-none"}
                   />
