@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentSalon } from "@/lib/salon";
 import { cityFromAddress } from "@/lib/address";
 import { getBaseUrl } from "@/lib/site-url";
+import { schemaTypeFromBusinessType } from "@/lib/schema-type";
 import { GalerieClient, type SalonSettings } from "./GalerieClient";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +63,7 @@ export default async function GaleriePage() {
     const baseUrl = await getBaseUrl();
     jsonLd = {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
+      "@type": schemaTypeFromBusinessType(settings.business_type),
       name: settings.salon_name,
       url: `${baseUrl}/galerie`,
       image: images,

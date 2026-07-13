@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { SiteFont } from "@/components/SiteFont";
@@ -394,8 +395,8 @@ useEffect(() => {
               aria-label="Retour en haut de page"
             >
               {logoImageUrl && (
-                <div className="h-11 w-11 shrink-0 flex items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] sm:h-14 sm:w-14 sm:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPanelBg }}>
-                  <img src={logoImageUrl} alt={salonName} className="h-full w-full object-cover" />
+                <div className="relative h-11 w-11 shrink-0 flex items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] sm:h-14 sm:w-14 sm:rounded-[22px]" style={{ borderColor: colorCardBorder, backgroundColor: colorPanelBg }}>
+                  <Image src={logoImageUrl} alt={salonName} fill sizes="56px" className="object-cover" />
                 </div>
               )}
               <div className="min-w-0">
@@ -656,14 +657,21 @@ useEffect(() => {
             transition={{ duration: 1.0, ease: [0.76, 0, 0.24, 1], delay: 0.3 }}
             className="relative min-h-[520px] overflow-hidden rounded-[32px] border border-[var(--card-border)] shadow-[0_18px_50px_rgba(0,0,0,0.05)]"
           >
-            <motion.img
-              src={heroImageUrl}
-              alt={`Salon ${salonName}`}
-              className="absolute -top-[45px] left-0 h-[calc(100%+90px)] w-full object-cover"
+            <motion.div
+              className="absolute -top-[45px] left-0 h-[calc(100%+90px)] w-full"
               style={{ y: heroImageY }}
               whileHover={{ scale: 1.03 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-            />
+            >
+              <Image
+                src={heroImageUrl}
+                alt={`Salon ${salonName}`}
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </motion.div>
           </motion.div>
         )}
       </section>
@@ -783,13 +791,19 @@ useEffect(() => {
             className="rounded-[28px] border border-[var(--card-border)] shadow-sm overflow-hidden"
             style={{ backgroundColor: colorPanelBg }}
           >
-            <motion.img
-              src={aproposImageUrl}
-              alt={`${salonName} — présentation`}
-              className="h-full min-h-[300px] w-full object-cover"
+            <motion.div
+              className="relative h-full min-h-[300px] w-full"
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-            />
+            >
+              <Image
+                src={aproposImageUrl}
+                alt={`${salonName} — présentation`}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </motion.div>
           </motion.div>
         )}
       </motion.section>

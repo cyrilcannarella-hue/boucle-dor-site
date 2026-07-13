@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { getCurrentSalon } from "@/lib/salon";
 import { getBaseUrl } from "@/lib/site-url";
+import { schemaTypeFromBusinessType } from "@/lib/schema-type";
 import { HomeClient, type SalonSettings } from "./HomeClient";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default async function Home() {
 
     jsonLd = {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
+      "@type": schemaTypeFromBusinessType(settings.business_type),
       name: settings.salon_name,
       url: baseUrl,
       ...(images.length > 0 ? { image: images } : {}),

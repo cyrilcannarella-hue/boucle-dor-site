@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { SiteFont } from "@/components/SiteFont";
@@ -13,6 +14,7 @@ export type SalonSettings = {
   address?: string | null;
   phone?: string | null;
   salon_subtitle?: string | null;
+  business_type?: string | null;
   logo_image_url?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
@@ -153,10 +155,10 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
           <a href="/" className="flex items-center gap-3">
             {logoUrl && (
               <div
-                className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] sm:h-14 sm:w-14 sm:rounded-[22px]"
+                className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border shadow-[0_12px_26px_rgba(185,139,61,0.18)] sm:h-14 sm:w-14 sm:rounded-[22px]"
                 style={{ borderColor: colorCardBorder, backgroundColor: colorPanelBg }}
               >
-                <img src={logoUrl} alt={salonName} className="h-full w-full object-cover" />
+                <Image src={logoUrl} alt={salonName} fill sizes="56px" className="object-cover" />
               </div>
             )}
             <div>
@@ -281,13 +283,15 @@ export function GalerieClient({ settings }: { settings: SalonSettings }) {
               >
                 {/* Carte photo */}
                 <div
-                  className={`group overflow-hidden rounded-2xl border ${i % 2 === 1 ? "md:order-last" : ""}`}
+                  className={`group relative h-64 overflow-hidden rounded-2xl border md:h-full md:min-h-[300px] ${i % 2 === 1 ? "md:order-last" : ""}`}
                   style={{ borderColor: colorCardBorder }}
                 >
-                  <img
+                  <Image
                     src={photo.url}
                     alt={photo.caption || `Photo ${i + 1}`}
-                    className="h-64 w-full object-cover transition duration-500 group-hover:scale-105 md:h-full md:min-h-[300px]"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover transition duration-500 group-hover:scale-105"
                   />
                 </div>
 
