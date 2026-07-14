@@ -68,8 +68,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description = `${description} à ${city}`;
   }
 
+  const businessTypeMentionsCity = !!city && !!businessType && businessType.toLowerCase().includes(city.toLowerCase());
   const titleDefault = businessType
-    ? `${salonName} — ${businessType}${city ? ` à ${city}` : ""}`
+    ? `${salonName} — ${businessType}${city && !businessTypeMentionsCity ? ` à ${city}` : ""}`
     : city
     ? `${salonName} — ${city}`
     : salonName;
