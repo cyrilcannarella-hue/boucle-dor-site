@@ -77,7 +77,7 @@ body {
 
 .gift-ribbon-wrap {
   stroke-dasharray: 1;
-  animation: gift-ribbon-wrap 6s ease-in-out infinite;
+  animation: gift-ribbon-wrap 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
 }
 
 @keyframes gift-ribbon-wrap {
@@ -87,7 +87,7 @@ body {
 }
 
 .gift-bow-wrap {
-  animation: gift-bow-pop 6s ease-in-out infinite;
+  animation: gift-bow-pop 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
 }
 
 @keyframes gift-bow-pop {

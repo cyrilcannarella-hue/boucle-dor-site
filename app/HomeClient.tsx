@@ -788,20 +788,14 @@ useEffect(() => {
           {giftCardLink && (
             <div className="mt-6 flex justify-center">
               <div className="relative inline-flex">
-                {/* Ruban qui s'enroule progressivement autour du badge */}
-                <div className="pointer-events-none absolute -inset-x-3 -inset-y-2">
-                  <svg
-                    aria-hidden="true"
-                    className="h-full w-full"
-                    style={{ overflow: "visible" }}
-                  >
+                {/* Ruban : moitié arrière (passe derrière le badge) */}
+                <div
+                  className="pointer-events-none absolute -inset-x-3 -inset-y-2"
+                  style={{ clipPath: "inset(50% 0 0 0)" }}
+                >
+                  <svg aria-hidden="true" className="h-full w-full" style={{ overflow: "visible" }}>
                     <rect
-                      x="0"
-                      y="0"
-                      width="100%"
-                      height="100%"
-                      rx="50%"
-                      ry="50%"
+                      x="0" y="0" width="100%" height="100%" rx="50%" ry="50%"
                       fill="none"
                       stroke={colorGiftCardAccent}
                       strokeOpacity={0.75}
@@ -826,6 +820,24 @@ useEffect(() => {
                 >
                   Mon bon cadeau
                 </a>
+                {/* Ruban : moitié avant (passe devant le badge) */}
+                <div
+                  className="pointer-events-none absolute -inset-x-3 -inset-y-2"
+                  style={{ clipPath: "inset(0 0 50% 0)" }}
+                >
+                  <svg aria-hidden="true" className="h-full w-full" style={{ overflow: "visible" }}>
+                    <rect
+                      x="0" y="0" width="100%" height="100%" rx="50%" ry="50%"
+                      fill="none"
+                      stroke={colorGiftCardAccent}
+                      strokeOpacity={0.75}
+                      strokeWidth={5}
+                      strokeLinecap="round"
+                      pathLength={1}
+                      className="gift-ribbon-wrap"
+                    />
+                  </svg>
+                </div>
                 {/* Noeud qui se forme une fois le ruban enroulé */}
                 <div
                   className="gift-bow-wrap pointer-events-none absolute -top-6 left-1/2 z-10 h-8 w-12"
