@@ -840,14 +840,26 @@ useEffect(() => {
                 </div>
                 {/* Noeud qui se forme une fois le ruban enroulé */}
                 <div
-                  className="gift-bow-wrap pointer-events-none absolute -top-6 left-1/2 z-10 h-8 w-12"
+                  className="gift-bow-wrap pointer-events-none absolute -top-9 left-1/2 z-10 h-14 w-20"
                   style={{ color: colorGiftCardAccent }}
                 >
-                  <svg viewBox="0 0 60 40" className="gift-bow h-full w-full">
-                    <path d="M30,20 C20,5 4,9 7,20 C4,31 20,35 30,20 Z" fill="currentColor" />
-                    <path d="M30,20 C40,5 56,9 53,20 C56,31 40,35 30,20 Z" fill="currentColor" />
-                    <rect x="25" y="15" width="10" height="10" rx="2.5" fill="currentColor" />
-                    <circle cx="30" cy="20" r="1.6" fill="white" opacity="0.7" />
+                  <svg viewBox="0 0 80 60" className="gift-bow h-full w-full">
+                    {/* Rubans qui pendent */}
+                    <path d="M45,33 L50,57 L44,49 L40,57 L42,33 Z" fill="currentColor" opacity="0.9" />
+                    <path d="M35,33 L30,57 L36,49 L40,57 L38,33 Z" fill="currentColor" opacity="0.9" />
+                    {/* Boucle gauche */}
+                    <path d="M40,26 C26,4 2,10 6,26 C2,42 26,48 40,26 Z" fill="currentColor" />
+                    <path d="M40,26 C30,12 14,15 12,26" fill="none" stroke="black" strokeOpacity="0.15" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M18,18 C14,22 13,27 15,32" fill="none" stroke="white" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" />
+                    {/* Boucle droite */}
+                    <path d="M40,26 C54,4 78,10 74,26 C78,42 54,48 40,26 Z" fill="currentColor" />
+                    <path d="M40,26 C50,12 66,15 68,26" fill="none" stroke="black" strokeOpacity="0.15" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M62,18 C66,22 67,27 65,32" fill="none" stroke="white" strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" />
+                    {/* Noeud central */}
+                    <rect x="32" y="18" width="16" height="18" rx="4" fill="currentColor" />
+                    <rect x="32" y="18" width="16" height="18" rx="4" fill="none" stroke="black" strokeOpacity="0.15" strokeWidth="1.5" />
+                    <line x1="40" y1="19" x2="40" y2="35" stroke="black" strokeOpacity="0.18" strokeWidth="1.5" />
+                    <circle cx="37" cy="24" r="2.3" fill="white" opacity="0.55" />
                   </svg>
                 </div>
               </div>
