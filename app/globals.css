@@ -85,6 +85,15 @@ body {
   50% { transform: translateX(-50%) rotate(6deg); }
 }
 
+.gift-ribbon-ring {
+  animation: gift-ribbon-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes gift-ribbon-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.03); }
+}
+
 @keyframes header-sweep {
   0%   { transform: translateX(-60%) skewX(-12deg); }
   100% { transform: translateX(480%) skewX(-12deg); }
