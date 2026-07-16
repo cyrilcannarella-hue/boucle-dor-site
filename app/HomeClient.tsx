@@ -789,27 +789,29 @@ useEffect(() => {
             <div className="mt-6 flex justify-center">
               <div className="relative inline-flex">
                 {/* Ruban qui s'enroule progressivement autour du badge */}
-                <svg
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -inset-x-3 -inset-y-2"
-                  style={{ overflow: "visible" }}
-                >
-                  <rect
-                    x="0"
-                    y="0"
-                    width="100%"
-                    height="100%"
-                    rx="50%"
-                    ry="50%"
-                    fill="none"
-                    stroke={colorGiftCardAccent}
-                    strokeOpacity={0.75}
-                    strokeWidth={5}
-                    strokeLinecap="round"
-                    pathLength={1}
-                    className="gift-ribbon-wrap"
-                  />
-                </svg>
+                <div className="pointer-events-none absolute -inset-x-3 -inset-y-2">
+                  <svg
+                    aria-hidden="true"
+                    className="h-full w-full"
+                    style={{ overflow: "visible" }}
+                  >
+                    <rect
+                      x="0"
+                      y="0"
+                      width="100%"
+                      height="100%"
+                      rx="50%"
+                      ry="50%"
+                      fill="none"
+                      stroke={colorGiftCardAccent}
+                      strokeOpacity={0.75}
+                      strokeWidth={5}
+                      strokeLinecap="round"
+                      pathLength={1}
+                      className="gift-ribbon-wrap"
+                    />
+                  </svg>
+                </div>
                 <a
                   href={giftCardLink}
                   target="_blank"
