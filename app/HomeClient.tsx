@@ -785,7 +785,7 @@ useEffect(() => {
                 href={giftCardLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em] transition-opacity hover:opacity-70"
+                className="inline-flex rounded-full border px-7 py-3 text-base font-bold uppercase tracking-[0.22em] transition-opacity hover:opacity-70"
                 style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}
               >
                 Mon bon cadeau
