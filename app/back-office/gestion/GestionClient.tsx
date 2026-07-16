@@ -153,6 +153,9 @@ export type SalonSettings = {
   color_avis_accent?: string | null;
   color_avis_bg?: string | null;
   color_avis_name?: string | null;
+  color_giftcard_bg?: string | null;
+  color_giftcard_text?: string | null;
+  color_giftcard_accent?: string | null;
   color_salon_name?: string | null;
   site_font?: string | null;
   font_salon_name?: string | null;
@@ -454,6 +457,9 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [appearanceAvisAccent, setAppearanceAvisAccent] = useState("");
   const [appearanceAvisBg, setAppearanceAvisBg] = useState("");
   const [appearanceAvisName, setAppearanceAvisName] = useState("");
+  const [appearanceGiftCardBg, setAppearanceGiftCardBg] = useState("");
+  const [appearanceGiftCardText, setAppearanceGiftCardText] = useState("");
+  const [appearanceGiftCardAccent, setAppearanceGiftCardAccent] = useState("");
   const [appearanceSalonName, setAppearanceSalonName] = useState("");
   const [appearanceSalonSubtitle, setAppearanceSalonSubtitle] = useState("");
   const [appearanceBusinessType, setAppearanceBusinessType] = useState("");
@@ -658,6 +664,9 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
       setAppearanceAvisAccent(loadedSettings?.color_avis_accent ?? loadedSettings?.color_badges ?? "");
       setAppearanceAvisBg(loadedSettings?.color_avis_bg ?? "");
       setAppearanceAvisName(loadedSettings?.color_avis_name ?? "");
+      setAppearanceGiftCardBg(loadedSettings?.color_giftcard_bg ?? "");
+      setAppearanceGiftCardText(loadedSettings?.color_giftcard_text ?? "");
+      setAppearanceGiftCardAccent(loadedSettings?.color_giftcard_accent ?? loadedSettings?.color_badges ?? "");
       setClosures((closuresRes.data ?? []) as ClosureRow[]);
       setExceptionOpenings((openingsRes.data ?? []) as ExceptionOpeningRow[]);
       setCategories((categoriesRes.data ?? []) as CategoryRow[]);
@@ -1715,6 +1724,9 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
           color_avis_accent: appearanceAvisAccent || null,
           color_avis_bg: appearanceAvisBg || null,
           color_avis_name: appearanceAvisName || null,
+          color_giftcard_bg: appearanceGiftCardBg || null,
+          color_giftcard_text: appearanceGiftCardText || null,
+          color_giftcard_accent: appearanceGiftCardAccent || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
@@ -1744,6 +1756,9 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         color_avis_accent: appearanceAvisAccent || null,
         color_avis_bg: appearanceAvisBg || null,
         color_avis_name: appearanceAvisName || null,
+        color_giftcard_bg: appearanceGiftCardBg || null,
+        color_giftcard_text: appearanceGiftCardText || null,
+        color_giftcard_accent: appearanceGiftCardAccent || null,
       } : prev);
       setStatusMessage("Couleurs enregistrées ✅");
     } catch (error: unknown) {
@@ -4303,6 +4318,14 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                             items: [
                               { key: "avisbg", label: "Fond", desc: "Fond des cartes d'avis", value: appearanceAvisBg, setter: setAppearanceAvisBg },
                               { key: "avisname", label: "Prénom", desc: "Nom de l'auteur affiché sous chaque avis", value: appearanceAvisName, setter: setAppearanceAvisName },
+                            ],
+                          },
+                          {
+                            title: "Bon cadeau",
+                            items: [
+                              { key: "giftcardbg", label: "Fond de la carte", desc: "Fond de la section Bon cadeau", value: appearanceGiftCardBg, setter: setAppearanceGiftCardBg },
+                              { key: "giftcardtext", label: "Description", desc: "Texte de description de la section Bon cadeau", value: appearanceGiftCardText, setter: setAppearanceGiftCardText },
+                              { key: "giftcardaccent", label: "Badge du lien", desc: "Couleur du badge \"Mon bon cadeau\"", value: appearanceGiftCardAccent, setter: setAppearanceGiftCardAccent },
                             ],
                           },
                           {

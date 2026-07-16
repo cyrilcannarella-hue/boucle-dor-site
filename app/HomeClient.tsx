@@ -56,6 +56,9 @@ export type SalonSettings = {
   gift_card_enabled?: boolean | null;
   gift_card_description?: string | null;
   gift_card_link?: string | null;
+  color_giftcard_bg?: string | null;
+  color_giftcard_text?: string | null;
+  color_giftcard_accent?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
   color_page_bg?: string | null;
@@ -323,6 +326,9 @@ useEffect(() => {
   const giftCardEnabled = settings?.gift_card_enabled ?? false;
   const giftCardDescription = settings?.gift_card_description ?? "";
   const giftCardLink = settings?.gift_card_link ?? "";
+  const colorGiftCardBg = settings?.color_giftcard_bg || colorPanelBg;
+  const colorGiftCardText = settings?.color_giftcard_text || colorTextSecondary;
+  const colorGiftCardAccent = settings?.color_giftcard_accent || colorBadge;
 
   const hasAnyOpenDay = !!(settings && (
     settings.is_open_monday || settings.is_open_tuesday || settings.is_open_wednesday ||
@@ -771,13 +777,13 @@ useEffect(() => {
           whileHover={{ y: -6, scale: 1.02 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="rounded-[28px] border border-[var(--card-border)] p-6 shadow-sm"
-          style={{ backgroundColor: colorPanelBg }}
+          style={{ backgroundColor: colorGiftCardBg }}
         >
-          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}>
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorGiftCardBg }}>
             Bon cadeau
           </div>
           {giftCardDescription && (
-            <p className="whitespace-pre-line" style={{ color: colorTextSecondary }}>{giftCardDescription}</p>
+            <p className="whitespace-pre-line" style={{ color: colorGiftCardText }}>{giftCardDescription}</p>
           )}
           {giftCardLink && (
             <div className="mt-4 flex justify-center">
@@ -786,7 +792,7 @@ useEffect(() => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex rounded-full border px-7 py-3 text-base font-bold uppercase tracking-[0.22em] transition-opacity hover:opacity-70"
-                style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}
+                style={{ color: colorGiftCardAccent, borderColor: `${colorGiftCardAccent}40`, backgroundColor: colorGiftCardBg }}
               >
                 Mon bon cadeau
               </a>
