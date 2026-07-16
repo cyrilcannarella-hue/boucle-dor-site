@@ -28,6 +28,11 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${salonName} Pro`,
     manifest: "/manifest-backoffice.json",
     icons: iconUrl ? { icon: iconUrl, apple: iconUrl } : { icon: [], apple: [] },
+    appleWebApp: {
+      capable: true,
+      title: `${salonName} Pro`,
+      statusBarStyle: "default",
+    },
   };
 }
 
