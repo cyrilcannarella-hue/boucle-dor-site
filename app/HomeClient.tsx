@@ -53,6 +53,9 @@ export type SalonSettings = {
   site_reviews?: Array<{ name: string; text: string }> | null;
   gallery_enabled?: boolean | null;
   site_gallery?: { title: string; text: string; photos: Array<{ url: string; caption: string }> } | null;
+  gift_card_enabled?: boolean | null;
+  gift_card_description?: string | null;
+  gift_card_link?: string | null;
   color_accents?: string | null;
   color_contact_bg?: string | null;
   color_page_bg?: string | null;
@@ -317,6 +320,9 @@ useEffect(() => {
   const instagramUrl = settings?.instagram_url || null;
   const salonEmail = settings?.email || null;
   const galleryEnabled = settings?.gallery_enabled ?? false;
+  const giftCardEnabled = settings?.gift_card_enabled ?? false;
+  const giftCardDescription = settings?.gift_card_description ?? "";
+  const giftCardLink = settings?.gift_card_link ?? "";
 
   const hasAnyOpenDay = !!(settings && (
     settings.is_open_monday || settings.is_open_tuesday || settings.is_open_wednesday ||
@@ -748,6 +754,42 @@ useEffect(() => {
               </div>
             </motion.article>
           ))}
+        </motion.div>
+      </section>
+      )}
+
+      {giftCardEnabled && (
+      <section
+        id="bon-cadeau"
+        className="mx-auto w-[min(1200px,calc(100%-32px))] scroll-mt-44 md:scroll-mt-28 py-6"
+      >
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          whileHover={{ y: -6, scale: 1.02 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="rounded-[28px] border border-[var(--card-border)] p-6 shadow-sm"
+          style={{ backgroundColor: colorPanelBg }}
+        >
+          <div className="mb-4 inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}>
+            Bon cadeau
+          </div>
+          {giftCardDescription && (
+            <p className="whitespace-pre-line" style={{ color: colorTextSecondary }}>{giftCardDescription}</p>
+          )}
+          {giftCardLink && (
+            <a
+              href={giftCardLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block text-sm font-semibold transition-opacity hover:opacity-70"
+              style={{ color: colorAccents }}
+            >
+              En savoir plus →
+            </a>
+          )}
         </motion.div>
       </section>
       )}

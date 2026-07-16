@@ -172,6 +172,9 @@ export type SalonSettings = {
   site_reviews?: Array<{ name: string; text: string }> | null;
   gallery_enabled?: boolean | null;
   site_gallery?: { title: string; text: string; photos: Array<{ url: string; caption: string }> } | null;
+  gift_card_enabled?: boolean | null;
+  gift_card_description?: string | null;
+  gift_card_link?: string | null;
   email?: string | null;
   instagram_url?: string | null;
   promo_bg_color?: string | null;
@@ -417,7 +420,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"closures" | "openings" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "apparence" | "agendaplus">("closures");
+  const [activeTab, setActiveTab] = useState<"closures" | "openings" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "cadeau" | "apparence" | "agendaplus">("closures");
   const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "police" | "couleurs" | "hero" | "logos" | "photos" | "prestations" | "apropos" | "avis">("nom");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("");
@@ -508,6 +511,11 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   );
   const [savingGallery, setSavingGallery] = useState(false);
   const [uploadingGalleryIndex, setUploadingGalleryIndex] = useState<number | null>(null);
+
+  const [giftCardEnabled, setGiftCardEnabled] = useState(false);
+  const [giftCardDescription, setGiftCardDescription] = useState("");
+  const [giftCardLink, setGiftCardLink] = useState("");
+  const [savingGiftCard, setSavingGiftCard] = useState(false);
 
   const [campaignMessage, setCampaignMessage] = useState("");
   const [campaignOnlyWithAppointments, setCampaignOnlyWithAppointments] = useState(false);
@@ -627,6 +635,9 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         while (padded.length < 12) padded.push({ url: "", caption: "" });
         setGalleryPhotos(padded);
       }
+      setGiftCardEnabled(loadedSettings?.gift_card_enabled ?? false);
+      setGiftCardDescription(loadedSettings?.gift_card_description ?? "");
+      setGiftCardLink(loadedSettings?.gift_card_link ?? "");
       setAppearanceBadges(loadedSettings?.color_badges ?? "");
       setAppearanceSubtitles(loadedSettings?.color_subtitles ?? "");
       setAppearanceAccents(loadedSettings?.color_accents ?? "");
@@ -1544,6 +1555,29 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
     }
   };
 
+  const handleSaveGiftCard = async () => {
+    if (!settings) return;
+    try {
+      setSavingGiftCard(true);
+      setStatusMessage("");
+      const { error } = await supabase
+        .from("salon_settings")
+        .update({
+          gift_card_enabled: giftCardEnabled,
+          gift_card_description: giftCardDescription.trim() || null,
+          gift_card_link: giftCardLink.trim() || null,
+        })
+        .eq("id", settings.id)
+        .eq("salon_id", salonId);
+      if (error) throw new Error(error.message);
+      setStatusMessage("Bon cadeau enregistré ✅");
+    } catch (error: unknown) {
+      setStatusMessage(`Erreur : ${(error as Error).message}`);
+    } finally {
+      setSavingGiftCard(false);
+    }
+  };
+
   const removeStorageFile = async (url: string | null | undefined) => {
     if (!url) return;
     const path = url.split("/site-images/").pop();
@@ -1918,6 +1952,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                   { id: "services" as const, label: "Prestations", icon: "⭐" },
                   { id: "questionnaire" as const, label: "Questionnaire", icon: "📋" },
                   { id: "galerie" as const, label: "Galerie", icon: "🖼️" },
+                  { id: "cadeau" as const, label: "Bon cadeau", icon: "🎀" },
                   { id: "apparence" as const, label: "Apparence", icon: "🎨" },
                   ...(!isTestSalon ? [{ id: "agendaplus" as const, label: "Agenda+", icon: "💳" }] : []),
                 ]).map((tab) => (
@@ -3813,6 +3848,69 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              </section>
+              )}
+
+              {activeTab === "cadeau" && (
+              <section className={cardClass + " p-5 md:p-7"}>
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                      <span className="text-xl">🎀</span>
+                      Bon cadeau
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight">Section bon cadeau</h2>
+                    <p className="mt-1 text-sm text-[var(--nav-text)]">Affichée sur la page d&apos;accueil, juste après les prestations.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveGiftCard}
+                    disabled={savingGiftCard}
+                    className={primaryButtonClass}
+                  >
+                    {savingGiftCard ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+
+                <div className="grid gap-6">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={giftCardEnabled}
+                        onChange={(e) => setGiftCardEnabled(e.target.checked)}
+                      />
+                      <div className={`h-6 w-11 rounded-full transition ${giftCardEnabled ? "bg-[var(--selected-bg)]" : "bg-gray-200"}`} />
+                      <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${giftCardEnabled ? "translate-x-5" : "translate-x-0"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-[var(--nav-text)]">
+                      Afficher la section bon cadeau sur le site
+                    </span>
+                  </label>
+
+                  <div className="grid gap-2">
+                    <label className="text-sm font-semibold text-[var(--nav-text)]">Description</label>
+                    <textarea
+                      rows={4}
+                      value={giftCardDescription}
+                      onChange={(e) => setGiftCardDescription(e.target.value)}
+                      placeholder="Ex : Offrez un moment de détente avec un bon cadeau valable sur toutes les prestations."
+                      className={fieldClass + " resize-none"}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <label className="text-sm font-semibold text-[var(--nav-text)]">Lien (sous la description)</label>
+                    <input
+                      type="text"
+                      value={giftCardLink}
+                      onChange={(e) => setGiftCardLink(e.target.value)}
+                      placeholder="https://..."
+                      className={fieldClass}
+                    />
                   </div>
                 </div>
               </section>
