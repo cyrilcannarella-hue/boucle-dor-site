@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin-client";
-import { DEFAULT_SALON_SLUG, PREVIEW_SALON_COOKIE, slugFromHostname } from "@/lib/salon";
+import { DEFAULT_SALON_SLUG, PREVIEW_SALON_COOKIE, salonLookupFromHostname } from "@/lib/salon";
 
 /**
  * Vérifie que l'utilisateur connecté est membre du salon résolu pour cette requête
@@ -25,8 +25,8 @@ async function isAuthorizedForCurrentSalon(request: NextRequest, userId: string)
   }
 
   const hostname = (request.headers.get("host") ?? "").split(":")[0];
-  const slug = slugFromHostname(hostname);
-  const { data: salon } = await admin.from("salons").select("id").eq("slug", slug).maybeSingle();
+  const lookup = salonLookupFromHostname(hostname);
+  const { data: salon } = await admin.from("salons").select("id").eq(lookup.column, lookup.value).maybeSingle();
   const finalSalon = salon ?? (await admin.from("salons").select("id").eq("slug", DEFAULT_SALON_SLUG).maybeSingle()).data;
   if (!finalSalon) return false;
 

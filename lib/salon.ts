@@ -15,6 +15,9 @@ export const DEFAULT_SALON_SLUG = "boucle-dor";
 export const PREVIEW_SALON_COOKIE = "preview_salon";
 
 const SAAS_DOMAINS = ["agenda-plus", "monsaas"];
+const NON_TENANT_HOST_SUFFIXES = [".vercel.app"];
+
+export type SalonLookup = { column: "slug" | "custom_domain"; value: string };
 
 /**
  * Dérive le slug du salon à partir du hostname de la requête, sans dépendre
@@ -31,7 +34,30 @@ export function slugFromHostname(hostname: string): string {
   return DEFAULT_SALON_SLUG;
 }
 
-async function resolveSalonSlug(): Promise<string> {
+/**
+ * Normalise un hostname en domaine perso candidat (salons.custom_domain), ou null
+ * si ce hostname relève du routage par sous-domaine/slug habituel (localhost,
+ * *.vercel.app, {slug}.agenda-plus.fr) et ne doit donc jamais être cherché en base
+ * comme custom_domain.
+ */
+export function customDomainCandidate(hostname: string): string | null {
+  if (hostname === "localhost") return null;
+  if (NON_TENANT_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix))) return null;
+
+  const parts = hostname.split(".");
+  if (parts.length >= 3 && SAAS_DOMAINS.includes(parts[parts.length - 2])) return null;
+  if (parts.length === 2 && SAAS_DOMAINS.includes(parts[0])) return null;
+
+  return hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+}
+
+export function salonLookupFromHostname(hostname: string): SalonLookup {
+  const domain = customDomainCandidate(hostname);
+  if (domain) return { column: "custom_domain", value: domain };
+  return { column: "slug", value: slugFromHostname(hostname) };
+}
+
+async function resolveSalonLookup(): Promise<SalonLookup> {
   const cookieStore = await cookies();
   const previewSlug = cookieStore.get(PREVIEW_SALON_COOKIE)?.value;
 
@@ -56,7 +82,7 @@ async function resolveSalonSlug(): Promise<string> {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (member) return previewSlug;
+        if (member) return { column: "slug", value: previewSlug };
       }
     }
     // Cookie invalide ou non autorisé — on ignore et on continue
@@ -65,22 +91,27 @@ async function resolveSalonSlug(): Promise<string> {
   const headersList = await headers();
   const host = headersList.get("host") ?? "";
   const hostname = host.split(":")[0];
-  return slugFromHostname(hostname);
+  return salonLookupFromHostname(hostname);
 }
 
 /**
- * Résout le salon courant (server-only) à partir du hostname de la requête.
- * Fallback sur Boucle d'Or si aucun sous-domaine reconnu (localhost, domaine custom, etc).
+ * Résout le salon courant (server-only) à partir du hostname de la requête
+ * (sous-domaine {slug}.agenda-plus.fr, ou domaine perso via salons.custom_domain).
+ * Fallback sur Boucle d'Or si rien ne correspond (localhost, domaine custom inconnu, etc).
  */
 export async function getCurrentSalon(): Promise<Salon> {
-  const slug = await resolveSalonSlug();
+  const lookup = await resolveSalonLookup();
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
 
-  const { data } = await supabase.from("salons").select("id, slug, name, status, is_test").eq("slug", slug).maybeSingle();
+  const { data } = await supabase
+    .from("salons")
+    .select("id, slug, name, status, is_test")
+    .eq(lookup.column, lookup.value)
+    .maybeSingle();
   if (data) return data;
 
   const { data: fallback } = await supabase
