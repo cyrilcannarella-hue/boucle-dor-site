@@ -75,6 +75,16 @@ body {
   to { translate: 120%; }
 }
 
+.gift-bow {
+  transform-origin: 50% 100%;
+  animation: gift-bow-sway 3.2s ease-in-out infinite;
+}
+
+@keyframes gift-bow-sway {
+  0%, 100% { transform: translateX(-50%) rotate(-6deg); }
+  50% { transform: translateX(-50%) rotate(6deg); }
+}
+
 @keyframes header-sweep {
   0%   { transform: translateX(-60%) skewX(-12deg); }
   100% { transform: translateX(480%) skewX(-12deg); }

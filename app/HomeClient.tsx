@@ -786,7 +786,18 @@ useEffect(() => {
             <p className="whitespace-pre-line" style={{ color: colorGiftCardText }}>{giftCardDescription}</p>
           )}
           {giftCardLink && (
-            <div className="mt-4 flex justify-center">
+            <div className="relative mt-4 flex justify-center">
+              <svg
+                viewBox="0 0 60 40"
+                aria-hidden="true"
+                className="gift-bow pointer-events-none absolute -top-5 left-1/2 h-8 w-12"
+                style={{ color: colorGiftCardAccent }}
+              >
+                <path d="M30,20 C20,5 4,9 7,20 C4,31 20,35 30,20 Z" fill="currentColor" />
+                <path d="M30,20 C40,5 56,9 53,20 C56,31 40,35 30,20 Z" fill="currentColor" />
+                <rect x="25" y="15" width="10" height="10" rx="2.5" fill="currentColor" />
+                <circle cx="30" cy="20" r="1.6" fill="white" opacity="0.7" />
+              </svg>
               <a
                 href={giftCardLink}
                 target="_blank"
