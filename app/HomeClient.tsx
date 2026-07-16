@@ -791,8 +791,13 @@ useEffect(() => {
                 href={giftCardLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-full border px-7 py-3 text-base font-bold uppercase tracking-[0.22em] transition-opacity hover:opacity-70"
-                style={{ color: colorGiftCardAccent, borderColor: `${colorGiftCardAccent}40`, backgroundColor: colorGiftCardBg }}
+                className="inline-flex rounded-full border px-7 py-3 text-base font-bold uppercase tracking-[0.22em] transition-shadow hover:opacity-70"
+                style={{
+                  color: colorGiftCardAccent,
+                  borderColor: `${colorGiftCardAccent}80`,
+                  backgroundColor: colorGiftCardBg,
+                  boxShadow: `0 0 18px 4px ${colorGiftCardAccent}66`,
+                }}
               >
                 Mon bon cadeau
               </a>
