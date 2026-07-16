@@ -780,15 +780,17 @@ useEffect(() => {
             <p className="whitespace-pre-line" style={{ color: colorTextSecondary }}>{giftCardDescription}</p>
           )}
           {giftCardLink && (
-            <a
-              href={giftCardLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-block text-sm font-semibold transition-opacity hover:opacity-70"
-              style={{ color: colorAccents }}
-            >
-              En savoir plus →
-            </a>
+            <div className="mt-4 flex justify-center">
+              <a
+                href={giftCardLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em] transition-opacity hover:opacity-70"
+                style={{ color: colorBadge, borderColor: `${colorBadge}40`, backgroundColor: colorPanelBg }}
+              >
+                Mon bon cadeau
+              </a>
+            </div>
           )}
         </motion.div>
       </section>
