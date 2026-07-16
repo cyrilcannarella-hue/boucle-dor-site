@@ -788,12 +788,28 @@ useEffect(() => {
           {giftCardLink && (
             <div className="mt-6 flex justify-center">
               <div className="relative inline-flex">
-                {/* Ruban qui encercle le badge */}
-                <span
+                {/* Ruban qui s'enroule progressivement autour du badge */}
+                <svg
                   aria-hidden="true"
-                  className="gift-ribbon-ring pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-full"
-                  style={{ border: `5px solid ${colorGiftCardAccent}55` }}
-                />
+                  className="pointer-events-none absolute -inset-x-3 -inset-y-2"
+                  style={{ overflow: "visible" }}
+                >
+                  <rect
+                    x="0"
+                    y="0"
+                    width="100%"
+                    height="100%"
+                    rx="50%"
+                    ry="50%"
+                    fill="none"
+                    stroke={colorGiftCardAccent}
+                    strokeOpacity={0.75}
+                    strokeWidth={5}
+                    strokeLinecap="round"
+                    pathLength={1}
+                    className="gift-ribbon-wrap"
+                  />
+                </svg>
                 <a
                   href={giftCardLink}
                   target="_blank"
@@ -808,18 +824,18 @@ useEffect(() => {
                 >
                   Mon bon cadeau
                 </a>
-                {/* Noeud posé sur le ruban, en haut */}
-                <svg
-                  viewBox="0 0 60 40"
-                  aria-hidden="true"
-                  className="gift-bow pointer-events-none absolute -top-6 left-1/2 z-10 h-8 w-12"
+                {/* Noeud qui se forme une fois le ruban enroulé */}
+                <div
+                  className="gift-bow-wrap pointer-events-none absolute -top-6 left-1/2 z-10 h-8 w-12"
                   style={{ color: colorGiftCardAccent }}
                 >
-                  <path d="M30,20 C20,5 4,9 7,20 C4,31 20,35 30,20 Z" fill="currentColor" />
-                  <path d="M30,20 C40,5 56,9 53,20 C56,31 40,35 30,20 Z" fill="currentColor" />
-                  <rect x="25" y="15" width="10" height="10" rx="2.5" fill="currentColor" />
-                  <circle cx="30" cy="20" r="1.6" fill="white" opacity="0.7" />
-                </svg>
+                  <svg viewBox="0 0 60 40" className="gift-bow h-full w-full">
+                    <path d="M30,20 C20,5 4,9 7,20 C4,31 20,35 30,20 Z" fill="currentColor" />
+                    <path d="M30,20 C40,5 56,9 53,20 C56,31 40,35 30,20 Z" fill="currentColor" />
+                    <rect x="25" y="15" width="10" height="10" rx="2.5" fill="currentColor" />
+                    <circle cx="30" cy="20" r="1.6" fill="white" opacity="0.7" />
+                  </svg>
+                </div>
               </div>
             </div>
           )}

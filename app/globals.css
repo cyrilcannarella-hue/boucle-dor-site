@@ -75,23 +75,35 @@ body {
   to { translate: 120%; }
 }
 
+.gift-ribbon-wrap {
+  stroke-dasharray: 1;
+  animation: gift-ribbon-wrap 6s ease-in-out infinite;
+}
+
+@keyframes gift-ribbon-wrap {
+  0% { stroke-dashoffset: 1; }
+  35%, 75% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 1; }
+}
+
+.gift-bow-wrap {
+  animation: gift-bow-pop 6s ease-in-out infinite;
+}
+
+@keyframes gift-bow-pop {
+  0%, 33% { opacity: 0; transform: translateX(-50%) scale(0.4); }
+  42%, 72% { opacity: 1; transform: translateX(-50%) scale(1); }
+  82%, 100% { opacity: 0; transform: translateX(-50%) scale(0.4); }
+}
+
 .gift-bow {
   transform-origin: 50% 100%;
-  animation: gift-bow-sway 3.2s ease-in-out infinite;
+  animation: gift-bow-sway 1.6s ease-in-out infinite;
 }
 
 @keyframes gift-bow-sway {
-  0%, 100% { transform: translateX(-50%) rotate(-6deg); }
-  50% { transform: translateX(-50%) rotate(6deg); }
-}
-
-.gift-ribbon-ring {
-  animation: gift-ribbon-breathe 3.2s ease-in-out infinite;
-}
-
-@keyframes gift-ribbon-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(1.03); }
+  0%, 100% { rotate: -6deg; }
+  50% { rotate: 6deg; }
 }
 
 @keyframes header-sweep {
