@@ -1575,10 +1575,19 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
           gift_card_enabled: giftCardEnabled,
           gift_card_description: giftCardDescription.trim() || null,
           gift_card_link: giftCardLink.trim() || null,
+          color_giftcard_bg: appearanceGiftCardBg || null,
+          color_giftcard_text: appearanceGiftCardText || null,
+          color_giftcard_accent: appearanceGiftCardAccent || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
       if (error) throw new Error(error.message);
+      setSettings((prev) => prev ? {
+        ...prev,
+        color_giftcard_bg: appearanceGiftCardBg || null,
+        color_giftcard_text: appearanceGiftCardText || null,
+        color_giftcard_accent: appearanceGiftCardAccent || null,
+      } : prev);
       setStatusMessage("Bon cadeau enregistré ✅");
     } catch (error: unknown) {
       setStatusMessage(`Erreur : ${(error as Error).message}`);
@@ -1724,9 +1733,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
           color_avis_accent: appearanceAvisAccent || null,
           color_avis_bg: appearanceAvisBg || null,
           color_avis_name: appearanceAvisName || null,
-          color_giftcard_bg: appearanceGiftCardBg || null,
-          color_giftcard_text: appearanceGiftCardText || null,
-          color_giftcard_accent: appearanceGiftCardAccent || null,
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId);
@@ -1756,9 +1762,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         color_avis_accent: appearanceAvisAccent || null,
         color_avis_bg: appearanceAvisBg || null,
         color_avis_name: appearanceAvisName || null,
-        color_giftcard_bg: appearanceGiftCardBg || null,
-        color_giftcard_text: appearanceGiftCardText || null,
-        color_giftcard_accent: appearanceGiftCardAccent || null,
       } : prev);
       setStatusMessage("Couleurs enregistrées ✅");
     } catch (error: unknown) {
@@ -3927,6 +3930,67 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                       className={fieldClass}
                     />
                   </div>
+
+                  <div className="grid gap-3">
+                    <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--gold)]">Couleurs</div>
+                    <div className="grid gap-3">
+                      {(
+                        [
+                          { key: "giftcardbg", label: "Fond de la carte", desc: "Fond de la section Bon cadeau", value: appearanceGiftCardBg, setter: setAppearanceGiftCardBg },
+                          { key: "giftcardtext", label: "Description", desc: "Texte de description de la section Bon cadeau", value: appearanceGiftCardText, setter: setAppearanceGiftCardText },
+                          { key: "giftcardaccent", label: "Badge du lien", desc: "Couleur du badge \"Mon bon cadeau\"", value: appearanceGiftCardAccent, setter: setAppearanceGiftCardAccent },
+                        ] as { key: string; label: string; desc: string; value: string; setter: (v: string) => void }[]
+                      ).map(({ key, label, desc, value, setter }) => (
+                        <div key={key} className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-white">
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-3 p-4 text-left"
+                            onClick={() => setOpenColorPicker(openColorPicker === key ? null : key)}
+                          >
+                            <div
+                              className="h-9 w-9 shrink-0 rounded-xl border border-[var(--card-border)] shadow-sm"
+                              style={value ? { backgroundColor: value } : { backgroundImage: "repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%)", backgroundSize: "12px 12px" }}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-semibold text-[var(--nav-text)]">{label}</div>
+                              <div className="text-xs text-[var(--nav-text)]">{desc}</div>
+                            </div>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              className={`h-4 w-4 shrink-0 text-[#a0927e] transition-transform ${openColorPicker === key ? "rotate-180" : ""}`}
+                            >
+                              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          {openColorPicker === key && (
+                            <div className="border-t border-[var(--card-border)] p-4">
+                              <div className="space-y-1.5">
+                                {APPEARANCE_PALETTE.map((family) => (
+                                  <div key={family.label} className="flex items-center gap-1.5">
+                                    <span className="w-16 shrink-0 text-[10px] text-[#a0927e]">{family.label}</span>
+                                    <div className="flex min-w-0 flex-1 gap-1">
+                                      {family.colors.map((c) => (
+                                        <button
+                                          key={c}
+                                          type="button"
+                                          onClick={() => setter(c)}
+                                          title={c}
+                                          className={`h-5 min-w-0 flex-1 rounded transition-transform ${value === c ? "scale-125 ring-2 ring-neutral-900 ring-offset-1" : "hover:scale-110"}`}
+                                          style={{ backgroundColor: c }}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </section>
               )}
@@ -4318,14 +4382,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                             items: [
                               { key: "avisbg", label: "Fond", desc: "Fond des cartes d'avis", value: appearanceAvisBg, setter: setAppearanceAvisBg },
                               { key: "avisname", label: "Prénom", desc: "Nom de l'auteur affiché sous chaque avis", value: appearanceAvisName, setter: setAppearanceAvisName },
-                            ],
-                          },
-                          {
-                            title: "Bon cadeau",
-                            items: [
-                              { key: "giftcardbg", label: "Fond de la carte", desc: "Fond de la section Bon cadeau", value: appearanceGiftCardBg, setter: setAppearanceGiftCardBg },
-                              { key: "giftcardtext", label: "Description", desc: "Texte de description de la section Bon cadeau", value: appearanceGiftCardText, setter: setAppearanceGiftCardText },
-                              { key: "giftcardaccent", label: "Badge du lien", desc: "Couleur du badge \"Mon bon cadeau\"", value: appearanceGiftCardAccent, setter: setAppearanceGiftCardAccent },
                             ],
                           },
                           {
