@@ -2527,6 +2527,14 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                       Téléphone, horaires et jours d’ouverture
                     </h2>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveSettings}
+                    disabled={savingSettings}
+                    className={primaryButtonClass}
+                  >
+                    {savingSettings ? "Enregistrement..." : "Enregistrer"}
+                  </button>
                 </div>
 
                 {settings ? (
@@ -2651,17 +2659,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                       <p className="mt-2 text-xs text-[var(--nav-text)] opacity-60">
                         Obligatoires pour la page "Mentions légales" du site. Tant qu'ils sont vides, la page l'indique clairement plutôt que d'afficher une fausse information.
                       </p>
-                    </div>
-
-                    <div className="mt-6 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleSaveSettings}
-                        disabled={savingSettings}
-                        className={primaryButtonClass}
-                      >
-                        {savingSettings ? "Enregistrement..." : "Enregistrer les réglages"}
-                      </button>
                     </div>
                   </>
                 ) : (
