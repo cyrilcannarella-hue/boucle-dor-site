@@ -1962,7 +1962,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                 {([
                   { id: "closures" as const, label: "Fermetures", icon: "📆" },
                   { id: "openings" as const, label: "Ouvertures", icon: "🔓" },
-                  { id: "promotions" as const, label: "Promotions", icon: "%" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
                   { id: "sms" as const, label: "SMS", icon: "💬" },
                   { id: "staff" as const, label: "Équipe", icon: "👥" },
@@ -1970,6 +1969,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                   { id: "services" as const, label: "Prestations", icon: "⭐" },
                   { id: "questionnaire" as const, label: "Questionnaire", icon: "📋" },
                   { id: "galerie" as const, label: "Galerie", icon: "🖼️" },
+                  { id: "promotions" as const, label: "Promotions", icon: "%" },
                   { id: "cadeau" as const, label: "Bon cadeau", icon: "🎁" },
                   { id: "apparence" as const, label: "Apparence", icon: "🎨" },
                   ...(!isTestSalon ? [{ id: "agendaplus" as const, label: "Agenda+", icon: "💳" }] : []),
