@@ -2347,13 +2347,23 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
               )}
               {activeTab === "promotions" && (
               <div className={cardClass + " p-5 md:p-7"}>
-                <div className="mb-6">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
-                    <span className="text-xl">%</span>
-                    Promotion
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                      <span className="text-xl">%</span>
+                      Promotion
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight">Bandeau promotionnel</h2>
+                    <p className="mt-1 text-sm text-[var(--nav-text)]">Affiché sur la page d'accueil juste sous la navigation.</p>
                   </div>
-                  <h2 className="text-2xl font-black tracking-tight">Bandeau promotionnel</h2>
-                  <p className="mt-1 text-sm text-[var(--nav-text)]">Affiché sur la page d'accueil juste sous la navigation.</p>
+                  <button
+                    type="button"
+                    onClick={handleSavePromo}
+                    disabled={savingPromo}
+                    className={primaryButtonClass}
+                  >
+                    {savingPromo ? "Enregistrement..." : "Enregistrer"}
+                  </button>
                 </div>
 
                 <label className="mb-6 flex cursor-pointer items-center gap-3">
@@ -2501,17 +2511,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                       </div>
                     )}
                   </div>
-                </div>
-
-                <div className="mt-5 flex items-center justify-end gap-4">
-                  <button
-                    type="button"
-                    onClick={handleSavePromo}
-                    disabled={savingPromo}
-                    className={primaryButtonClass}
-                  >
-                    {savingPromo ? "Enregistrement..." : "Enregistrer"}
-                  </button>
                 </div>
               </div>
               )}
