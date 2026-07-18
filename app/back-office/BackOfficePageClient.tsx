@@ -1677,6 +1677,31 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
       if (error) throw new Error((error as Error).message);
 
+      const smsPhone =
+        createClientMode === "existing"
+          ? selectedExistingClient?.phone ?? null
+          : normalizePhone(createPhone).length === 10
+          ? normalizePhone(createPhone)
+          : null;
+      const smsFirstName =
+        createClientMode === "existing"
+          ? selectedExistingClient?.first_name ?? ""
+          : createFirstName.trim();
+
+      if (smsPhone) {
+        fetch("/api/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: smsPhone,
+            firstName: smsFirstName,
+            serviceName: selectedCreateService.name,
+            date: createDate,
+            time: createTime,
+          }),
+        }).catch(() => {});
+      }
+
       await loadAppointments(selectedDate);
       await loadClosuresForDay(selectedDate);
       await loadInitialData();
