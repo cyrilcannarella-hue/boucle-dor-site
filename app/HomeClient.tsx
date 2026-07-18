@@ -38,6 +38,7 @@ export type SalonSettings = {
   opening_time_sunday?: string | null;
   closing_time_sunday?: string | null;
   promo_text?: string | null;
+  promo_enabled?: boolean | null;
   promo_color_from?: string | null;
   promo_color_to?: string | null;
   promo_text_color?: string | null;
@@ -320,6 +321,7 @@ useEffect(() => {
   const promoGradientTo = settings?.promo_color_to || "#1a1a2e";
   const promoBgColor = settings?.promo_bg_color || colorContactBg;
   const promoTextColor = settings?.promo_text_color || contrastText(promoBgColor);
+  const promoEnabled = settings?.promo_enabled ?? false;
   const instagramUrl = settings?.instagram_url || null;
   const salonEmail = settings?.email || null;
   const galleryEnabled = settings?.gallery_enabled ?? false;
@@ -574,7 +576,7 @@ useEffect(() => {
         </div>
       </motion.header>
 
-      {settings?.promo_text?.trim() ? (
+      {promoEnabled && settings?.promo_text?.trim() ? (
         <div className="relative z-40 overflow-hidden px-4 py-3.5" style={{ background: promoBgColor }}>
           {/* Lignes haut et bas */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent opacity-70" />

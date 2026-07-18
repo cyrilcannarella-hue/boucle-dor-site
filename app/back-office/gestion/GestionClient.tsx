@@ -127,6 +127,7 @@ export type SalonSettings = {
   opening_time_sunday?: string | null;
   closing_time_sunday?: string | null;
   promo_text?: string | null;
+  promo_enabled?: boolean | null;
   promo_color_from?: string | null;
   promo_color_to?: string | null;
   promo_text_color?: string | null;
@@ -519,6 +520,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [uploadingGalleryIndex, setUploadingGalleryIndex] = useState<number | null>(null);
 
   const [giftCardEnabled, setGiftCardEnabled] = useState(false);
+  const [promoEnabled, setPromoEnabled] = useState(false);
   const [giftCardDescription, setGiftCardDescription] = useState("");
   const [giftCardLink, setGiftCardLink] = useState("");
   const [savingGiftCard, setSavingGiftCard] = useState(false);
@@ -642,6 +644,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         setGalleryPhotos(padded);
       }
       setGiftCardEnabled(loadedSettings?.gift_card_enabled ?? false);
+      setPromoEnabled(loadedSettings?.promo_enabled ?? false);
       setGiftCardDescription(loadedSettings?.gift_card_description ?? "");
       setGiftCardLink(loadedSettings?.gift_card_link ?? "");
       setAppearanceBadges(loadedSettings?.color_badges ?? "");
@@ -1172,6 +1175,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
         .from("salon_settings")
         .update({
           promo_text: settings.promo_text?.trim() || null,
+          promo_enabled: promoEnabled,
           promo_color_from: promoColorStars || null,
           promo_text_color: promoTextColor || null,
           promo_bg_color: promoBgColorState || null,
@@ -2349,8 +2353,24 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                     Promotion
                   </div>
                   <h2 className="text-2xl font-black tracking-tight">Bandeau promotionnel</h2>
-                  <p className="mt-1 text-sm text-[var(--nav-text)]">Affiché sur la page d'accueil juste sous la navigation. Laisser vide pour masquer le bandeau.</p>
+                  <p className="mt-1 text-sm text-[var(--nav-text)]">Affiché sur la page d'accueil juste sous la navigation.</p>
                 </div>
+
+                <label className="mb-6 flex cursor-pointer items-center gap-3">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={promoEnabled}
+                      onChange={(e) => setPromoEnabled(e.target.checked)}
+                    />
+                    <div className={`h-6 w-11 rounded-full transition ${promoEnabled ? "bg-[var(--selected-bg)]" : "bg-gray-200"}`} />
+                    <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${promoEnabled ? "translate-x-5" : "translate-x-0"}`} />
+                  </div>
+                  <span className="text-sm font-semibold text-[var(--nav-text)]">
+                    Afficher le bandeau promotionnel sur le site
+                  </span>
+                </label>
 
                 <label className="grid gap-2 text-sm font-semibold text-[var(--nav-text)]">
                   Texte du bandeau
@@ -2485,7 +2505,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
 
                 <div className="mt-5 flex items-center justify-between gap-4">
                   <p className="text-sm text-[#9a9089]">
-                    {settings?.promo_text?.trim() ? "✅ Bandeau actif" : "⬜ Bandeau masqué"}
+                    {promoEnabled && settings?.promo_text?.trim() ? "✅ Bandeau actif" : "⬜ Bandeau masqué"}
                   </p>
                   <button
                     type="button"
