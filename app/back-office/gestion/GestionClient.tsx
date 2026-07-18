@@ -417,6 +417,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
 
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
+  const [showAddStaff, setShowAddStaff] = useState(false);
   const [newStaffFirstName, setNewStaffFirstName] = useState("");
   const [newStaffLastName, setNewStaffLastName] = useState("");
   const [newStaffColor, setNewStaffColor] = useState("#EADCCB");
@@ -3180,13 +3181,59 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
               )}
               {activeTab === "staff" && (
               <div className={cardClass + " p-5 md:p-7"}>
-                  <div className="mb-6">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
-                      <span className="text-xl">👥</span> Équipe
+                  <div className="mb-6 flex items-start justify-between gap-3">
+                    <div>
+                      <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                        <span className="text-xl">👥</span> Équipe
+                      </div>
+                      <h2 className="text-2xl font-semibold tracking-tight">Prestataires</h2>
+                      <p className="mt-1 text-sm text-[var(--nav-text)]">Horaires et pauses par jour, dans les limites du salon.</p>
                     </div>
-                    <h2 className="text-2xl font-semibold tracking-tight">Prestataires</h2>
-                    <p className="mt-1 text-sm text-[var(--nav-text)]">Horaires et pauses par jour, dans les limites du salon.</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddStaff((v) => !v)}
+                      className={primaryButtonClass}
+                    >
+                      {showAddStaff ? "Fermer" : "+ Ajouter"}
+                    </button>
                   </div>
+
+                  {showAddStaff && (
+                    <div className="mb-6 rounded-3xl border border-[var(--card-border)] bg-white p-5">
+                      <div className="mb-4 text-lg font-black">Ajouter une prestataire</div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="grid gap-1 text-xs font-semibold text-[var(--nav-text)]">
+                          Prénom
+                          <input type="text" value={newStaffFirstName} onChange={(e) => setNewStaffFirstName(e.target.value)} className={fieldClass} />
+                        </label>
+                        <label className="grid gap-1 text-xs font-semibold text-[var(--nav-text)]">
+                          Nom
+                          <input type="text" value={newStaffLastName} onChange={(e) => setNewStaffLastName(e.target.value)} className={fieldClass} />
+                        </label>
+                      </div>
+                      <div className="mt-3 grid gap-1">
+                        <div className="text-xs font-semibold text-[var(--nav-text)]">Couleur agenda</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {COLOR_OPTIONS.map((c) => {
+                            const taken = staff.some((s) => s.color === c);
+                            return (
+                              <button key={c} type="button" disabled={taken}
+                                onClick={() => { if (!taken) setNewStaffColor(c); }}
+                                title={taken ? "Déjà utilisée" : undefined}
+                                className={`h-7 w-7 rounded-lg border-2 transition ${newStaffColor === c ? "border-neutral-900 scale-110" : taken ? "cursor-not-allowed opacity-30" : "border-transparent hover:scale-105"}`}
+                                style={{ backgroundColor: c }} />
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-xs text-[#9a9089]">Les horaires par jour seront configurables après la création.</p>
+                      <div className="mt-4 flex justify-end">
+                        <button type="button" onClick={handleCreateStaff} disabled={savingStaff} className={primaryButtonClass}>
+                          {savingStaff ? "Ajout..." : "Ajouter"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-6">
                     {staff.length === 0 ? (
@@ -3336,42 +3383,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                         </div>
                       );
                     })}
-                  </div>
-
-                  {/* Ajouter */}
-                  <div className="mt-4 rounded-2xl border border-[var(--card-border)] bg-white p-4">
-                    <div className="mb-3 text-sm font-black">Ajouter une prestataire</div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="grid gap-1 text-xs font-semibold text-[var(--nav-text)]">
-                        Prénom
-                        <input type="text" value={newStaffFirstName} onChange={(e) => setNewStaffFirstName(e.target.value)} className={fieldClass} />
-                      </label>
-                      <label className="grid gap-1 text-xs font-semibold text-[var(--nav-text)]">
-                        Nom
-                        <input type="text" value={newStaffLastName} onChange={(e) => setNewStaffLastName(e.target.value)} className={fieldClass} />
-                      </label>
-                    </div>
-                    <div className="mt-3 grid gap-1">
-                      <div className="text-xs font-semibold text-[var(--nav-text)]">Couleur agenda</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {COLOR_OPTIONS.map((c) => {
-                          const taken = staff.some((s) => s.color === c);
-                          return (
-                            <button key={c} type="button" disabled={taken}
-                              onClick={() => { if (!taken) setNewStaffColor(c); }}
-                              title={taken ? "Déjà utilisée" : undefined}
-                              className={`h-7 w-7 rounded-lg border-2 transition ${newStaffColor === c ? "border-neutral-900 scale-110" : taken ? "cursor-not-allowed opacity-30" : "border-transparent hover:scale-105"}`}
-                              style={{ backgroundColor: c }} />
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <p className="mt-2 text-xs text-[#9a9089]">Les horaires par jour seront configurables après la création.</p>
-                    <div className="mt-4 flex justify-end">
-                      <button type="button" onClick={handleCreateStaff} disabled={savingStaff} className={primaryButtonClass}>
-                        {savingStaff ? "Ajout..." : "Ajouter"}
-                      </button>
-                    </div>
                   </div>
               </div>
               )}
