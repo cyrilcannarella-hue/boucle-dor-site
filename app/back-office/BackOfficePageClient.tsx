@@ -1943,6 +1943,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
   // — Vue semaine —
   const weekDays = useMemo(() => {
+    if (!selectedDate) return [];
     const d = parseDateKey(selectedDate);
     const dow = d.getDay();
     const monday = new Date(d);
@@ -2411,9 +2412,13 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                 <div className="flex items-center gap-3 whitespace-nowrap">
                   <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-lg transition hover:bg-[var(--panel-bg)]">‹</button>
                   <h2 className="text-2xl font-semibold leading-none whitespace-nowrap">
-                    {parseDateKey(weekDays[0]).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
-                    {" → "}
-                    {parseDateKey(weekDays[6]).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                    {weekDays.length === 7 && (
+                      <>
+                        {parseDateKey(weekDays[0]).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+                        {" → "}
+                        {parseDateKey(weekDays[6]).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                      </>
+                    )}
                   </h2>
                   <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--panel-bg)] text-lg transition hover:bg-[var(--panel-bg)]">›</button>
                 </div>
