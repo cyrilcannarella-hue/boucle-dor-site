@@ -2503,10 +2503,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                   </div>
                 </div>
 
-                <div className="mt-5 flex items-center justify-between gap-4">
-                  <p className="text-sm text-[#9a9089]">
-                    {promoEnabled && settings?.promo_text?.trim() ? "✅ Bandeau actif" : "⬜ Bandeau masqué"}
-                  </p>
+                <div className="mt-5 flex items-center justify-end gap-4">
                   <button
                     type="button"
                     onClick={handleSavePromo}
