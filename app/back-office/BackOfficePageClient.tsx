@@ -728,6 +728,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const [savingEditAppointment, setSavingEditAppointment] = useState(false);
+  const [editModalError, setEditModalError] = useState("");
+  const [editOverlapWarning, setEditOverlapWarning] = useState(false);
   const [editAppointmentDate, setEditAppointmentDate] = useState("");
   const [editAppointmentTime, setEditAppointmentTime] = useState("");
   const [editCategoryFilter, setEditCategoryFilter] = useState("all");
@@ -1231,6 +1233,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setSelectedAppointment(appointment);
     setShowAppointmentModal(true);
     setIsEditingAppointment(false);
+    setEditModalError("");
+    setEditOverlapWarning(false);
     setEditAppointmentDate(appointment.appointment_date);
     setEditAppointmentTime(formatTime(appointment.start_time));
     setEditAppointmentServiceId(appointment.services?.id ?? appointment.service_id ?? "");
@@ -1248,6 +1252,8 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     setSelectedAppointment(null);
     setShowAppointmentModal(false);
     setIsEditingAppointment(false);
+    setEditModalError("");
+    setEditOverlapWarning(false);
     setEditAppointmentDate("");
     setEditAppointmentTime("");
     setEditCategoryFilter("all");
@@ -1717,15 +1723,15 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
     }
   };
 
-  const handleSaveAppointmentEdit = async () => {
+  const handleSaveAppointmentEdit = async (forceOverlap = false) => {
     if (!selectedAppointment) return;
     if (!selectedEditService) {
-      setStatusMessage("Choisis une prestation.");
+      setEditModalError("Choisis une prestation.");
       return;
     }
 
     if (!isOpenDay(editAppointmentDate, settings, allFutureOpenings)) {
-      setStatusMessage("Le salon est fermé ce jour-là.");
+      setEditModalError("Le salon est fermé ce jour-là.");
       return;
     }
 
@@ -1739,7 +1745,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
       const sched = staffSchedules.find((s) => s.staff_id === selectedAppointment.staff_id && s.day_of_week === dow);
       return sched ? Math.min(dayEnd, parseTimeToMinutes(sched.closing_time.slice(0,5))) : dayEnd;
     })()) {
-      setStatusMessage("Le rendez-vous dépasse l’horaire de fermeture.");
+      setEditModalError("Le rendez-vous dépasse l’horaire de fermeture.");
       return;
     }
 
@@ -1799,13 +1805,20 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
           editDateClosures
         ));
 
-    if (blockedByAppointments || blockedByClosures) {
-      setStatusMessage("Ce créneau est indisponible.");
+    if (blockedByClosures) {
+      setEditModalError("Ce créneau est bloqué par une fermeture exceptionnelle.");
+      return;
+    }
+
+    if (blockedByAppointments && !forceOverlap) {
+      setEditOverlapWarning(true);
       return;
     }
 
     try {
       setSavingEditAppointment(true);
+      setEditModalError("");
+      setEditOverlapWarning(false);
       setStatusMessage("");
 
       const startTime = `${editAppointmentTime}:00`;
@@ -1872,7 +1885,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
         closeAppointmentModal();
       }
     } catch (error: unknown) {
-      setStatusMessage(`Erreur : ${(error as Error).message ?? "Impossible de modifier le rendez-vous."}`);
+      setEditModalError(`Erreur : ${(error as Error).message ?? "Impossible de modifier le rendez-vous."}`);
     } finally {
       setSavingEditAppointment(false);
     }
@@ -3444,7 +3457,11 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                   <div className="mt-6 flex flex-wrap justify-end gap-3">
                     <button
                       type="button"
-                      onClick={() => setIsEditingAppointment(true)}
+                      onClick={() => {
+                        setEditModalError("");
+                        setEditOverlapWarning(false);
+                        setIsEditingAppointment(true);
+                      }}
                       className="rounded-2xl border border-[var(--card-border)] bg-[var(--panel-bg)] px-5 py-3 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[var(--panel-bg)]"
                     >
                       Modifier
@@ -3505,7 +3522,7 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
 
                       <button
                         type="button"
-                        onClick={handleSaveAppointmentEdit}
+                        onClick={() => handleSaveAppointmentEdit()}
                         disabled={savingEditAppointment}
                         className="rounded-2xl bg-[var(--selected-bg)] px-5 py-3 font-semibold text-[var(--selected-text)] shadow-[0_10px_24px_rgba(31,27,23,0.15)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50"
                       >
@@ -3595,6 +3612,27 @@ export function BackOfficePageClient({ initialSettings }: { initialSettings: Sal
                       />
                     </label>
                   </div>
+
+                  {editModalError && (
+                    <div className="mt-4 rounded-2xl border border-[#f5c6c6] bg-[#fff5f5] px-4 py-3 text-sm font-medium text-[#a33a3a]">
+                      {editModalError}
+                    </div>
+                  )}
+
+                  {editOverlapWarning && (
+                    <div className="mt-4 rounded-2xl border border-[#f5e4a0] bg-[#fffbea] px-4 py-3 text-sm text-[#7a5c00]">
+                      <p className="font-semibold mb-2">Ce créneau est déjà occupé.</p>
+                      <p className="mb-3">Veux-tu déplacer ce rendez-vous quand même et le superposer ?</p>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveAppointmentEdit(true)}
+                        disabled={savingEditAppointment}
+                        className="rounded-xl bg-[#7a5c00] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                      >
+                        {savingEditAppointment ? "Enregistrement..." : "Confirmer quand même"}
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
