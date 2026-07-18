@@ -77,23 +77,12 @@ body {
 
 .gift-ribbon-wrap {
   stroke-dasharray: 1;
-  animation: gift-ribbon-wrap 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-}
-
-@keyframes gift-ribbon-wrap {
-  0% { stroke-dashoffset: 1; }
-  35%, 75% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 1; }
+  stroke-dashoffset: 0;
 }
 
 .gift-bow-wrap {
-  animation: gift-bow-pop 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-}
-
-@keyframes gift-bow-pop {
-  0%, 33% { opacity: 0; transform: translateX(-50%) scale(0.4); }
-  42%, 72% { opacity: 1; transform: translateX(-50%) scale(1); }
-  82%, 100% { opacity: 0; transform: translateX(-50%) scale(0.4); }
+  opacity: 1;
+  transform: translateX(-50%) scale(0.88);
 }
 
 .gift-bow {
