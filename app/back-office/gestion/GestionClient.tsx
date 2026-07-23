@@ -2214,9 +2214,6 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                     <h2 className="text-2xl font-black tracking-tight">
                       Ouvertures exceptionnelles
                     </h2>
-                    <p className="mt-2 text-sm text-[var(--nav-text)]">
-                      Si un jour normalement fermé est ajouté ici, l&apos;agenda l&apos;affichera comme ouvert.
-                    </p>
                   </div>
                 </div>
 
