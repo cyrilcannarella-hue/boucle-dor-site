@@ -1967,8 +1967,8 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
               <nav className="flex flex-col gap-1.5 md:sticky md:top-[76px] md:w-44 md:shrink-0">
                 {([
-                  { id: "closures" as const, label: "Fermetures", icon: "📆" },
-                  { id: "openings" as const, label: "Ouvertures", icon: "🔓" },
+                  { id: "closures" as const, label: "Fermetures", icon: "🔴" },
+                  { id: "openings" as const, label: "Ouvertures", icon: "🟢" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
                   { id: "reservation" as const, label: "Réservation", icon: "🗓️" },
                   { id: "sms" as const, label: "SMS", icon: "💬" },
@@ -2003,7 +2003,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
-                      <span className="text-xl">📆</span>
+                      <span className="text-xl">🔴</span>
                       Planning
                     </div>
                     <h2 className="text-2xl font-black tracking-tight">
@@ -2208,7 +2208,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                 <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
-                      <span className="text-xl">🔓</span>
+                      <span className="text-xl">🟢</span>
                       Planning
                     </div>
                     <h2 className="text-2xl font-black tracking-tight">
