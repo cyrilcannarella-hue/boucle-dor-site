@@ -185,6 +185,29 @@ export function isBlockedByExceptionalClosure(
   });
 }
 
+export type BookingMinNotice = "none" | "same_day" | "next_day";
+
+const MIN_NOTICE_DAYS: Record<BookingMinNotice, number> = {
+  none: 0,
+  same_day: 1,
+  next_day: 2,
+};
+
+// Ajoute `days` jours calendaires à une clé de date "YYYY-MM-DD", indépendamment
+// de tout fuseau horaire (calcul fait en UTC pour éviter les décalages DST).
+export function addDaysToKey(dateKey: string, days: number): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() + days);
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+// Première date ("YYYY-MM-DD") à laquelle la réservation en ligne est autorisée,
+// compte tenu du délai minimum réglé par le salon (onglet "Réservation").
+export function minBookableDateKey(todayKey: string, minNotice: BookingMinNotice | null | undefined): string {
+  return addDaysToKey(todayKey, MIN_NOTICE_DAYS[minNotice ?? "none"]);
+}
+
 export function isOpenDayFromSettings(date: Date, settings: DayFlagsSettings | null): boolean {
   if (!settings) return false;
 

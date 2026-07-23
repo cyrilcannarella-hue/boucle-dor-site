@@ -126,6 +126,7 @@ export type SalonSettings = {
   closing_time_saturday?: string | null;
   opening_time_sunday?: string | null;
   closing_time_sunday?: string | null;
+  booking_min_notice?: "none" | "same_day" | "next_day" | null;
   promo_text?: string | null;
   promo_enabled?: boolean | null;
   promo_color_from?: string | null;
@@ -425,7 +426,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null);
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null);
   const [updatingStaffId, setUpdatingStaffId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"closures" | "openings" | "promotions" | "settings" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "cadeau" | "apparence" | "agendaplus">("closures");
+  const [activeTab, setActiveTab] = useState<"closures" | "openings" | "promotions" | "settings" | "reservation" | "sms" | "staff" | "categories" | "services" | "questionnaire" | "galerie" | "cadeau" | "apparence" | "agendaplus">("closures");
   const [appearanceSubTab, setAppearanceSubTab] = useState<"nom" | "motif" | "police" | "couleurs" | "hero" | "logos" | "photos" | "prestations" | "apropos" | "avis">("nom");
   const [savingPromo, setSavingPromo] = useState(false);
   const [promoTextColor, setPromoTextColor] = useState("");
@@ -724,6 +725,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
           closing_time_saturday: settings.closing_time_saturday ?? null,
           opening_time_sunday: settings.opening_time_sunday ?? null,
           closing_time_sunday: settings.closing_time_sunday ?? null,
+          booking_min_notice: settings.booking_min_notice ?? "none",
         })
         .eq("id", settings.id)
         .eq("salon_id", salonId)
@@ -1968,6 +1970,7 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                   { id: "closures" as const, label: "Fermetures", icon: "📆" },
                   { id: "openings" as const, label: "Ouvertures", icon: "🔓" },
                   { id: "settings" as const, label: "Salon", icon: "🏪" },
+                  { id: "reservation" as const, label: "Réservation", icon: "🗓️" },
                   { id: "sms" as const, label: "SMS", icon: "💬" },
                   { id: "staff" as const, label: "Équipe", icon: "👥" },
                   { id: "categories" as const, label: "Catégories", icon: "🗂️" },
@@ -2661,6 +2664,63 @@ export function GestionClient({ initialSettings }: { initialSettings: SalonSetti
                       </p>
                     </div>
                   </>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-8 text-center text-[var(--nav-text)]">
+                    Aucune ligne trouvée dans <strong>salon_settings</strong>.
+                  </div>
+                )}
+              </section>
+              )}
+              {activeTab === "reservation" && (
+              <section className={cardClass + " p-5 md:p-7"}>
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--gold)]">
+                      <span className="text-xl">🗓️</span>
+                      Réservation
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight">
+                      Délai minimum avant un rendez-vous en ligne
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveSettings}
+                    disabled={savingSettings}
+                    className={primaryButtonClass}
+                  >
+                    {savingSettings ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+
+                {settings ? (
+                  <div className="grid gap-3">
+                    {([
+                      ["none", "Jamais", "Les clients peuvent réserver jusqu'au dernier créneau disponible, y compris pour aujourd'hui."],
+                      ["same_day", "Le jour même", "Le jour même n'est plus proposé : la réservation en ligne s'ouvre à partir de demain."],
+                      ["next_day", "Le lendemain (jour même inclus)", "Le jour même et demain ne sont plus proposés : la réservation en ligne s'ouvre à partir d'après-demain."],
+                    ] as [NonNullable<SalonSettings["booking_min_notice"]>, string, string][]).map(([value, label, description]) => {
+                      const selected = (settings.booking_min_notice ?? "none") === value;
+                      return (
+                        <label
+                          key={value}
+                          className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition ${selected ? "border-[var(--accents)]/50 bg-[var(--accents)]/5" : "border-[var(--card-border)] bg-white hover:bg-[var(--panel-bg)]"}`}
+                        >
+                          <input
+                            type="radio"
+                            name="booking_min_notice"
+                            className="mt-1"
+                            checked={selected}
+                            onChange={() => setSettings({ ...settings, booking_min_notice: value })}
+                          />
+                          <div>
+                            <div className={`text-sm font-semibold ${selected ? "text-[var(--gold)]" : "text-[var(--nav-text)]"}`}>{label}</div>
+                            <div className="text-xs text-[var(--nav-text)] opacity-60">{description}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-8 text-center text-[var(--nav-text)]">
                     Aucune ligne trouvée dans <strong>salon_settings</strong>.

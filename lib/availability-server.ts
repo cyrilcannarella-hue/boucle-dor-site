@@ -3,7 +3,9 @@ import {
   getExceptionalOpening,
   isOpenDayFromSettings,
   isSlotAvailable,
+  minBookableDateKey,
   parseTime,
+  type BookingMinNotice,
   type BusyAppointment,
   type DayFlagsSettings,
   type ExceptionClosure,
@@ -21,11 +23,13 @@ const HOURS_COLUMNS = [
   "opening_time_wednesday", "closing_time_wednesday", "opening_time_thursday", "closing_time_thursday",
   "opening_time_friday", "closing_time_friday", "opening_time_saturday", "closing_time_saturday",
   "opening_time_sunday", "closing_time_sunday",
+  "booking_min_notice",
 ].join(", ");
 
 type HoursSettings = DayFlagsSettings & {
   opening_time: string | null;
   closing_time: string | null;
+  booking_min_notice: BookingMinNotice | null;
 } & Record<`opening_time_${typeof DAY_SLUGS[number]}`, string | null> & Record<`closing_time_${typeof DAY_SLUGS[number]}`, string | null>;
 
 export type SlotValidationResult = { ok: true } | { ok: false; message: string };
@@ -59,6 +63,11 @@ export async function validateAppointmentSlot(
     .maybeSingle<HoursSettings>();
 
   const dayNormallyOpen = !!settings && isOpenDayFromSettings(date, settings);
+
+  const todayKey = new Date().toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
+  if (appointmentDate < minBookableDateKey(todayKey, settings?.booking_min_notice)) {
+    return { ok: false, message: "Ce créneau ne respecte pas le délai minimum de réservation en ligne." };
+  }
 
   const [{ data: appointmentsData }, { data: closuresData }, { data: openingsData }] = await Promise.all([
     supabase

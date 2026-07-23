@@ -15,7 +15,9 @@ import {
   hasOpeningForDate,
   isOpenDayFromSettings,
   isSlotAvailable,
+  minBookableDateKey,
   parseTime,
+  type BookingMinNotice,
   type BusyAppointment,
   type ExceptionClosure,
   type ExceptionOpening,
@@ -90,6 +92,7 @@ export type SalonSettings = {
   site_font?: string | null;
   font_salon_name?: string | null;
   bg_pattern?: string | null;
+  booking_min_notice?: BookingMinNotice | null;
 };
 
 type StaffRow = {
@@ -366,6 +369,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
   const now = new Date();
   const todayKey = toKey(makeLocalDate(now.getFullYear(), now.getMonth(), now.getDate()));
+  const minBookableKey = minBookableDateKey(todayKey, settings?.booking_min_notice);
 
   const [calendarYear, setCalendarYear] = useState(now.getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(now.getMonth());
@@ -1098,7 +1102,7 @@ export function ReservationClient({ initialSettings }: { initialSettings: SalonS
 
                     {calendarDays.map((date) => {
                       const key = toKey(date);
-                      const isPast = key < todayKey;
+                      const isPast = key < minBookableKey;
                       const hasAnyOpening = hasOpeningForDate(key, exceptionOpenings);
                       const closed = !isOpenDayFromSettings(date, settings) && !hasAnyOpening;
                       // Sur un jour d'ouverture exceptionnelle : le staff est disponible s'il a
